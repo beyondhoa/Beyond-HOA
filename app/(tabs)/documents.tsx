@@ -26,7 +26,7 @@ interface HoaDocument {
 }
 
 const SEED_DOCS: HoaDocument[] = [
-  { id: "1", title: "HOA Bylaws – 2024 Revision", category: "bylaws", date: "2024-01-15", size: "1.2 MB", description: "Governing bylaws for Maple Ridge HOA, revised January 2024." },
+  { id: "1", title: "HOA Bylaws – 2024 Revision", category: "bylaws", date: "2024-01-15", size: "1.2 MB", description: "Governing bylaws for Beyond HOA, revised January 2024." },
   { id: "2", title: "Community Rules & Regulations", category: "rules", date: "2024-03-01", size: "856 KB", description: "Complete rules covering landscaping, parking, noise, and pets." },
   { id: "3", title: "Architectural Review Guidelines", category: "rules", date: "2023-11-10", size: "432 KB", description: "Standards and approval process for exterior modifications." },
   { id: "4", title: "Q4 2025 Board Meeting Minutes", category: "minutes", date: "2025-12-20", size: "124 KB", description: "Official minutes from the December quarterly board meeting." },

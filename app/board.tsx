@@ -96,7 +96,7 @@ export default function BoardScreen() {
         <View style={styles.heroCard}>
           <View style={styles.heroTop}>
             <View>
-              <Text style={styles.heroLabel}>MAPLE RIDGE HOA</Text>
+              <Text style={styles.heroLabel}>BEYOND HOA</Text>
               <Text style={styles.heroTitle}>Board Portal</Text>
             </View>
             <View style={styles.heroBadge}>

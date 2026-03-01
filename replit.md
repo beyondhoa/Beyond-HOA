@@ -1,4 +1,4 @@
-# HOA Connect – Homeowners Association App
+# Beyond HOA – Homeowners Association App
 
 ## Overview
 A full-featured mobile HOA management app built with Expo Router (React Native) and an Express backend. Provides owner and board dashboards, community voting, dues management, document library, announcements, and an AI-powered bylaw assistant.

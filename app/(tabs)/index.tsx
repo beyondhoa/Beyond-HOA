@@ -157,7 +157,7 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <View>
           <Text style={styles.greeting}>Good morning,</Text>
-          <Text style={styles.name}>Maple Ridge HOA</Text>
+          <Text style={styles.name}>Beyond HOA</Text>
         </View>
         <TouchableOpacity style={styles.boardButton} onPress={handleBoardPress} activeOpacity={0.8}>
           <MaterialCommunityIcons name="shield-star" size={18} color={Colors.gold} />

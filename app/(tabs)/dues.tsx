@@ -111,7 +111,7 @@ export default function DuesScreen() {
     <View style={[styles.container, { paddingTop: topPadding }]}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>HOA Dues</Text>
-        <Text style={styles.headerSub}>Maple Ridge Homeowners Association</Text>
+        <Text style={styles.headerSub}>Beyond HOA Community</Text>
       </View>
 
       <ScrollView
