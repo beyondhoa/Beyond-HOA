@@ -1,0 +1,73 @@
+# HOA Connect – Homeowners Association App
+
+## Overview
+A full-featured mobile HOA management app built with Expo Router (React Native) and an Express backend. Provides owner and board dashboards, community voting, dues management, document library, announcements, and an AI-powered bylaw assistant.
+
+## Architecture
+
+### Frontend (Expo / React Native)
+- **Framework**: Expo SDK 54 with Expo Router for file-based navigation
+- **State**: AsyncStorage for local data persistence, React Query for API calls
+- **Fonts**: Inter (400, 500, 600, 700) via @expo-google-fonts/inter
+- **Icons**: @expo/vector-icons (Ionicons, MaterialCommunityIcons)
+- **Animations**: react-native-reanimated for vote result bars
+- **Keyboard**: react-native-keyboard-controller for AI chat input
+
+### Backend (Express / TypeScript)
+- **Server**: Express on port 5000
+- **AI**: OpenAI via Replit AI Integrations (no API key required)
+- **Route**: POST /api/bylaw-chat – streaming AI responses for bylaw questions
+
+### AI Integration
+- Uses Replit AI Integrations (OpenAI-compatible, billed to Replit credits)
+- Model: gpt-5.1 for the bylaw assistant
+- Streaming SSE responses for real-time chat experience
+- HOA-specific system prompt with knowledge of CC&Rs, bylaws, procedures
+
+## App Structure
+
+```
+app/
+  _layout.tsx          # Root layout (fonts, QueryClient, KeyboardProvider)
+  (tabs)/
+    _layout.tsx        # Tab bar (NativeTabs liquid glass on iOS 26+)
+    index.tsx          # Owner Dashboard + Announcements
+    voting.tsx         # Community voting with animated results
+    dues.tsx           # HOA dues tracking and payment
+    documents.tsx      # Document library with search/filter
+    assistant.tsx      # AI Bylaw Assistant (streaming chat)
+  board.tsx            # Board Dashboard (modal)
+```
+
+## Features
+1. **Owner Dashboard** – Dues status, active votes summary, quick actions, pinned announcements
+2. **Board Dashboard** – Stats panel, action items checklist, quick admin tools, board member directory
+3. **Community Voting** – Active/closed ballots, animated vote bars, one-vote-per-user enforcement
+4. **Dues Management** – Payment history, outstanding balances, pay-now flow
+5. **Document Library** – Searchable/filterable HOA documents by category (bylaws, rules, minutes, financial, forms, legal)
+6. **Announcements** – Pinned and chronological community notices with category indicators
+7. **AI Bylaw Advisor** – Streaming conversational AI specialized in HOA rules and bylaws
+
+## Color Theme
+- Navy: #0F2340 (primary, headers, user chat bubbles)
+- Gold: #C9A84C (accent, active tabs, highlights)
+- Background: #F5F7FA
+- Cards: #FFFFFF
+- Success: #2ECC71, Warning: #F39C12, Danger: #E74C3C
+
+## Key Dependencies
+- expo-router, expo-glass-effect (liquid glass tabs)
+- @tanstack/react-query, @react-native-async-storage/async-storage
+- react-native-reanimated, react-native-keyboard-controller
+- expo-haptics, expo-linear-gradient, expo-blur
+- openai (via Replit AI Integrations env vars)
+
+## Data Storage
+- Announcements, votes, dues, and documents seeded on first launch via AsyncStorage
+- AI conversation history maintained in component state (not persisted)
+- Server-side: No database (stateless AI endpoint only)
+
+## Running the App
+- Backend: `npm run server:dev` (port 5000)
+- Frontend: `npm run expo:dev` (port 8081)
+- Scan QR code with Expo Go to test on device
