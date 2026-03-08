@@ -105,20 +105,25 @@ export default function DocumentsScreen() {
         <Text style={styles.headerSub}>{docs.length} community documents</Text>
       </View>
 
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={16} color={Colors.slate} style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search documents..."
-          placeholderTextColor={Colors.slate}
-          value={search}
-          onChangeText={setSearch}
-        />
-        {search.length > 0 && (
-          <TouchableOpacity onPress={() => setSearch("")} activeOpacity={0.7}>
-            <Ionicons name="close-circle" size={18} color={Colors.slate} />
-          </TouchableOpacity>
-        )}
+      <View style={styles.searchWrapper}>
+        <View style={styles.searchContainer}>
+          <View style={styles.searchIconWrap}>
+            <Ionicons name="search" size={16} color={Colors.textSecondary} />
+          </View>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search documents..."
+            placeholderTextColor={Colors.slate}
+            value={search}
+            onChangeText={setSearch}
+            returnKeyType="search"
+          />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={() => setSearch("")} activeOpacity={0.7} style={styles.clearBtn}>
+              <Ionicons name="close-circle" size={18} color={Colors.slate} />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={styles.filterRow}>
@@ -194,24 +199,45 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontFamily: "Inter_700Bold", fontSize: 22, color: "#fff" },
   headerSub: { fontFamily: "Inter_400Regular", fontSize: 13, color: Colors.slate, marginTop: 2 },
+  searchWrapper: {
+    backgroundColor: Colors.background,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 6,
+  },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.navyLight,
-    marginHorizontal: 16,
-    marginTop: 12,
-    marginBottom: 4,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 8,
+    backgroundColor: Colors.card,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingHorizontal: 4,
+    paddingVertical: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  searchIcon: {},
+  searchIconWrap: {
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  clearBtn: {
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   searchInput: {
     flex: 1,
     fontFamily: "Inter_400Regular",
     fontSize: 14,
-    color: "#fff",
+    color: Colors.text,
+    paddingVertical: 8,
   },
   filterScroll: { maxHeight: 52 },
   filterRow: {
