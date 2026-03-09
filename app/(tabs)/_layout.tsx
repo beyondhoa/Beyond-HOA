@@ -15,10 +15,6 @@ function NativeTabLayout() {
         <Icon sf={{ default: "house", selected: "house.fill" }} />
         <Label>Home</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="voting">
-        <Icon sf={{ default: "checkmark.circle", selected: "checkmark.circle.fill" }} />
-        <Label>Voting</Label>
-      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="dues">
         <Icon sf={{ default: "creditcard", selected: "creditcard.fill" }} />
         <Label>Dues</Label>
@@ -30,6 +26,10 @@ function NativeTabLayout() {
       <NativeTabs.Trigger name="assistant">
         <Icon sf={{ default: "bubble.left.and.bubble.right", selected: "bubble.left.and.bubble.right.fill" }} />
         <Label>AI Advisor</Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="voting">
+        <Icon sf={{ default: "checkmark.circle", selected: "checkmark.circle.fill" }} />
+        <Label>Voting</Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );
@@ -82,15 +82,6 @@ function ClassicTabLayout() {
         }}
       />
       <Tabs.Screen
-        name="voting"
-        options={{
-          title: "Voting",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="checkmark-circle-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="dues"
         options={{
           title: "Dues",
@@ -114,6 +105,15 @@ function ClassicTabLayout() {
           title: "AI Advisor",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="chatbubbles-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="voting"
+        options={{
+          title: "Voting",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="checkmark-circle-outline" size={size} color={color} />
           ),
         }}
       />
