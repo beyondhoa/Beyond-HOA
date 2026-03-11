@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "node:http";
 import OpenAI from "openai";
+import { pool } from "./db";
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
@@ -72,6 +73,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         res.status(500).json({ error: "Failed to process request" });
       }
+    }
+  });
+
+  app.get("/api/residents", async (_req, res) => {
+    try {
+      const result = await pool.query(
+        "SELECT * FROM residents ORDER BY unit ASC"
+      );
+      res.json(result.rows);
+    } catch (err) {
+      console.error("Residents fetch error:", err);
+      res.status(500).json({ error: "Failed to fetch residents" });
+    }
+  });
+
+  app.post("/api/residents", async (req, res) => {
+    try {
+      const { name, unit, email, phone, status, move_in_date, notes } = req.body;
+      if (!name || !unit || !status) {
+        return res.status(400).json({ error: "name, unit, and status are required" });
+      }
+      const result = await pool.query(
+        `INSERT INTO residents (name, unit, email, phone, status, move_in_date, notes)
+         VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+        [name, unit, email || null, phone || null, status, move_in_date || null, notes || null]
+      );
+      res.status(201).json(result.rows[0]);
+    } catch (err) {
+      console.error("Resident create error:", err);
+      res.status(500).json({ error: "Failed to create resident" });
+    }
+  });
+
+  app.put("/api/residents/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { name, unit, email, phone, status, move_in_date, notes } = req.body;
+      const result = await pool.query(
+        `UPDATE residents SET name=$1, unit=$2, email=$3, phone=$4, status=$5, move_in_date=$6, notes=$7
+         WHERE id=$8 RETURNING *`,
+        [name, unit, email || null, phone || null, status, move_in_date || null, notes || null, id]
+      );
+      if (result.rows.length === 0) return res.status(404).json({ error: "Not found" });
+      res.json(result.rows[0]);
+    } catch (err) {
+      console.error("Resident update error:", err);
+      res.status(500).json({ error: "Failed to update resident" });
+    }
+  });
+
+  app.delete("/api/residents/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await pool.query("DELETE FROM residents WHERE id=$1", [id]);
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Resident delete error:", err);
+      res.status(500).json({ error: "Failed to delete resident" });
     }
   });
 

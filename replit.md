@@ -15,8 +15,13 @@ A full-featured mobile HOA management app built with Expo Router (React Native) 
 
 ### Backend (Express / TypeScript)
 - **Server**: Express on port 5000
+- **Database**: PostgreSQL (Replit built-in) accessed via `pg` pool in `server/db.ts`
 - **AI**: OpenAI via Replit AI Integrations (no API key required)
-- **Route**: POST /api/bylaw-chat – streaming AI responses for bylaw questions
+- **Routes**:
+  - POST /api/bylaw-chat – streaming AI responses for bylaw questions
+  - GET/POST /api/residents – list and create residents
+  - PUT /api/residents/:id – update resident
+  - DELETE /api/residents/:id – delete resident
 
 ### AI Integration
 - Uses Replit AI Integrations (OpenAI-compatible, billed to Replit credits)
@@ -32,6 +37,7 @@ app/
   (tabs)/
     _layout.tsx        # Tab bar (NativeTabs liquid glass on iOS 26+)
     index.tsx          # Owner Dashboard + Announcements
+    residents.tsx      # Residents directory (PostgreSQL-backed CRUD)
     voting.tsx         # Community voting with animated results
     dues.tsx           # HOA dues tracking and payment
     documents.tsx      # Document library with search/filter
@@ -47,6 +53,7 @@ app/
 5. **Document Library** – Searchable/filterable HOA documents by category (bylaws, rules, minutes, financial, forms, legal)
 6. **Announcements** – Pinned and chronological community notices with category indicators
 7. **AI Bylaw Advisor** – Streaming conversational AI specialized in HOA rules and bylaws
+8. **Residents Directory** – Searchable PostgreSQL-backed directory; add/edit/delete residents with name, unit, status (owner/tenant), email, phone, move-in date, and notes
 
 ## Color Theme
 - Navy: #0F2340 (primary, headers, user chat bubbles)
@@ -65,7 +72,8 @@ app/
 ## Data Storage
 - Announcements, votes, dues, and documents seeded on first launch via AsyncStorage
 - AI conversation history maintained in component state (not persisted)
-- Server-side: No database (stateless AI endpoint only)
+- **Residents**: PostgreSQL table `residents` — 12 seeded residents, full CRUD via REST API
+  - Fields: id, name, unit, email, phone, status (owner/tenant), move_in_date, notes, created_at
 
 ## Running the App
 - Backend: `npm run server:dev` (port 5000)
