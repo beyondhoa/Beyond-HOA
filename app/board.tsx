@@ -139,6 +139,7 @@ export default function BoardScreen() {
   const [violationModal, setViolationModal] = useState(false);
   const [detailViolation, setDetailViolation] = useState<Violation | null>(null);
   const [detailWorkOrder, setDetailWorkOrder] = useState<WorkOrder | null>(null);
+  const [confirmDeleteWo, setConfirmDeleteWo] = useState(false);
   const [boardNotesDraft, setBoardNotesDraft] = useState("");
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [typePickerOpen, setTypePickerOpen] = useState(false);
@@ -158,6 +159,21 @@ export default function BoardScreen() {
       setDetailWorkOrder(updated);
     },
   });
+
+  const deleteWorkOrder = useMutation({
+    mutationFn: (id: number) => apiRequest("DELETE", `/api/work-orders/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/work-orders"] });
+      setConfirmDeleteWo(false);
+      setDetailWorkOrder(null);
+    },
+    onError: () => Alert.alert("Error", "Failed to delete work order."),
+  });
+
+  const handleDeleteWorkOrder = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    setConfirmDeleteWo(true);
+  };
 
   const createViolation = useMutation({
     mutationFn: (data: typeof EMPTY_FORM) =>
@@ -502,7 +518,7 @@ export default function BoardScreen() {
         <View style={{ height: bottomPadding + 20 }} />
       </ScrollView>
 
-      <Modal visible={!!detailWorkOrder} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setDetailWorkOrder(null)}>
+      <Modal visible={!!detailWorkOrder} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => { setDetailWorkOrder(null); setConfirmDeleteWo(false); }}>
         {detailWorkOrder && (() => {
           const woStatusConf: Record<string, { color: string; bg: string; label: string }> = {
             submitted:     { color: "#3B82F6", bg: "#EFF6FF", label: "New" },
@@ -524,7 +540,9 @@ export default function BoardScreen() {
                     <Ionicons name="construct" size={16} color="#0891B2" />
                     <Text style={styles.modalTitle}>Work Order #{detailWorkOrder.id}</Text>
                   </View>
-                  <View style={{ width: 36 }} />
+                  <TouchableOpacity onPress={handleDeleteWorkOrder} style={styles.modalCloseBtn} testID={`delete-wo-${detailWorkOrder.id}`}>
+                    <Ionicons name="trash-outline" size={18} color={Colors.danger} />
+                  </TouchableOpacity>
                 </View>
 
                 <ScrollView contentContainerStyle={styles.detailScroll} keyboardShouldPersistTaps="handled">
@@ -593,6 +611,41 @@ export default function BoardScreen() {
                       <Text style={styles.modalSaveBtnText}>Save Notes</Text>
                     </TouchableOpacity>
                   </View>
+
+                  {confirmDeleteWo ? (
+                    <View style={styles.deleteConfirmBox} testID="delete-confirm-box">
+                      <Ionicons name="warning" size={18} color={Colors.danger} />
+                      <Text style={styles.deleteConfirmText}>Permanently delete this work order?</Text>
+                      <View style={styles.deleteConfirmBtns}>
+                        <TouchableOpacity
+                          style={styles.deleteConfirmCancel}
+                          onPress={() => setConfirmDeleteWo(false)}
+                          testID="cancel-delete-wo"
+                        >
+                          <Text style={styles.deleteConfirmCancelText}>Cancel</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.deleteConfirmYes}
+                          onPress={() => deleteWorkOrder.mutate(detailWorkOrder.id)}
+                          disabled={deleteWorkOrder.isPending}
+                          testID="confirm-delete-wo"
+                        >
+                          <Text style={styles.deleteConfirmYesText}>{deleteWorkOrder.isPending ? "Deleting…" : "Delete"}</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.deleteWoBtn}
+                      onPress={handleDeleteWorkOrder}
+                      testID="delete-wo-button"
+                    >
+                      <Ionicons name="trash-outline" size={16} color={Colors.danger} />
+                      <Text style={styles.deleteWoBtnText}>Delete Work Order</Text>
+                    </TouchableOpacity>
+                  )}
+
+                  <View style={{ height: 32 }} />
                 </ScrollView>
               </View>
             </KeyboardAvoidingView>
@@ -925,6 +978,16 @@ const styles = StyleSheet.create({
   modalTitle: { fontFamily: "Inter_700Bold", fontSize: 16, color: Colors.text },
   modalSaveBtn: { backgroundColor: Colors.danger, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 16, minWidth: 52, alignItems: "center" },
   modalSaveBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#fff" },
+
+  deleteWoBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 24, paddingVertical: 12, borderRadius: 10, borderWidth: 1, borderColor: Colors.danger + "55", backgroundColor: Colors.danger + "10" },
+  deleteWoBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: Colors.danger },
+  deleteConfirmBox: { marginTop: 24, borderRadius: 12, borderWidth: 1.5, borderColor: Colors.danger, backgroundColor: Colors.danger + "0C", padding: 16, gap: 10, alignItems: "center" },
+  deleteConfirmText: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: Colors.text, textAlign: "center" },
+  deleteConfirmBtns: { flexDirection: "row", gap: 10, marginTop: 4 },
+  deleteConfirmCancel: { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: Colors.border, alignItems: "center", backgroundColor: "#fff" },
+  deleteConfirmCancelText: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: Colors.text },
+  deleteConfirmYes: { flex: 1, paddingVertical: 10, borderRadius: 8, backgroundColor: Colors.danger, alignItems: "center" },
+  deleteConfirmYesText: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: "#fff" },
 
   formScroll: { padding: 16, gap: 0, paddingBottom: 40 },
   detailScroll: { padding: 16, gap: 0, paddingBottom: 40 },
