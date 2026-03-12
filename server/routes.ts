@@ -134,6 +134,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/violations", async (_req, res) => {
+    try {
+      const result = await pool.query(
+        "SELECT * FROM violations ORDER BY created_at DESC"
+      );
+      res.json(result.rows);
+    } catch (err) {
+      console.error("Violations fetch error:", err);
+      res.status(500).json({ error: "Failed to fetch violations" });
+    }
+  });
+
+  app.post("/api/violations", async (req, res) => {
+    try {
+      const {
+        resident_name, unit, violation_type, notice_number,
+        incident_date, description, required_action, compliance_deadline,
+        fine_amount, notes, issued_by,
+      } = req.body;
+      if (!resident_name || !unit || !violation_type || !incident_date || !description || !required_action || !compliance_deadline) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+      const result = await pool.query(
+        `INSERT INTO violations
+          (resident_name, unit, violation_type, notice_number, incident_date, description, required_action, compliance_deadline, fine_amount, notes, issued_by, status)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'open') RETURNING *`,
+        [resident_name, unit, violation_type, notice_number || 1, incident_date, description, required_action, compliance_deadline, fine_amount || null, notes || null, issued_by || null]
+      );
+      res.status(201).json(result.rows[0]);
+    } catch (err) {
+      console.error("Violation create error:", err);
+      res.status(500).json({ error: "Failed to create violation" });
+    }
+  });
+
+  app.put("/api/violations/:id/status", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      if (!["open", "resolved", "appealed"].includes(status)) {
+        return res.status(400).json({ error: "Invalid status" });
+      }
+      const result = await pool.query(
+        "UPDATE violations SET status=$1 WHERE id=$2 RETURNING *",
+        [status, id]
+      );
+      if (result.rows.length === 0) return res.status(404).json({ error: "Not found" });
+      res.json(result.rows[0]);
+    } catch (err) {
+      console.error("Violation status error:", err);
+      res.status(500).json({ error: "Failed to update violation" });
+    }
+  });
+
+  app.delete("/api/violations/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await pool.query("DELETE FROM violations WHERE id=$1", [id]);
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Violation delete error:", err);
+      res.status(500).json({ error: "Failed to delete violation" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
