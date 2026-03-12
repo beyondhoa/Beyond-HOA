@@ -199,6 +199,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/work-orders", async (req, res) => {
+    try {
+      const { unit } = req.query;
+      let query = "SELECT * FROM work_orders";
+      const params: string[] = [];
+      if (unit) { query += " WHERE unit=$1"; params.push(unit as string); }
+      query += " ORDER BY created_at DESC";
+      const result = await pool.query(query, params);
+      res.json(result.rows);
+    } catch (err) {
+      console.error("Work orders fetch error:", err);
+      res.status(500).json({ error: "Failed to fetch work orders" });
+    }
+  });
+
+  app.post("/api/work-orders", async (req, res) => {
+    try {
+      const { title, resident_name, unit, category, priority, description } = req.body;
+      if (!title || !resident_name || !unit || !category || !description) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+      const result = await pool.query(
+        `INSERT INTO work_orders (title, resident_name, unit, category, priority, description)
+         VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
+        [title, resident_name, unit, category, priority || "medium", description]
+      );
+      res.status(201).json(result.rows[0]);
+    } catch (err) {
+      console.error("Work order create error:", err);
+      res.status(500).json({ error: "Failed to create work order" });
+    }
+  });
+
+  app.put("/api/work-orders/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status, board_notes } = req.body;
+      const validStatuses = ["submitted", "in-progress", "completed", "cancelled"];
+      if (status && !validStatuses.includes(status)) {
+        return res.status(400).json({ error: "Invalid status" });
+      }
+      const result = await pool.query(
+        `UPDATE work_orders SET status=COALESCE($1,status), board_notes=COALESCE($2,board_notes), updated_at=NOW()
+         WHERE id=$3 RETURNING *`,
+        [status || null, board_notes ?? null, id]
+      );
+      if (result.rows.length === 0) return res.status(404).json({ error: "Not found" });
+      res.json(result.rows[0]);
+    } catch (err) {
+      console.error("Work order update error:", err);
+      res.status(500).json({ error: "Failed to update work order" });
+    }
+  });
+
+  app.delete("/api/work-orders/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await pool.query("DELETE FROM work_orders WHERE id=$1", [id]);
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Work order delete error:", err);
+      res.status(500).json({ error: "Failed to delete work order" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

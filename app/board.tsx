@@ -23,6 +23,20 @@ import { getApiUrl } from "@/lib/query-client";
 
 interface BoardMember { name: string; role: string; since: string; }
 interface ActionItem { id: string; title: string; priority: "high" | "medium" | "low"; category: string; }
+interface WorkOrder {
+  id: number;
+  title: string;
+  resident_name: string;
+  unit: string;
+  category: string;
+  priority: string;
+  description: string;
+  status: "submitted" | "in-progress" | "completed" | "cancelled";
+  board_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 interface Violation {
   id: number;
   resident_name: string;
@@ -124,6 +138,8 @@ export default function BoardScreen() {
   const [completedItems, setCompletedItems] = useState<string[]>([]);
   const [violationModal, setViolationModal] = useState(false);
   const [detailViolation, setDetailViolation] = useState<Violation | null>(null);
+  const [detailWorkOrder, setDetailWorkOrder] = useState<WorkOrder | null>(null);
+  const [boardNotesDraft, setBoardNotesDraft] = useState("");
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [typePickerOpen, setTypePickerOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -132,6 +148,16 @@ export default function BoardScreen() {
   const queryClient = useQueryClient();
 
   const { data: violations = [] } = useQuery<Violation[]>({ queryKey: ["/api/violations"] });
+  const { data: workOrders = [] } = useQuery<WorkOrder[]>({ queryKey: ["/api/work-orders"] });
+
+  const updateWorkOrder = useMutation({
+    mutationFn: ({ id, status, board_notes }: { id: number; status?: string; board_notes?: string }) =>
+      apiRequest("PUT", `/api/work-orders/${id}`, { status, board_notes }),
+    onSuccess: (updated) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/work-orders"] });
+      setDetailWorkOrder(updated);
+    },
+  });
 
   const createViolation = useMutation({
     mutationFn: (data: typeof EMPTY_FORM) =>
@@ -286,6 +312,63 @@ export default function BoardScreen() {
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Work Orders</Text>
+            {workOrders.filter((w) => w.status === "submitted").length > 0 && (
+              <View style={[styles.badge, { backgroundColor: "#0891B218" }]}>
+                <Text style={[styles.badgeText, { color: "#0891B2" }]}>
+                  {workOrders.filter((w) => w.status === "submitted").length} new
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {workOrders.length === 0 ? (
+            <View style={styles.emptyViolations}>
+              <Ionicons name="construct-outline" size={32} color={Colors.border} />
+              <Text style={styles.emptyViolationsText}>No work orders submitted</Text>
+            </View>
+          ) : (
+            workOrders.slice(0, 5).map((wo) => {
+              const priorityColors: Record<string, string> = {
+                low: Colors.success, medium: Colors.warning, high: Colors.danger, emergency: "#7C0000",
+              };
+              const woStatusConf: Record<string, { color: string; bg: string; label: string }> = {
+                submitted:    { color: "#3B82F6", bg: "#EFF6FF", label: "New" },
+                "in-progress": { color: Colors.warning, bg: Colors.warning + "15", label: "In Progress" },
+                completed:    { color: Colors.success, bg: Colors.success + "18", label: "Completed" },
+                cancelled:    { color: Colors.slate, bg: Colors.slate + "18", label: "Cancelled" },
+              };
+              const sc = woStatusConf[wo.status] ?? woStatusConf.submitted;
+              const pc = priorityColors[wo.priority] ?? Colors.slate;
+              return (
+                <TouchableOpacity
+                  key={wo.id}
+                  style={styles.violationCard}
+                  onPress={() => { setBoardNotesDraft(wo.board_notes ?? ""); setDetailWorkOrder(wo); }}
+                  activeOpacity={0.75}
+                >
+                  <View style={[styles.violationTypeDot, { backgroundColor: pc }]} />
+                  <View style={styles.violationBody}>
+                    <View style={styles.violationTop}>
+                      <Text style={styles.violationName} numberOfLines={1}>{wo.title}</Text>
+                      <View style={[styles.statusPill, { backgroundColor: sc.bg }]}>
+                        <Text style={[styles.statusPillText, { color: sc.color }]}>{sc.label}</Text>
+                      </View>
+                    </View>
+                    <Text style={styles.violationType}>{wo.resident_name} · Unit {wo.unit} · {wo.category}</Text>
+                    <Text style={styles.violationDate}>
+                      Submitted: {new Date(wo.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color={Colors.border} />
+                </TouchableOpacity>
+              );
+            })
+          )}
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Violation Log</Text>
             {openViolations > 0 && (
               <View style={[styles.badge, { backgroundColor: Colors.danger + "18" }]}>
@@ -418,6 +501,104 @@ export default function BoardScreen() {
 
         <View style={{ height: bottomPadding + 20 }} />
       </ScrollView>
+
+      <Modal visible={!!detailWorkOrder} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setDetailWorkOrder(null)}>
+        {detailWorkOrder && (() => {
+          const woStatusConf: Record<string, { color: string; bg: string; label: string }> = {
+            submitted:     { color: "#3B82F6", bg: "#EFF6FF", label: "New" },
+            "in-progress": { color: Colors.warning, bg: Colors.warning + "15", label: "In Progress" },
+            completed:     { color: Colors.success, bg: Colors.success + "18", label: "Completed" },
+            cancelled:     { color: Colors.slate, bg: Colors.slate + "18", label: "Cancelled" },
+          };
+          const priorityColors: Record<string, string> = { low: Colors.success, medium: Colors.warning, high: Colors.danger, emergency: "#7C0000" };
+          const sc = woStatusConf[detailWorkOrder.status] ?? woStatusConf.submitted;
+          const priorityLabel: Record<string, string> = { low: "Low", medium: "Medium", high: "High", emergency: "Emergency" };
+          return (
+            <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+              <View style={styles.modalContainer}>
+                <View style={styles.modalHeader}>
+                  <TouchableOpacity onPress={() => setDetailWorkOrder(null)} style={styles.modalCloseBtn}>
+                    <Ionicons name="close" size={20} color={Colors.text} />
+                  </TouchableOpacity>
+                  <View style={styles.modalTitleWrap}>
+                    <Ionicons name="construct" size={16} color="#0891B2" />
+                    <Text style={styles.modalTitle}>Work Order #{detailWorkOrder.id}</Text>
+                  </View>
+                  <View style={{ width: 36 }} />
+                </View>
+
+                <ScrollView contentContainerStyle={styles.detailScroll} keyboardShouldPersistTaps="handled">
+                  <View style={styles.noticeBanner}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.noticeBannerTitle}>{detailWorkOrder.title}</Text>
+                      <Text style={styles.noticeBannerSub}>
+                        {detailWorkOrder.resident_name} · Unit {detailWorkOrder.unit} · Submitted {fmtDate(detailWorkOrder.created_at)}
+                      </Text>
+                    </View>
+                    <View style={[styles.statusPill, { backgroundColor: sc.bg }]}>
+                      <Text style={[styles.statusPillText, { color: sc.color }]}>{sc.label}</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.detailCard}>
+                    <NoticeRow label="Category" value={detailWorkOrder.category} />
+                    <NoticeRow label="Priority" value={priorityLabel[detailWorkOrder.priority] ?? detailWorkOrder.priority} highlight={detailWorkOrder.priority === "emergency" || detailWorkOrder.priority === "high"} />
+                    <NoticeRow label="Unit" value={`Unit ${detailWorkOrder.unit}`} />
+                    <NoticeRow label="Submitted" value={fmtDate(detailWorkOrder.created_at)} />
+                    {detailWorkOrder.updated_at !== detailWorkOrder.created_at && (
+                      <NoticeRow label="Last Updated" value={fmtDate(detailWorkOrder.updated_at)} />
+                    )}
+                  </View>
+
+                  <View style={styles.noticeSection}>
+                    <Text style={styles.noticeSectionLabel}>DESCRIPTION</Text>
+                    <Text style={styles.noticeSectionText}>{detailWorkOrder.description}</Text>
+                  </View>
+
+                  <View style={styles.noticeSection}>
+                    <Text style={styles.noticeSectionLabel}>UPDATE STATUS</Text>
+                    <View style={styles.statusRow}>
+                      {(["submitted", "in-progress", "completed", "cancelled"] as const).map((s) => {
+                        const c = woStatusConf[s];
+                        return (
+                          <TouchableOpacity
+                            key={s}
+                            style={[styles.statusBtn, detailWorkOrder.status === s && { backgroundColor: c.bg, borderColor: c.color }]}
+                            onPress={() => { Haptics.selectionAsync(); updateWorkOrder.mutate({ id: detailWorkOrder.id, status: s }); }}
+                            disabled={updateWorkOrder.isPending}
+                          >
+                            <Text style={[styles.statusBtnText, detailWorkOrder.status === s && { color: c.color }]}>{c.label}</Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
+
+                  <View style={styles.noticeSection}>
+                    <Text style={styles.noticeSectionLabel}>BOARD NOTES</Text>
+                    <TextInput
+                      style={[styles.vInput, styles.vInputMulti, { marginBottom: 10 }]}
+                      value={boardNotesDraft}
+                      onChangeText={setBoardNotesDraft}
+                      placeholder="Add internal notes for the board..."
+                      placeholderTextColor={Colors.slate}
+                      multiline
+                      numberOfLines={3}
+                    />
+                    <TouchableOpacity
+                      style={[styles.modalSaveBtn, { alignSelf: "flex-end" }]}
+                      onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); updateWorkOrder.mutate({ id: detailWorkOrder.id, board_notes: boardNotesDraft }); }}
+                      disabled={updateWorkOrder.isPending}
+                    >
+                      <Text style={styles.modalSaveBtnText}>Save Notes</Text>
+                    </TouchableOpacity>
+                  </View>
+                </ScrollView>
+              </View>
+            </KeyboardAvoidingView>
+          );
+        })()}
+      </Modal>
 
       <Modal visible={violationModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setViolationModal(false)}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
