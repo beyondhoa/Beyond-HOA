@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Q4 2025 Board Meeting Minutes — Beyond HOA</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background: #f5f6fa;
+      color: #1a1a2e;
+      line-height: 1.6;
+      padding: 24px 16px 60px;
+    }
+    .page { max-width: 720px; margin: 0 auto; }
+
+    .header {
+      background: linear-gradient(135deg, #0F2340 0%, #1a3a60 100%);
+      border-radius: 16px;
+      padding: 28px 28px 24px;
+      margin-bottom: 24px;
+      color: #fff;
+    }
+    .header-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+    .hoa-name { font-size: 12px; font-weight: 600; letter-spacing: 1.2px; color: #C9A84C; margin-bottom: 4px; text-transform: uppercase; }
+    .doc-title { font-size: 24px; font-weight: 700; color: #fff; }
+    .doc-subtitle { font-size: 14px; color: rgba(255,255,255,0.65); margin-top: 4px; }
+    .badge { background: #0891b2; color: #fff; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 20px; white-space: nowrap; height: fit-content; }
+    .header-meta { display: flex; gap: 20px; margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.12); flex-wrap: wrap; }
+    .meta-item { }
+    .meta-label { font-size: 10px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.8px; }
+    .meta-value { font-size: 14px; font-weight: 600; color: #fff; margin-top: 2px; }
+
+    .section { background: #fff; border-radius: 14px; margin-bottom: 16px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .section-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 13px 20px;
+      background: #f8f9fc;
+      border-bottom: 1px solid #f0f1f5;
+    }
+    .section-icon { font-size: 15px; }
+    .section-title { font-size: 11px; font-weight: 700; letter-spacing: 0.8px; color: #6b7280; text-transform: uppercase; }
+    .section-body { padding: 16px 20px; }
+
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .info-item { }
+    .info-label { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+    .info-value { font-size: 14px; color: #374151; font-weight: 500; }
+
+    .attendance-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .attendance-col { }
+    .attendance-label { font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .attendance-name { font-size: 13px; color: #374151; padding: 5px 0; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 8px; }
+    .attendance-name:last-child { border-bottom: none; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .dot-present { background: #10b981; }
+    .dot-absent { background: #ef4444; }
+
+    .motion-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 14px; margin-top: 8px; }
+    .motion-text { font-size: 13px; color: #166534; font-weight: 500; margin-bottom: 8px; }
+    .motion-row { display: flex; gap: 20px; flex-wrap: wrap; }
+    .motion-item { font-size: 12px; color: #374151; }
+    .motion-item span { font-weight: 600; }
+    .vote-passed { display: inline-block; background: #10b981; color: #fff; font-size: 11px; font-weight: 700; padding: 2px 10px; border-radius: 99px; letter-spacing: 0.5px; }
+    .vote-failed { display: inline-block; background: #ef4444; color: #fff; font-size: 11px; font-weight: 700; padding: 2px 10px; border-radius: 99px; }
+
+    .report-item { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #f3f4f6; }
+    .report-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+    .report-role { font-size: 12px; font-weight: 700; color: #0F2340; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .report-text { font-size: 14px; color: #374151; line-height: 1.6; }
+
+    .business-item { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #f3f4f6; }
+    .business-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+    .business-title { font-size: 13px; font-weight: 700; color: #1f2937; margin-bottom: 4px; }
+    .business-text { font-size: 13px; color: #6b7280; line-height: 1.5; }
+
+    .forum-text { font-size: 14px; color: #374151; line-height: 1.7; }
+
+    .adjourn-box { background: linear-gradient(135deg, #0F2340, #1a3a60); border-radius: 12px; padding: 18px 20px; color: #fff; }
+    .adjourn-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .adjourn-label { font-size: 12px; color: rgba(255,255,255,0.6); }
+    .adjourn-value { font-size: 15px; font-weight: 700; color: #fff; }
+    .next-meeting { margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.15); font-size: 13px; color: rgba(255,255,255,0.8); }
+    .next-meeting strong { color: #C9A84C; }
+
+    .sig-section { background: #fff; border-radius: 14px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .sig-title { font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 16px; }
+    .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .sig-line { border-top: 1px solid #d1d5db; padding-top: 6px; }
+    .sig-name { font-size: 13px; font-weight: 600; color: #374151; }
+    .sig-role { font-size: 12px; color: #9ca3af; }
+
+    .footer { text-align: center; font-size: 12px; color: #9ca3af; padding-top: 8px; }
+
+    @media (max-width: 480px) {
+      .info-grid, .attendance-grid, .sig-grid { grid-template-columns: 1fr; }
+      .header-meta { gap: 12px; }
+    }
+    @media print {
+      body { background: #fff; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="hoa-name">Beyond HOA</div>
+        <div class="doc-title">Q4 2025 Board Meeting Minutes</div>
+        <div class="doc-subtitle">Official Minutes — Quarterly Board Meeting</div>
+      </div>
+      <div class="badge">OFFICIAL</div>
+    </div>
+    <div class="header-meta">
+      <div class="meta-item">
+        <div class="meta-label">Meeting Type</div>
+        <div class="meta-value">Regular</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Date</div>
+        <div class="meta-value">December 20, 2025</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Location</div>
+        <div class="meta-value">Community Center, Room A</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Document No.</div>
+        <div class="meta-value">MIN-Q4-2025</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MEETING DETAILS -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">📋</span>
+      <span class="section-title">Meeting Details</span>
+    </div>
+    <div class="section-body">
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">Call to Order</div>
+          <div class="info-value">7:03 PM</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Adjournment</div>
+          <div class="info-value">8:47 PM</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Presiding Officer</div>
+          <div class="info-value">Patricia Chen, President</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Minute Taker</div>
+          <div class="info-value">David Kim, Secretary</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Quorum</div>
+          <div class="info-value">✅ Met (4 of 4 board members)</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Format</div>
+          <div class="info-value">In-Person</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ATTENDANCE -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">👥</span>
+      <span class="section-title">Attendance</span>
+    </div>
+    <div class="section-body">
+      <div class="attendance-grid">
+        <div class="attendance-col">
+          <div class="attendance-label">Board Present</div>
+          <div class="attendance-name"><span class="dot dot-present"></span>Patricia Chen — President</div>
+          <div class="attendance-name"><span class="dot dot-present"></span>Marcus Williams — VP</div>
+          <div class="attendance-name"><span class="dot dot-present"></span>Sandra Torres — Treasurer</div>
+          <div class="attendance-name"><span class="dot dot-present"></span>David Kim — Secretary</div>
+        </div>
+        <div class="attendance-col">
+          <div class="attendance-label">Board Absent</div>
+          <div class="attendance-name" style="color:#9ca3af;font-style:italic;">None</div>
+          <div class="attendance-label" style="margin-top:14px;">Management</div>
+          <div class="attendance-name"><span class="dot dot-present"></span>Lisa Hartman, Community Mgr.</div>
+          <div class="attendance-label" style="margin-top:14px;">Residents Present</div>
+          <div class="attendance-name">14 homeowners attended</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPROVAL OF PRIOR MINUTES -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">✅</span>
+      <span class="section-title">Approval of Prior Minutes</span>
+    </div>
+    <div class="section-body">
+      <p class="report-text">Motion to approve the Q3 2025 Board Meeting Minutes as presented.</p>
+      <div class="motion-box">
+        <div class="motion-text">Motion to approve Q3 2025 Board Meeting Minutes.</div>
+        <div class="motion-row">
+          <div class="motion-item"><span>Moved by:</span> Marcus Williams</div>
+          <div class="motion-item"><span>Seconded by:</span> Sandra Torres</div>
+          <div class="motion-item"><span>Vote:</span> <span class="vote-passed">PASSED 4–0</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REPORTS -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">📊</span>
+      <span class="section-title">Reports</span>
+    </div>
+    <div class="section-body">
+      <div class="report-item">
+        <div class="report-role">President — Patricia Chen</div>
+        <div class="report-text">President Chen reported a strong close to 2025, with all major capital projects completed on schedule. She thanked the community for their participation in the annual survey and noted that 83% of respondents rated community management as "Good" or "Excellent." The 2026 operating budget was presented for formal adoption.</div>
+      </div>
+      <div class="report-item">
+        <div class="report-role">Treasurer — Sandra Torres</div>
+        <div class="report-text">Treasurer Torres reported year-to-date dues collection at 94.2%, with $42,300 in outstanding balances under active collections. Reserve fund balance stands at $1,847,500 across all categories, representing 76% overall funding per the 2024 reserve study. Q4 operating expenses came in 3.1% under budget due to mild weather reducing utility costs.</div>
+      </div>
+      <div class="report-item">
+        <div class="report-role">Management — Lisa Hartman</div>
+        <div class="report-text">Ms. Hartman reported 18 open work orders at the start of the quarter, with 15 closed by month-end. The pool replastering project was completed November 14th and received positive feedback from residents. Holiday lighting installation was completed across all common areas. Two new vendor contracts (landscaping and elevator maintenance) were finalized at improved rates.</div>
+      </div>
+      <div class="report-item">
+        <div class="report-role">Architectural Committee</div>
+        <div class="report-text">7 architectural review applications received in Q4; 6 approved, 1 pending additional documentation. The committee chair reminded residents that all exterior modifications require prior written approval per CC&amp;Rs Section 4.2.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OLD BUSINESS -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">🔄</span>
+      <span class="section-title">Old Business</span>
+    </div>
+    <div class="section-body">
+      <div class="business-item">
+        <div class="business-title">1. Parking Lot Resurfacing — Status Update</div>
+        <div class="business-text">The board reviewed final punch-list items for the Phase 2 parking lot resurfacing project completed in October. All items have been resolved to management's satisfaction. Final payment of $28,400 was approved in October. Project officially closed.</div>
+      </div>
+      <div class="business-item">
+        <div class="business-title">2. Elevator Modernization — Contract Award</div>
+        <div class="business-text">Following the RFP process initiated in Q3, the board reviewed three bids for the Building B elevator modernization. ThyssenKrupp Elevator was selected at $184,200. Work is scheduled to begin February 2026 with a 10-week completion timeline. Residents will receive 30-day advance notice.</div>
+      </div>
+      <div class="business-item">
+        <div class="business-title">3. Visitor Parking Policy — Implementation</div>
+        <div class="business-text">Updated visitor parking policy (effective April 1, 2026) was finalized. Visitor pass booklets will be distributed to all units in January. Digital pass system vendor selection is ongoing; decision expected at Q1 2026 meeting.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NEW BUSINESS -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">🆕</span>
+      <span class="section-title">New Business</span>
+    </div>
+    <div class="section-body">
+      <div class="business-item">
+        <div class="business-title">1. Adoption of 2026 Operating Budget</div>
+        <div class="business-text">Treasurer Torres presented the proposed 2026 Operating Budget totaling $1,108,200 in expenses with $1,139,580 in projected revenue, resulting in a $31,380 surplus. Monthly assessment remains unchanged at $385/unit.</div>
+        <div class="motion-box" style="margin-top:10px;">
+          <div class="motion-text">Motion to adopt the 2026 Operating Budget as presented.</div>
+          <div class="motion-row">
+            <div class="motion-item"><span>Moved by:</span> Sandra Torres</div>
+            <div class="motion-item"><span>Seconded by:</span> Marcus Williams</div>
+            <div class="motion-item"><span>Vote:</span> <span class="vote-passed">PASSED 4–0</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="business-item">
+        <div class="business-title">2. Holiday Decoration Policy</div>
+        <div class="business-text">Following resident feedback, the board approved updated holiday decoration guidelines extending the display period through January 15th and permitting LED string lights on balcony railings (previously restricted). Policy effective immediately.</div>
+        <div class="motion-box" style="margin-top:10px;">
+          <div class="motion-text">Motion to approve updated holiday decoration guidelines.</div>
+          <div class="motion-row">
+            <div class="motion-item"><span>Moved by:</span> Patricia Chen</div>
+            <div class="motion-item"><span>Seconded by:</span> David Kim</div>
+            <div class="motion-item"><span>Vote:</span> <span class="vote-passed">PASSED 4–0</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="business-item">
+        <div class="business-title">3. Board Officer Elections for 2026</div>
+        <div class="business-text">Annual officer elections were conducted. All incumbents were unanimously re-elected: Patricia Chen (President), Marcus Williams (Vice President), Sandra Torres (Treasurer), David Kim (Secretary). Officers will serve through December 2026.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPEN FORUM -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">🗣️</span>
+      <span class="section-title">Owner Open Forum</span>
+    </div>
+    <div class="section-body">
+      <div class="forum-text">
+        <p style="margin-bottom:10px;">Fourteen residents were in attendance. The open forum session ran approximately 22 minutes. Topics raised included:</p>
+        <ul style="padding-left:18px;color:#374151;font-size:14px;line-height:1.9;">
+          <li><strong>Gym hours:</strong> Several residents requested extended fitness center hours (currently 6 AM–10 PM). The board agreed to survey residents and revisit at the Q1 2026 meeting.</li>
+          <li><strong>Package lockers:</strong> Unit 204 inquired about installing smart package lockers in the mail room. Management to obtain quotes for the Q1 meeting.</li>
+          <li><strong>Speeding in the garage:</strong> Resident from Unit 318 raised concerns about vehicle speeds in the parking structure. Management will install additional speed bump signage and consult with the security vendor.</li>
+          <li><strong>Pool temperature:</strong> Request to extend the heated pool season by two weeks in spring and fall. Board took under advisement; cost estimate to be presented in Q1.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADJOURNMENT -->
+  <div class="adjourn-box" style="margin-bottom:16px;">
+    <div class="adjourn-row">
+      <div>
+        <div class="adjourn-label">Meeting Adjourned</div>
+        <div class="adjourn-value">8:47 PM — December 20, 2025</div>
+      </div>
+    </div>
+    <div class="next-meeting">Next Regular Meeting: <strong>March 20, 2026 · 7:00 PM · Community Center</strong></div>
+  </div>
+
+  <!-- SIGNATURES -->
+  <div class="sig-section">
+    <div class="sig-title">Certification of Minutes</div>
+    <div class="sig-grid">
+      <div>
+        <div class="sig-line"></div>
+        <div class="sig-name">David Kim, Secretary</div>
+        <div class="sig-role">Prepared &amp; Submitted</div>
+      </div>
+      <div>
+        <div class="sig-line"></div>
+        <div class="sig-name">Patricia Chen, President</div>
+        <div class="sig-role">Approved &amp; Certified</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">Beyond HOA · MIN-Q4-2025 · Approved January 15, 2026 · Official Community Record</div>
+</div>
+</body>
+</html>

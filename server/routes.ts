@@ -270,6 +270,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile(filePath);
   });
 
+  app.get("/documents/minutes-q4-2025", (_req, res) => {
+    const filePath = require("path").resolve(process.cwd(), "server", "templates", "minutes-q4-2025.html");
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.sendFile(filePath);
+  });
+
+  app.get("/documents/minutes-q3-2025", (_req, res) => {
+    const filePath = require("path").resolve(process.cwd(), "server", "templates", "minutes-q3-2025.html");
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.sendFile(filePath);
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
