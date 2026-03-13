@@ -264,6 +264,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/documents/budget-2026", (_req, res) => {
+    const filePath = require("path").resolve(process.cwd(), "server", "templates", "budget-2026.html");
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.sendFile(filePath);
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
