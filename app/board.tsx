@@ -12,6 +12,7 @@ import {
   KeyboardAvoidingView,
   ActivityIndicator,
   RefreshControl,
+  Switch,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -20,6 +21,7 @@ import { Colors } from "@/constants/colors";
 import * as Haptics from "expo-haptics";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getApiUrl } from "@/lib/query-client";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface BoardMember { name: string; role: string; since: string; }
 interface ActionItem { id: string; title: string; priority: "high" | "medium" | "low"; category: string; }
@@ -53,6 +55,33 @@ interface Violation {
   issued_by: string | null;
   created_at: string;
 }
+
+interface Announcement {
+  id: string;
+  title: string;
+  body: string;
+  date: string;
+  pinned: boolean;
+  category: "general" | "maintenance" | "event" | "urgent";
+}
+
+interface Resident {
+  id: number;
+  resident_type: "owner" | "tenant";
+}
+
+const HOA_ANNOUNCEMENTS_KEY = "hoa_announcements";
+
+const ANNOUNCE_CATEGORIES: { key: Announcement["category"]; label: string; icon: string; color: string }[] = [
+  { key: "general",     label: "General",     icon: "information-circle", color: Colors.navy },
+  { key: "maintenance", label: "Maintenance",  icon: "construct",          color: Colors.warning },
+  { key: "event",       label: "Event",        icon: "calendar",           color: Colors.success },
+  { key: "urgent",      label: "Urgent",       icon: "alert-circle",       color: Colors.danger },
+];
+
+const EMPTY_ANNOUNCE: { title: string; body: string; category: Announcement["category"]; pinned: boolean } = {
+  title: "", body: "", category: "general", pinned: false,
+};
 
 const BOARD_MEMBERS: BoardMember[] = [
   { name: "Patricia Chen", role: "President", since: "2023" },
@@ -141,6 +170,10 @@ export default function BoardScreen() {
   const [detailWorkOrder, setDetailWorkOrder] = useState<WorkOrder | null>(null);
   const [confirmDeleteWo, setConfirmDeleteWo] = useState(false);
   const [boardNotesDraft, setBoardNotesDraft] = useState("");
+  const [announceModal, setAnnounceModal] = useState(false);
+  const [announceForm, setAnnounceForm] = useState({ ...EMPTY_ANNOUNCE });
+  const [announceSaving, setAnnounceSaving] = useState(false);
+  const [reportModal, setReportModal] = useState(false);
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [typePickerOpen, setTypePickerOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -150,6 +183,38 @@ export default function BoardScreen() {
 
   const { data: violations = [] } = useQuery<Violation[]>({ queryKey: ["/api/violations"] });
   const { data: workOrders = [] } = useQuery<WorkOrder[]>({ queryKey: ["/api/work-orders"] });
+  const { data: residents = [] } = useQuery<Resident[]>({ queryKey: ["/api/residents"] });
+
+  const saveAnnouncement = async () => {
+    if (!announceForm.title.trim() || !announceForm.body.trim()) {
+      Alert.alert("Required Fields", "Please enter a title and body.");
+      return;
+    }
+    setAnnounceSaving(true);
+    try {
+      const stored = await AsyncStorage.getItem(HOA_ANNOUNCEMENTS_KEY);
+      const existing: Announcement[] = stored ? JSON.parse(stored) : [];
+      const newItem: Announcement = {
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 6),
+        title: announceForm.title.trim(),
+        body: announceForm.body.trim(),
+        category: announceForm.category,
+        pinned: announceForm.pinned,
+        date: new Date().toISOString().split("T")[0],
+      };
+      const updated = announceForm.pinned
+        ? [newItem, ...existing.map((a) => ({ ...a, pinned: false }))]
+        : [newItem, ...existing];
+      await AsyncStorage.setItem(HOA_ANNOUNCEMENTS_KEY, JSON.stringify(updated));
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setAnnounceModal(false);
+      setAnnounceForm({ ...EMPTY_ANNOUNCE });
+    } catch {
+      Alert.alert("Error", "Failed to save announcement.");
+    } finally {
+      setAnnounceSaving(false);
+    }
+  };
 
   const updateWorkOrder = useMutation({
     mutationFn: ({ id, status, board_notes }: { id: number; status?: string; board_notes?: string }) =>
@@ -227,6 +292,11 @@ export default function BoardScreen() {
     if (tool.id === "violation") {
       setForm({ ...EMPTY_FORM, incident_date: todayStr(), compliance_deadline: deadlineStr(14) });
       setViolationModal(true);
+    } else if (tool.id === "announce") {
+      setAnnounceForm({ ...EMPTY_ANNOUNCE });
+      setAnnounceModal(true);
+    } else if (tool.id === "report") {
+      setReportModal(true);
     } else {
       Alert.alert(tool.label, "This feature is coming soon in the next update.", [{ text: "OK" }]);
     }
@@ -653,6 +723,233 @@ export default function BoardScreen() {
         })()}
       </Modal>
 
+      {/* ── NEW ANNOUNCEMENT MODAL ─────────────────────────── */}
+      <Modal visible={announceModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setAnnounceModal(false)}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <TouchableOpacity onPress={() => setAnnounceModal(false)} style={styles.modalCloseBtn}>
+                <Ionicons name="close" size={20} color={Colors.text} />
+              </TouchableOpacity>
+              <View style={styles.modalTitleWrap}>
+                <Ionicons name="megaphone" size={16} color={Colors.navy} />
+                <Text style={styles.modalTitle}>New Announcement</Text>
+              </View>
+              <TouchableOpacity onPress={saveAnnouncement} style={[styles.modalSaveBtn, { backgroundColor: Colors.navy }]} disabled={announceSaving}>
+                {announceSaving
+                  ? <ActivityIndicator size="small" color="#fff" />
+                  : <Text style={styles.modalSaveBtnText}>Post</Text>
+                }
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView contentContainerStyle={styles.formScroll} keyboardShouldPersistTaps="handled">
+              <View style={styles.noticeBanner}>
+                <Ionicons name="megaphone" size={18} color={Colors.gold} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.noticeBannerTitle}>Community Announcement</Text>
+                  <Text style={styles.noticeBannerSub}>Posted to the resident dashboard immediately.</Text>
+                </View>
+              </View>
+
+              <View style={styles.formSection}>
+                <Text style={styles.formSectionTitle}>ANNOUNCEMENT DETAILS</Text>
+                <Text style={styles.vLabel}>Title *</Text>
+                <TextInput
+                  style={styles.vInput}
+                  value={announceForm.title}
+                  onChangeText={(v) => setAnnounceForm({ ...announceForm, title: v })}
+                  placeholder="e.g. Pool Closure – Scheduled Maintenance"
+                  placeholderTextColor={Colors.slate}
+                />
+                <Text style={styles.vLabel}>Message *</Text>
+                <TextInput
+                  style={[styles.vInput, styles.vInputMulti]}
+                  value={announceForm.body}
+                  onChangeText={(v) => setAnnounceForm({ ...announceForm, body: v })}
+                  placeholder="Write the full announcement message here…"
+                  placeholderTextColor={Colors.slate}
+                  multiline
+                  numberOfLines={5}
+                />
+              </View>
+
+              <View style={styles.formSection}>
+                <Text style={styles.formSectionTitle}>CATEGORY</Text>
+                <View style={styles.categoryGrid}>
+                  {ANNOUNCE_CATEGORIES.map((cat) => {
+                    const active = announceForm.category === cat.key;
+                    return (
+                      <TouchableOpacity
+                        key={cat.key}
+                        style={[styles.categoryChip, active && { backgroundColor: cat.color + "18", borderColor: cat.color }]}
+                        onPress={() => { Haptics.selectionAsync(); setAnnounceForm({ ...announceForm, category: cat.key }); }}
+                      >
+                        <Ionicons name={cat.icon as any} size={15} color={active ? cat.color : Colors.slate} />
+                        <Text style={[styles.categoryChipText, active && { color: cat.color }]}>{cat.label}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+
+              <View style={styles.formSection}>
+                <View style={styles.pinnedRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.pinnedLabel}>Pin to top</Text>
+                    <Text style={styles.pinnedSub}>Appears first in the announcements feed. Unpins any existing pinned notice.</Text>
+                  </View>
+                  <Switch
+                    value={announceForm.pinned}
+                    onValueChange={(v) => { Haptics.selectionAsync(); setAnnounceForm({ ...announceForm, pinned: v }); }}
+                    trackColor={{ false: Colors.border, true: Colors.navy + "88" }}
+                    thumbColor={announceForm.pinned ? Colors.navy : "#f4f3f4"}
+                  />
+                </View>
+              </View>
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* ── GENERATE REPORT MODAL ──────────────────────────── */}
+      <Modal visible={reportModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setReportModal(false)}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setReportModal(false)} style={styles.modalCloseBtn}>
+              <Ionicons name="close" size={20} color={Colors.text} />
+            </TouchableOpacity>
+            <View style={styles.modalTitleWrap}>
+              <Ionicons name="bar-chart" size={16} color={Colors.success} />
+              <Text style={styles.modalTitle}>Community Report</Text>
+            </View>
+            <View style={{ width: 36 }} />
+          </View>
+
+          <ScrollView contentContainerStyle={[styles.detailScroll, { gap: 0 }]} showsVerticalScrollIndicator={false}>
+            {/* Header band */}
+            <View style={styles.reportBanner}>
+              <Text style={styles.reportBannerTitle}>Beyond HOA — Status Report</Text>
+              <Text style={styles.reportBannerDate}>{new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</Text>
+            </View>
+
+            {/* Residents */}
+            <View style={styles.reportSection}>
+              <View style={styles.reportSectionHeader}>
+                <Ionicons name="people" size={15} color={Colors.navy} />
+                <Text style={styles.reportSectionTitle}>RESIDENTS</Text>
+              </View>
+              <View style={styles.reportRow}>
+                <ReportStat label="Total Residents" value={residents.length} />
+                <ReportStat label="Owners" value={residents.filter((r) => r.resident_type === "owner").length} color={Colors.gold} />
+                <ReportStat label="Tenants" value={residents.filter((r) => r.resident_type === "tenant").length} color="#3B82F6" />
+              </View>
+            </View>
+
+            {/* Work Orders */}
+            {(() => {
+              const total = workOrders.length;
+              const byStatus: Record<string, number> = {};
+              workOrders.forEach((w) => { byStatus[w.status] = (byStatus[w.status] ?? 0) + 1; });
+              const byCat: Record<string, number> = {};
+              workOrders.forEach((w) => { byCat[w.category] = (byCat[w.category] ?? 0) + 1; });
+              const topCats = Object.entries(byCat).sort((a, b) => b[1] - a[1]).slice(0, 4);
+              return (
+                <View style={styles.reportSection}>
+                  <View style={styles.reportSectionHeader}>
+                    <Ionicons name="construct" size={15} color="#0891B2" />
+                    <Text style={styles.reportSectionTitle}>WORK ORDERS</Text>
+                  </View>
+                  <View style={styles.reportRow}>
+                    <ReportStat label="Total" value={total} />
+                    <ReportStat label="New" value={byStatus["submitted"] ?? 0} color="#3B82F6" />
+                    <ReportStat label="In Progress" value={byStatus["in-progress"] ?? 0} color={Colors.warning} />
+                    <ReportStat label="Completed" value={byStatus["completed"] ?? 0} color={Colors.success} />
+                  </View>
+                  {topCats.length > 0 && (
+                    <View style={styles.reportBars}>
+                      <Text style={styles.reportBarsTitle}>Top Categories</Text>
+                      {topCats.map(([cat, count]) => (
+                        <View key={cat} style={styles.reportBarRow}>
+                          <Text style={styles.reportBarLabel}>{cat}</Text>
+                          <View style={styles.reportBarTrack}>
+                            <View style={[styles.reportBarFill, { width: `${Math.round((count / total) * 100)}%`, backgroundColor: "#0891B2" }]} />
+                          </View>
+                          <Text style={styles.reportBarValue}>{count}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              );
+            })()}
+
+            {/* Violations */}
+            {(() => {
+              const total = violations.length;
+              const open = violations.filter((v) => v.status === "open").length;
+              const resolved = violations.filter((v) => v.status === "resolved").length;
+              const appealed = violations.filter((v) => v.status === "appealed").length;
+              const byType: Record<string, number> = {};
+              violations.forEach((v) => { byType[v.violation_type] = (byType[v.violation_type] ?? 0) + 1; });
+              const topTypes = Object.entries(byType).sort((a, b) => b[1] - a[1]).slice(0, 4);
+              return (
+                <View style={styles.reportSection}>
+                  <View style={styles.reportSectionHeader}>
+                    <Ionicons name="alert-circle" size={15} color={Colors.danger} />
+                    <Text style={styles.reportSectionTitle}>VIOLATIONS</Text>
+                  </View>
+                  <View style={styles.reportRow}>
+                    <ReportStat label="Total" value={total} />
+                    <ReportStat label="Open" value={open} color={Colors.danger} />
+                    <ReportStat label="Resolved" value={resolved} color={Colors.success} />
+                    <ReportStat label="Appealed" value={appealed} color={Colors.warning} />
+                  </View>
+                  {topTypes.length > 0 && (
+                    <View style={styles.reportBars}>
+                      <Text style={styles.reportBarsTitle}>By Violation Type</Text>
+                      {topTypes.map(([type, count]) => (
+                        <View key={type} style={styles.reportBarRow}>
+                          <Text style={styles.reportBarLabel}>{type}</Text>
+                          <View style={styles.reportBarTrack}>
+                            <View style={[styles.reportBarFill, { width: `${Math.round((count / total) * 100)}%`, backgroundColor: Colors.danger }]} />
+                          </View>
+                          <Text style={styles.reportBarValue}>{count}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              );
+            })()}
+
+            {/* Dues */}
+            <View style={styles.reportSection}>
+              <View style={styles.reportSectionHeader}>
+                <Ionicons name="cash" size={15} color={Colors.success} />
+                <Text style={styles.reportSectionTitle}>DUES COLLECTION — Q1 2026</Text>
+              </View>
+              <View style={styles.reportRow}>
+                <ReportStat label="Collected" value="94%" color={Colors.success} />
+                <ReportStat label="Outstanding" value="6%" color={Colors.danger} />
+                <ReportStat label="Units" value="247" />
+              </View>
+              <View style={styles.reportBars}>
+                <View style={styles.reportBarRow}>
+                  <Text style={styles.reportBarLabel}>Collection Rate</Text>
+                  <View style={styles.reportBarTrack}>
+                    <View style={[styles.reportBarFill, { width: "94%", backgroundColor: Colors.success }]} />
+                  </View>
+                  <Text style={styles.reportBarValue}>94%</Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={{ height: 40 }} />
+          </ScrollView>
+        </View>
+      </Modal>
+
       <Modal visible={violationModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setViolationModal(false)}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
           <View style={styles.modalContainer}>
@@ -872,6 +1169,15 @@ function NoticeRow({ label, value, highlight }: { label: string; value: string; 
   );
 }
 
+function ReportStat({ label, value, color }: { label: string; value: string | number; color?: string }) {
+  return (
+    <View style={styles.reportStat}>
+      <Text style={[styles.reportStatValue, color ? { color } : {}]}>{String(value)}</Text>
+      <Text style={styles.reportStatLabel}>{label}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   header: {
@@ -988,6 +1294,31 @@ const styles = StyleSheet.create({
   deleteConfirmCancelText: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: Colors.text },
   deleteConfirmYes: { flex: 1, paddingVertical: 10, borderRadius: 8, backgroundColor: Colors.danger, alignItems: "center" },
   deleteConfirmYesText: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: "#fff" },
+
+  categoryGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 4 },
+  categoryChip: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5, borderColor: Colors.border, backgroundColor: Colors.card },
+  categoryChipText: { fontFamily: "Inter_500Medium", fontSize: 13, color: Colors.textSecondary },
+  pinnedRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 4 },
+  pinnedLabel: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: Colors.text },
+  pinnedSub: { fontFamily: "Inter_400Regular", fontSize: 12, color: Colors.textSecondary, marginTop: 2 },
+
+  reportBanner: { backgroundColor: Colors.navy, borderRadius: 12, padding: 16, marginBottom: 20, alignItems: "center" },
+  reportBannerTitle: { fontFamily: "Inter_700Bold", fontSize: 15, color: "#fff" },
+  reportBannerDate: { fontFamily: "Inter_400Regular", fontSize: 12, color: "rgba(255,255,255,0.65)", marginTop: 4 },
+  reportSection: { marginBottom: 20, backgroundColor: Colors.card, borderRadius: 12, padding: 16, borderWidth: 1, borderColor: Colors.border },
+  reportSectionHeader: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 14 },
+  reportSectionTitle: { fontFamily: "Inter_700Bold", fontSize: 11, color: Colors.textSecondary, letterSpacing: 0.8 },
+  reportRow: { flexDirection: "row", gap: 8, marginBottom: 4 },
+  reportStat: { flex: 1, alignItems: "center", backgroundColor: Colors.background, borderRadius: 8, paddingVertical: 10, borderWidth: 1, borderColor: Colors.border },
+  reportStatValue: { fontFamily: "Inter_700Bold", fontSize: 20, color: Colors.navy },
+  reportStatLabel: { fontFamily: "Inter_400Regular", fontSize: 10, color: Colors.textSecondary, marginTop: 2, textAlign: "center" },
+  reportBars: { marginTop: 14, gap: 8 },
+  reportBarsTitle: { fontFamily: "Inter_600SemiBold", fontSize: 11, color: Colors.textSecondary, letterSpacing: 0.5, marginBottom: 4 },
+  reportBarRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  reportBarLabel: { fontFamily: "Inter_400Regular", fontSize: 11, color: Colors.text, width: 90 },
+  reportBarTrack: { flex: 1, height: 8, backgroundColor: Colors.border, borderRadius: 4, overflow: "hidden" },
+  reportBarFill: { height: 8, borderRadius: 4, minWidth: 4 },
+  reportBarValue: { fontFamily: "Inter_600SemiBold", fontSize: 11, color: Colors.text, width: 24, textAlign: "right" },
 
   formScroll: { padding: 16, gap: 0, paddingBottom: 40 },
   detailScroll: { padding: 16, gap: 0, paddingBottom: 40 },
