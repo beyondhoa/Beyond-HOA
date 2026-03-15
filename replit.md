@@ -22,6 +22,12 @@ A full-featured mobile HOA management app built with Expo Router (React Native) 
   - GET/POST /api/residents – list and create residents
   - PUT /api/residents/:id – update resident
   - DELETE /api/residents/:id – delete resident
+  - POST /api/dues/checkout – create Stripe checkout session (requires STRIPE_SECRET_KEY env var)
+  - GET /api/dues/payments – list all payment records from PostgreSQL
+  - GET /api/dues/payment-status/:sessionId – verify a Stripe session and update DB
+  - GET /api/dues/stripe-configured – returns whether Stripe secret key is set
+  - GET /api/dues/payment-success – Stripe redirect handler (updates DB, serves branded HTML)
+  - GET /api/dues/payment-cancelled – Stripe cancel redirect (serves branded HTML)
 
 ### AI Integration
 - Uses Replit AI Integrations (OpenAI-compatible, billed to Replit credits)

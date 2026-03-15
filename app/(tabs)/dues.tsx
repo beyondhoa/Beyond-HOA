@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -8,12 +8,17 @@ import {
   Platform,
   Alert,
   RefreshControl,
+  Linking,
+  AppState,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Colors } from "@/constants/colors";
 import * as Haptics from "expo-haptics";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getApiUrl } from "@/lib/query-client";
 
 interface DuesRecord {
   id: string;
@@ -23,6 +28,18 @@ interface DuesRecord {
   paidDate: string | null;
   paid: boolean;
   type: "quarterly" | "special";
+}
+
+interface DuesPayment {
+  id: number;
+  dues_id: string;
+  period: string;
+  amount: string;
+  stripe_session_id: string | null;
+  stripe_payment_intent_id: string | null;
+  status: "pending" | "paid" | "failed";
+  paid_at: string | null;
+  created_at: string;
 }
 
 const SEED_DUES: DuesRecord[] = [
@@ -36,17 +53,33 @@ const SEED_DUES: DuesRecord[] = [
 
 const STORAGE_KEY = "hoa_dues";
 
-const methodIcons: Record<string, any> = {
-  card: "card-outline",
-  bank: "business-outline",
-  check: "document-text-outline",
-};
+function apiUrl(path: string) {
+  return new URL(path, getApiUrl()).toString();
+}
 
 export default function DuesScreen() {
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
   const [dues, setDues] = useState<DuesRecord[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [payingId, setPayingId] = useState<string | null>(null);
+  const appState = useRef(AppState.currentState);
+  const topPadding = Platform.OS === "web" ? 67 : insets.top;
+
+  const { data: paymentsFromServer = [] } = useQuery<DuesPayment[]>({
+    queryKey: ["/api/dues/payments"],
+    refetchInterval: 10000,
+  });
+
+  const { data: stripeStatus } = useQuery<{ configured: boolean }>({
+    queryKey: ["/api/dues/stripe-configured"],
+    refetchInterval: false,
+  });
+  const stripeConfigured = stripeStatus?.configured ?? false;
+
+  const paidDuesIds = new Set(
+    paymentsFromServer.filter((p) => p.status === "paid").map((p) => p.dues_id)
+  );
 
   const load = useCallback(async () => {
     try {
@@ -64,54 +97,90 @@ export default function DuesScreen() {
 
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (nextState) => {
+      if (appState.current.match(/inactive|background/) && nextState === "active") {
+        queryClient.invalidateQueries({ queryKey: ["/api/dues/payments"] });
+      }
+      appState.current = nextState;
+    });
+    return () => sub.remove();
+  }, [queryClient]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await load();
+    await Promise.all([
+      load(),
+      queryClient.invalidateQueries({ queryKey: ["/api/dues/payments"] }),
+    ]);
     setRefreshing(false);
-  }, [load]);
+  }, [load, queryClient]);
 
-  const handlePay = useCallback((record: DuesRecord) => {
+  const handlePay = useCallback(async (record: DuesRecord) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    Alert.alert(
-      "Confirm Payment",
-      `Pay $${record.amount} for ${record.period}?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Pay Now",
-          onPress: async () => {
-            setPayingId(record.id);
-            setTimeout(async () => {
-              const updated = dues.map((d) =>
-                d.id === record.id
-                  ? { ...d, paid: true, paidDate: new Date().toISOString().split("T")[0] }
-                  : d
-              );
-              setDues(updated);
-              await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-              setPayingId(null);
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              Alert.alert("Payment Successful", `Your payment of $${record.amount} has been processed.`);
-            }, 1500);
-          },
-        },
-      ]
-    );
-  }, [dues]);
 
-  const unpaid = dues.filter((d) => !d.paid);
-  const paid = dues.filter((d) => d.paid);
+    if (!stripeConfigured) {
+      Alert.alert(
+        "Payment Setup Required",
+        "Stripe payments are not yet configured for this HOA. Please contact your board administrator to set up the STRIPE_SECRET_KEY.\n\nIn test mode, you can still mark dues as reviewed.",
+        [{ text: "OK", style: "cancel" }]
+      );
+      return;
+    }
+
+    setPayingId(record.id);
+    try {
+      const res = await fetch(apiUrl("/api/dues/checkout"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          duesId: record.id,
+          period: record.period,
+          amount: record.amount,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error ?? "Checkout failed");
+      }
+
+      const { url } = await res.json();
+      await Linking.openURL(url);
+    } catch (err: any) {
+      Alert.alert("Payment Error", err.message ?? "Failed to open payment page. Please try again.");
+    } finally {
+      setPayingId(null);
+    }
+  }, [stripeConfigured]);
+
+  const displayedDues = dues.map((d) => ({
+    ...d,
+    paid: d.paid || paidDuesIds.has(d.id),
+    paidDate: paidDuesIds.has(d.id)
+      ? paymentsFromServer.find((p) => p.dues_id === d.id && p.status === "paid")?.paid_at?.split("T")[0] ?? d.paidDate
+      : d.paidDate,
+    paidViaStripe: paidDuesIds.has(d.id),
+  }));
+
+  const unpaid = displayedDues.filter((d) => !d.paid);
+  const paid = displayedDues.filter((d) => d.paid);
   const totalPaidYear = paid
     .filter((d) => d.paidDate?.startsWith("2026") || d.period.includes("2026"))
     .reduce((s, d) => s + d.amount, 0);
   const totalOwed = unpaid.reduce((s, d) => s + d.amount, 0);
-  const topPadding = Platform.OS === "web" ? 67 : insets.top;
 
   return (
     <View style={[styles.container, { paddingTop: topPadding }]}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>HOA Dues</Text>
-        <Text style={styles.headerSub}>Beyond HOA Community</Text>
+        <View>
+          <Text style={styles.headerTitle}>HOA Dues</Text>
+          <Text style={styles.headerSub}>Beyond HOA Community</Text>
+        </View>
+        <View style={styles.stripeBadge}>
+          <Ionicons name="shield-checkmark" size={12} color="#635BFF" />
+          <Text style={styles.stripeBadgeText}>Stripe Secured</Text>
+        </View>
       </View>
 
       <ScrollView
@@ -155,18 +224,50 @@ export default function DuesScreen() {
                 <View style={styles.duesCardRight}>
                   <Text style={styles.duesAmount}>${record.amount}</Text>
                   <TouchableOpacity
-                    style={styles.payButton}
+                    style={[styles.payButton, payingId === record.id && styles.payButtonLoading]}
                     onPress={() => handlePay(record)}
-                    disabled={payingId === record.id}
+                    disabled={payingId !== null}
                     activeOpacity={0.8}
                   >
-                    <Text style={styles.payButtonText}>
-                      {payingId === record.id ? "Processing..." : "Pay Now"}
-                    </Text>
+                    {payingId === record.id ? (
+                      <View style={styles.payButtonInner}>
+                        <ActivityIndicator size="small" color={Colors.navy} />
+                        <Text style={styles.payButtonText}>Opening...</Text>
+                      </View>
+                    ) : (
+                      <View style={styles.payButtonInner}>
+                        <Ionicons name="card" size={14} color={Colors.navy} />
+                        <Text style={styles.payButtonText}>Pay Now</Text>
+                      </View>
+                    )}
                   </TouchableOpacity>
                 </View>
               </View>
             ))}
+
+            {stripeConfigured ? (
+              <View style={styles.stripeInfoBox}>
+                <Ionicons name="lock-closed" size={14} color="#635BFF" />
+                <Text style={styles.stripeInfoText}>
+                  Payments are processed securely by Stripe. Your card details are never stored by Beyond HOA.
+                </Text>
+              </View>
+            ) : (
+              <View style={[styles.stripeInfoBox, { borderColor: "rgba(201,168,76,0.3)", backgroundColor: "rgba(201,168,76,0.06)" }]}>
+                <Ionicons name="information-circle" size={14} color={Colors.gold} />
+                <Text style={[styles.stripeInfoText, { color: Colors.textSecondary }]}>
+                  Payment processing is ready to be configured. Add your <Text style={{ fontFamily: "Inter_600SemiBold", color: Colors.text }}>STRIPE_SECRET_KEY</Text> environment variable to enable live payments.
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        {unpaid.length === 0 && (
+          <View style={styles.allPaidBanner}>
+            <Ionicons name="checkmark-circle" size={36} color={Colors.success} />
+            <Text style={styles.allPaidTitle}>All Dues Paid</Text>
+            <Text style={styles.allPaidSub}>You're all caught up — no outstanding balance.</Text>
           </View>
         )}
 
@@ -178,6 +279,11 @@ export default function DuesScreen() {
                 <View style={styles.paidBadge}>
                   <Ionicons name="checkmark" size={12} color={Colors.success} />
                   <Text style={styles.paidText}>Paid</Text>
+                  {(record as any).paidViaStripe && (
+                    <View style={styles.stripePill}>
+                      <Text style={styles.stripePillText}>Stripe</Text>
+                    </View>
+                  )}
                 </View>
                 <Text style={styles.duesPeriod}>{record.period}</Text>
                 <Text style={styles.duesDueDate}>
@@ -197,7 +303,7 @@ export default function DuesScreen() {
         <View style={styles.infoBox}>
           <Ionicons name="information-circle-outline" size={18} color={Colors.navy} />
           <Text style={styles.infoText}>
-            Quarterly dues are due by the last day of each quarter. Late payments may incur a $50 penalty after 30 days.
+            Quarterly dues are due by the last day of each quarter. Late payments may incur a $50 penalty after 30 days. Pull to refresh after completing payment to see your updated status.
           </Text>
         </View>
 
@@ -214,86 +320,69 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     paddingTop: 8,
     backgroundColor: Colors.navy,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   headerTitle: { fontFamily: "Inter_700Bold", fontSize: 22, color: "#fff" },
   headerSub: { fontFamily: "Inter_400Regular", fontSize: 13, color: Colors.slate, marginTop: 2 },
-  summaryRow: {
+  stripeBadge: {
     flexDirection: "row",
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    gap: 12,
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "rgba(99,91,255,0.15)",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(99,91,255,0.3)",
   },
+  stripeBadgeText: { fontFamily: "Inter_600SemiBold", fontSize: 11, color: "#9E97FF" },
+  summaryRow: { flexDirection: "row", paddingHorizontal: 16, paddingTop: 16, gap: 12 },
   summaryCard: {
-    flex: 1,
-    backgroundColor: Colors.card,
-    borderRadius: 14,
-    padding: 16,
-    borderLeftWidth: 3,
-    gap: 6,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
+    flex: 1, backgroundColor: Colors.card, borderRadius: 14, padding: 16, borderLeftWidth: 3, gap: 6,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 2,
   },
   summaryLabel: { fontFamily: "Inter_400Regular", fontSize: 12, color: Colors.textSecondary },
   summaryAmount: { fontFamily: "Inter_700Bold", fontSize: 26 },
   section: { paddingHorizontal: 16, paddingTop: 24 },
   sectionTitle: { fontFamily: "Inter_700Bold", fontSize: 17, color: Colors.text, marginBottom: 12 },
   duesCard: {
-    backgroundColor: Colors.card,
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 10,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
+    backgroundColor: Colors.card, borderRadius: 14, padding: 16, marginBottom: 10,
+    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+    shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1,
   },
-  unpaidCard: {
-    borderWidth: 1,
-    borderColor: "rgba(231,76,60,0.2)",
-  },
+  unpaidCard: { borderWidth: 1, borderColor: "rgba(231,76,60,0.2)" },
   duesCardLeft: { flex: 1 },
   duesCardRight: { alignItems: "flex-end" },
-  typeBadge: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-    marginBottom: 6,
-  },
+  typeBadge: { alignSelf: "flex-start", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, marginBottom: 6 },
   typeText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
-  paidBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    marginBottom: 6,
-  },
+  paidBadge: { flexDirection: "row", alignItems: "center", gap: 4, marginBottom: 6 },
   paidText: { fontFamily: "Inter_600SemiBold", fontSize: 12, color: Colors.success },
+  stripePill: { backgroundColor: "rgba(99,91,255,0.12)", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
+  stripePillText: { fontFamily: "Inter_600SemiBold", fontSize: 10, color: "#635BFF" },
   duesPeriod: { fontFamily: "Inter_600SemiBold", fontSize: 15, color: Colors.text },
   duesDueDate: { fontFamily: "Inter_400Regular", fontSize: 12, color: Colors.textSecondary, marginTop: 3 },
   duesAmount: { fontFamily: "Inter_700Bold", fontSize: 22, color: Colors.text },
   payButton: {
-    backgroundColor: Colors.gold,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginTop: 8,
+    backgroundColor: Colors.gold, paddingHorizontal: 16, paddingVertical: 9,
+    borderRadius: 20, marginTop: 8, minWidth: 110,
   },
+  payButtonLoading: { opacity: 0.7 },
+  payButtonInner: { flexDirection: "row", alignItems: "center", gap: 6, justifyContent: "center" },
   payButtonText: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: Colors.navy },
+  stripeInfoBox: {
+    flexDirection: "row", gap: 8, marginTop: 4, marginBottom: 8,
+    backgroundColor: "rgba(99,91,255,0.06)", padding: 12, borderRadius: 10,
+    alignItems: "flex-start", borderWidth: 1, borderColor: "rgba(99,91,255,0.12)",
+  },
+  stripeInfoText: { fontFamily: "Inter_400Regular", fontSize: 12, color: Colors.textSecondary, flex: 1, lineHeight: 18 },
+  allPaidBanner: { alignItems: "center", padding: 32, gap: 10 },
+  allPaidTitle: { fontFamily: "Inter_700Bold", fontSize: 20, color: Colors.success },
+  allPaidSub: { fontFamily: "Inter_400Regular", fontSize: 14, color: Colors.textSecondary },
   infoBox: {
-    flexDirection: "row",
-    gap: 10,
-    margin: 16,
-    backgroundColor: "rgba(15,35,64,0.06)",
-    padding: 14,
-    borderRadius: 12,
-    alignItems: "flex-start",
+    flexDirection: "row", gap: 10, margin: 16,
+    backgroundColor: "rgba(15,35,64,0.06)", padding: 14, borderRadius: 12, alignItems: "flex-start",
   },
   infoText: { fontFamily: "Inter_400Regular", fontSize: 13, color: Colors.textSecondary, flex: 1, lineHeight: 19 },
 });
