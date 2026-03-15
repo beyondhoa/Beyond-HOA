@@ -24,6 +24,8 @@ import { getApiUrl } from "@/lib/query-client";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface BoardMember { name: string; role: string; since: string; }
+interface VoteOption { id: string; label: string; votes: number; }
+interface Vote { id: string; title: string; description: string; status: "active" | "closed"; deadline: string; options: VoteOption[]; userVote: string | null; totalVoters: number; }
 interface ActionItem { id: string; title: string; priority: "high" | "medium" | "low"; category: string; }
 interface WorkOrder {
   id: number;
@@ -174,6 +176,14 @@ export default function BoardScreen() {
   const [announceForm, setAnnounceForm] = useState({ ...EMPTY_ANNOUNCE });
   const [announceSaving, setAnnounceSaving] = useState(false);
   const [reportModal, setReportModal] = useState(false);
+  const [ballotModal, setBallotModal] = useState(false);
+  const [ballotForm, setBallotForm] = useState({ title: "", description: "", deadline: "", options: ["Yes", "No", ""], totalVoters: 248 });
+  const [ballotSaving, setBallotSaving] = useState(false);
+  const [noticeModal, setNoticeModal] = useState(false);
+  const [noticeForm, setNoticeForm] = useState<{ subject: string; body: string; recipients: "all" | "owners" | "tenants"; category: "general" | "maintenance" | "urgent" | "legal" }>({ subject: "", body: "", recipients: "all", category: "general" });
+  const [noticeSending, setNoticeSending] = useState(false);
+  const [woListModal, setWoListModal] = useState(false);
+  const [woListFilter, setWoListFilter] = useState<"all" | "submitted" | "in-progress" | "completed" | "cancelled">("all");
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [typePickerOpen, setTypePickerOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -297,8 +307,15 @@ export default function BoardScreen() {
       setAnnounceModal(true);
     } else if (tool.id === "report") {
       setReportModal(true);
-    } else {
-      Alert.alert(tool.label, "This feature is coming soon in the next update.", [{ text: "OK" }]);
+    } else if (tool.id === "vote") {
+      setBallotForm({ title: "", description: "", deadline: deadlineStr(14), options: ["Yes", "No", ""], totalVoters: residents.length || 248 });
+      setBallotModal(true);
+    } else if (tool.id === "notice") {
+      setNoticeForm({ subject: "", body: "", recipients: "all", category: "general" });
+      setNoticeModal(true);
+    } else if (tool.id === "maintenance") {
+      setWoListFilter("all");
+      setWoListModal(true);
     }
   };
 
@@ -316,6 +333,85 @@ export default function BoardScreen() {
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     createViolation.mutate(form);
+  };
+
+  const saveBallot = async () => {
+    if (!ballotForm.title.trim() || !ballotForm.description.trim() || !ballotForm.deadline) {
+      Alert.alert("Required Fields", "Please fill in title, description, and deadline.");
+      return;
+    }
+    const nonEmpty = ballotForm.options.filter((o) => o.trim());
+    if (nonEmpty.length < 2) {
+      Alert.alert("Options Required", "Please add at least 2 voting options.");
+      return;
+    }
+    setBallotSaving(true);
+    try {
+      const stored = await AsyncStorage.getItem("hoa_votes");
+      const existing: Vote[] = stored ? JSON.parse(stored) : [];
+      const newBallot: Vote = {
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 6),
+        title: ballotForm.title.trim(),
+        description: ballotForm.description.trim(),
+        status: "active",
+        deadline: ballotForm.deadline,
+        options: nonEmpty.map((label, i) => ({ id: `opt_${i}`, label: label.trim(), votes: 0 })),
+        userVote: null,
+        totalVoters: ballotForm.totalVoters,
+      };
+      await AsyncStorage.setItem("hoa_votes", JSON.stringify([newBallot, ...existing]));
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setBallotModal(false);
+      Alert.alert("Ballot Published", `"${newBallot.title}" is now live for community voting.`);
+    } catch {
+      Alert.alert("Error", "Failed to publish ballot.");
+    } finally {
+      setBallotSaving(false);
+    }
+  };
+
+  const sendNotice = async () => {
+    if (!noticeForm.subject.trim() || !noticeForm.body.trim()) {
+      Alert.alert("Required Fields", "Please enter a subject and message body.");
+      return;
+    }
+    setNoticeSending(true);
+    try {
+      const stored = await AsyncStorage.getItem("hoa_notices");
+      const existing = stored ? JSON.parse(stored) : [];
+      const notice = {
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 6),
+        subject: noticeForm.subject.trim(),
+        body: noticeForm.body.trim(),
+        recipients: noticeForm.recipients,
+        category: noticeForm.category,
+        sentAt: new Date().toISOString(),
+      };
+      await AsyncStorage.setItem("hoa_notices", JSON.stringify([notice, ...existing]));
+      const announceStored = await AsyncStorage.getItem(HOA_ANNOUNCEMENTS_KEY);
+      const announceExisting: Announcement[] = announceStored ? JSON.parse(announceStored) : [];
+      const catMap: Record<string, Announcement["category"]> = { urgent: "urgent", maintenance: "maintenance", general: "general", legal: "general" };
+      const newItem: Announcement = {
+        id: notice.id,
+        title: noticeForm.subject.trim(),
+        body: noticeForm.body.trim(),
+        category: catMap[noticeForm.category] ?? "general",
+        pinned: noticeForm.category === "urgent",
+        date: new Date().toISOString().split("T")[0],
+      };
+      const updatedAnnouncements = noticeForm.category === "urgent"
+        ? [newItem, ...announceExisting.map((a) => ({ ...a, pinned: false }))]
+        : [newItem, ...announceExisting];
+      await AsyncStorage.setItem(HOA_ANNOUNCEMENTS_KEY, JSON.stringify(updatedAnnouncements));
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setNoticeModal(false);
+      const recipLabel = noticeForm.recipients === "all" ? "All Residents" : noticeForm.recipients === "owners" ? "Owners Only" : "Tenants Only";
+      Alert.alert("Notice Sent", `Your notice has been sent to ${recipLabel} and posted on the home screen.`);
+    } catch {
+      Alert.alert("Error", "Failed to send notice.");
+    } finally {
+      setNoticeSending(false);
+    }
   };
 
   const handleDeleteViolation = (v: Violation) => {
@@ -1134,6 +1230,262 @@ export default function BoardScreen() {
           );
         })()}
       </Modal>
+
+      {/* ── CREATE BALLOT MODAL ── */}
+      <Modal visible={ballotModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setBallotModal(false)}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <TouchableOpacity onPress={() => setBallotModal(false)} style={styles.modalCloseBtn}>
+                <Ionicons name="close" size={20} color={Colors.text} />
+              </TouchableOpacity>
+              <View style={styles.modalTitleWrap}>
+                <Ionicons name="checkmark-circle" size={16} color="#7C3AED" />
+                <Text style={styles.modalTitle}>Create Ballot</Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.modalSaveBtn, { backgroundColor: "#7C3AED" }, ballotSaving && { opacity: 0.6 }]}
+                onPress={saveBallot}
+                disabled={ballotSaving}
+              >
+                {ballotSaving ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.modalSaveBtnText}>Publish</Text>}
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView contentContainerStyle={styles.formScroll} keyboardShouldPersistTaps="handled">
+              <View style={styles.formSection}>
+                <Text style={styles.formSectionTitle}>BALLOT DETAILS</Text>
+                <VField label="Ballot Title *" value={ballotForm.title} onChangeText={(v) => setBallotForm({ ...ballotForm, title: v })} placeholder="e.g. New Playground Equipment Approval" />
+                <VField label="Description / Question *" value={ballotForm.description} onChangeText={(v) => setBallotForm({ ...ballotForm, description: v })} placeholder="Describe the issue and what members are voting on..." multiline />
+                <VField label="Voting Deadline *" value={ballotForm.deadline} onChangeText={(v) => setBallotForm({ ...ballotForm, deadline: v })} placeholder="YYYY-MM-DD" keyboardType="numbers-and-punctuation" />
+                <Text style={styles.vLabel}>Total Eligible Voters</Text>
+                <View style={styles.voterRow}>
+                  <TouchableOpacity style={styles.voterBtn} onPress={() => setBallotForm({ ...ballotForm, totalVoters: Math.max(1, ballotForm.totalVoters - 1) })}>
+                    <Ionicons name="remove" size={18} color={Colors.text} />
+                  </TouchableOpacity>
+                  <Text style={styles.voterCount}>{ballotForm.totalVoters}</Text>
+                  <TouchableOpacity style={styles.voterBtn} onPress={() => setBallotForm({ ...ballotForm, totalVoters: ballotForm.totalVoters + 1 })}>
+                    <Ionicons name="add" size={18} color={Colors.text} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.formSection}>
+                <Text style={styles.formSectionTitle}>VOTING OPTIONS</Text>
+                <Text style={[styles.vLabel, { marginBottom: 10 }]}>Add between 2 and 4 options. Leave extra fields blank to skip.</Text>
+                {ballotForm.options.map((opt, idx) => (
+                  <View key={idx} style={styles.optionRow}>
+                    <View style={styles.optionNum}>
+                      <Text style={styles.optionNumText}>{String.fromCharCode(65 + idx)}</Text>
+                    </View>
+                    <TextInput
+                      style={[styles.vInput, { flex: 1, marginBottom: 0 }]}
+                      value={opt}
+                      onChangeText={(v) => {
+                        const next = [...ballotForm.options];
+                        next[idx] = v;
+                        setBallotForm({ ...ballotForm, options: next });
+                      }}
+                      placeholder={idx === 0 ? "e.g. Approve" : idx === 1 ? "e.g. Reject" : "e.g. Defer to Next Quarter"}
+                      placeholderTextColor={Colors.slate}
+                    />
+                  </View>
+                ))}
+                {ballotForm.options.length < 4 && (
+                  <TouchableOpacity
+                    style={styles.addOptionBtn}
+                    onPress={() => setBallotForm({ ...ballotForm, options: [...ballotForm.options, ""] })}
+                  >
+                    <Ionicons name="add-circle-outline" size={16} color="#7C3AED" />
+                    <Text style={styles.addOptionBtnText}>Add Option</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              <View style={styles.noticeFooter}>
+                <Text style={styles.noticeFooterText}>
+                  This ballot will be published immediately and appear in the Voting tab for all community members. Results are visible in real-time as members cast votes.
+                </Text>
+              </View>
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* ── SEND NOTICE MODAL ── */}
+      <Modal visible={noticeModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setNoticeModal(false)}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <TouchableOpacity onPress={() => setNoticeModal(false)} style={styles.modalCloseBtn}>
+                <Ionicons name="close" size={20} color={Colors.text} />
+              </TouchableOpacity>
+              <View style={styles.modalTitleWrap}>
+                <Ionicons name="mail" size={16} color={Colors.warning} />
+                <Text style={styles.modalTitle}>Send Notice</Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.modalSaveBtn, { backgroundColor: Colors.warning }, noticeSending && { opacity: 0.6 }]}
+                onPress={sendNotice}
+                disabled={noticeSending}
+              >
+                {noticeSending ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.modalSaveBtnText}>Send</Text>}
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView contentContainerStyle={styles.formScroll} keyboardShouldPersistTaps="handled">
+              <View style={styles.formSection}>
+                <Text style={styles.formSectionTitle}>RECIPIENTS</Text>
+                <View style={styles.toggleRow}>
+                  {([["all", "All Residents"], ["owners", "Owners Only"], ["tenants", "Tenants Only"]] as const).map(([key, label]) => (
+                    <TouchableOpacity
+                      key={key}
+                      style={[styles.toggleBtn, noticeForm.recipients === key && styles.toggleActive]}
+                      onPress={() => setNoticeForm({ ...noticeForm, recipients: key })}
+                    >
+                      <Text style={[styles.toggleText, noticeForm.recipients === key && styles.toggleTextActive]}>{label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.formSection}>
+                <Text style={styles.formSectionTitle}>NOTICE CATEGORY</Text>
+                <View style={styles.categoryGrid}>
+                  {([
+                    { key: "general" as const,     label: "General",     icon: "information-circle", color: Colors.navy },
+                    { key: "maintenance" as const, label: "Maintenance",  icon: "construct",          color: Colors.warning },
+                    { key: "urgent" as const,      label: "Urgent",       icon: "alert-circle",       color: Colors.danger },
+                    { key: "legal" as const,       label: "Legal",        icon: "briefcase",          color: "#7C3AED" },
+                  ]).map((cat) => {
+                    const active = noticeForm.category === cat.key;
+                    return (
+                      <TouchableOpacity
+                        key={cat.key}
+                        style={[styles.categoryChip, active && { backgroundColor: cat.color + "15", borderColor: cat.color }]}
+                        onPress={() => setNoticeForm({ ...noticeForm, category: cat.key })}
+                      >
+                        <Ionicons name={cat.icon as any} size={14} color={active ? cat.color : Colors.textSecondary} />
+                        <Text style={[styles.categoryChipText, active && { color: cat.color, fontFamily: "Inter_600SemiBold" }]}>{cat.label}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+
+              <View style={styles.formSection}>
+                <Text style={styles.formSectionTitle}>MESSAGE</Text>
+                <VField label="Subject *" value={noticeForm.subject} onChangeText={(v) => setNoticeForm({ ...noticeForm, subject: v })} placeholder="e.g. Pool Closure — Friday July 4th" />
+                <VField label="Message Body *" value={noticeForm.body} onChangeText={(v) => setNoticeForm({ ...noticeForm, body: v })} placeholder="Write your notice message here. Be clear and concise — include any dates, times, or actions residents need to take..." multiline />
+              </View>
+
+              <View style={styles.noticeFooter}>
+                <Text style={styles.noticeFooterText}>
+                  This notice will be sent to {noticeForm.recipients === "all" ? "all residents" : noticeForm.recipients === "owners" ? "unit owners" : "tenants"} and posted on the community home screen. Urgent notices are automatically pinned to the top.
+                </Text>
+              </View>
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* ── WORK ORDERS LIST MODAL ── */}
+      <Modal visible={woListModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setWoListModal(false)}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setWoListModal(false)} style={styles.modalCloseBtn}>
+              <Ionicons name="close" size={20} color={Colors.text} />
+            </TouchableOpacity>
+            <View style={styles.modalTitleWrap}>
+              <Ionicons name="construct" size={16} color="#0891B2" />
+              <Text style={styles.modalTitle}>Work Orders</Text>
+            </View>
+            <View style={[styles.badge, { backgroundColor: "#0891B218" }]}>
+              <Text style={[styles.badgeText, { color: "#0891B2" }]}>
+                {workOrders.filter((w) => w.status === "submitted").length} new
+              </Text>
+            </View>
+          </View>
+
+          {/* Filter tabs */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.woFilterScroll} contentContainerStyle={styles.woFilterContent}>
+            {([
+              { key: "all",         label: "All",         color: Colors.text },
+              { key: "submitted",   label: "New",         color: "#3B82F6" },
+              { key: "in-progress", label: "In Progress", color: Colors.warning },
+              { key: "completed",   label: "Completed",   color: Colors.success },
+              { key: "cancelled",   label: "Cancelled",   color: Colors.slate },
+            ] as const).map((f) => {
+              const count = f.key === "all" ? workOrders.length : workOrders.filter((w) => w.status === f.key).length;
+              const active = woListFilter === f.key;
+              return (
+                <TouchableOpacity
+                  key={f.key}
+                  style={[styles.woFilterTab, active && { backgroundColor: "#0891B2", borderColor: "#0891B2" }]}
+                  onPress={() => { Haptics.selectionAsync(); setWoListFilter(f.key); }}
+                >
+                  <Text style={[styles.woFilterText, active && { color: "#fff" }]}>{f.label}</Text>
+                  <View style={[styles.woFilterBadge, active && { backgroundColor: "rgba(255,255,255,0.25)" }]}>
+                    <Text style={[styles.woFilterBadgeText, active && { color: "#fff" }]}>{count}</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+
+          <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+            {workOrders
+              .filter((w) => woListFilter === "all" || w.status === woListFilter)
+              .length === 0 ? (
+              <View style={styles.emptyViolations}>
+                <Ionicons name="construct-outline" size={36} color={Colors.border} />
+                <Text style={styles.emptyViolationsText}>No work orders in this category</Text>
+              </View>
+            ) : (
+              workOrders
+                .filter((w) => woListFilter === "all" || w.status === woListFilter)
+                .map((wo) => {
+                  const priorityColors: Record<string, string> = {
+                    low: Colors.success, medium: Colors.warning, high: Colors.danger, emergency: "#7C0000",
+                  };
+                  const woStatusConf: Record<string, { color: string; bg: string; label: string }> = {
+                    submitted:    { color: "#3B82F6", bg: "#EFF6FF", label: "New" },
+                    "in-progress": { color: Colors.warning, bg: Colors.warning + "15", label: "In Progress" },
+                    completed:    { color: Colors.success, bg: Colors.success + "18", label: "Completed" },
+                    cancelled:    { color: Colors.slate, bg: Colors.slate + "18", label: "Cancelled" },
+                  };
+                  const sc = woStatusConf[wo.status] ?? woStatusConf.submitted;
+                  const pc = priorityColors[wo.priority] ?? Colors.slate;
+                  return (
+                    <TouchableOpacity
+                      key={wo.id}
+                      style={styles.violationCard}
+                      onPress={() => { setWoListModal(false); setBoardNotesDraft(wo.board_notes ?? ""); setDetailWorkOrder(wo); }}
+                      activeOpacity={0.75}
+                    >
+                      <View style={[styles.violationTypeDot, { backgroundColor: pc }]} />
+                      <View style={styles.violationBody}>
+                        <View style={styles.violationTop}>
+                          <Text style={styles.violationName} numberOfLines={1}>{wo.title}</Text>
+                          <View style={[styles.statusPill, { backgroundColor: sc.bg }]}>
+                            <Text style={[styles.statusPillText, { color: sc.color }]}>{sc.label}</Text>
+                          </View>
+                        </View>
+                        <Text style={styles.violationType}>{wo.resident_name} · Unit {wo.unit} · {wo.category}</Text>
+                        <Text style={styles.violationDate}>
+                          {new Date(wo.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                          {wo.priority === "high" || wo.priority === "emergency" ? " · ⚠️ " + wo.priority : ""}
+                        </Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={16} color={Colors.border} />
+                    </TouchableOpacity>
+                  );
+                })
+            )}
+          </ScrollView>
+        </View>
+      </Modal>
+
     </View>
   );
 }
@@ -1382,4 +1734,21 @@ const styles = StyleSheet.create({
 
   noticeFooter: { backgroundColor: Colors.background, borderRadius: 10, padding: 14, borderWidth: 1, borderColor: Colors.border, marginTop: 8 },
   noticeFooterText: { fontFamily: "Inter_400Regular", fontSize: 11, color: Colors.slate, lineHeight: 17, textAlign: "center" },
+
+  voterRow: { flexDirection: "row", alignItems: "center", gap: 16, marginBottom: 12 },
+  voterBtn: { width: 38, height: 38, borderRadius: 10, borderWidth: 1, borderColor: Colors.border, backgroundColor: "#fff", alignItems: "center", justifyContent: "center" },
+  voterCount: { fontFamily: "Inter_700Bold", fontSize: 20, color: Colors.text, minWidth: 40, textAlign: "center" },
+
+  optionRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 },
+  optionNum: { width: 30, height: 30, borderRadius: 8, backgroundColor: "#7C3AED18", alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  optionNumText: { fontFamily: "Inter_700Bold", fontSize: 13, color: "#7C3AED" },
+  addOptionBtn: { flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 10, justifyContent: "center" },
+  addOptionBtnText: { fontFamily: "Inter_500Medium", fontSize: 14, color: "#7C3AED" },
+
+  woFilterScroll: { borderBottomWidth: 1, borderBottomColor: Colors.border },
+  woFilterContent: { paddingHorizontal: 16, paddingVertical: 10, gap: 8, flexDirection: "row" },
+  woFilterTab: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, borderWidth: 1, borderColor: Colors.border, backgroundColor: Colors.card },
+  woFilterText: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: Colors.textSecondary },
+  woFilterBadge: { minWidth: 20, height: 20, borderRadius: 10, backgroundColor: Colors.background, alignItems: "center", justifyContent: "center", paddingHorizontal: 5 },
+  woFilterBadgeText: { fontFamily: "Inter_700Bold", fontSize: 11, color: Colors.textSecondary },
 });
