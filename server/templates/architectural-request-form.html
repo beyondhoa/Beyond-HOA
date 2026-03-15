@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Architectural Request Form — Beyond HOA</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; background: #f5f6fa; color: #1a1a2e; line-height: 1.6; padding: 24px 16px 60px; }
+    .page { max-width: 720px; margin: 0 auto; }
+    .header { background: linear-gradient(135deg, #0F2340 0%, #1a3a60 100%); border-radius: 16px; padding: 28px 28px 24px; margin-bottom: 24px; color: #fff; }
+    .header-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+    .hoa-name { font-size: 13px; font-weight: 600; letter-spacing: 1.2px; color: #C9A84C; margin-bottom: 4px; text-transform: uppercase; }
+    .doc-title { font-size: 26px; font-weight: 700; color: #fff; }
+    .doc-subtitle { font-size: 14px; color: rgba(255,255,255,0.65); margin-top: 4px; }
+    .badge { background: #C9A84C; color: #0F2340; font-size: 13px; font-weight: 700; padding: 6px 14px; border-radius: 20px; white-space: nowrap; height: fit-content; }
+    .notice { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #78350f; margin-bottom: 24px; display: flex; gap: 8px; }
+    .notice-icon { font-size: 16px; flex-shrink: 0; }
+    .section { background: #fff; border-radius: 14px; margin-bottom: 20px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .section-header { background: #0F2340; padding: 12px 20px; color: #C9A84C; font-size: 13px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; }
+    .section-body { padding: 16px 20px; }
+    .form-row { margin-bottom: 18px; }
+    .form-row:last-child { margin-bottom: 0; }
+    .form-label { font-size: 12px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .form-line { border-bottom: 1.5px solid #d1d5db; min-height: 28px; width: 100%; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-grid-3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 16px; }
+    .form-textarea { border: 1.5px solid #d1d5db; border-radius: 8px; min-height: 80px; width: 100%; padding: 8px; }
+    .checklist { list-style: none; }
+    .checklist li { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid #f0f1f5; font-size: 14px; color: #374151; }
+    .checklist li:last-child { border-bottom: none; }
+    .checkbox { width: 18px; height: 18px; border: 2px solid #d1d5db; border-radius: 4px; flex-shrink: 0; margin-top: 2px; }
+    .approval-block { border: 2px solid #0F2340; border-radius: 10px; padding: 16px; margin-top: 10px; }
+    .approval-label { font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .approval-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    .approval-row { border-bottom: 1px solid #d1d5db; min-height: 28px; }
+    .approval-sub { font-size: 11px; color: #9ca3af; margin-top: 3px; }
+    .condition-row { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; }
+    .condition-num { width: 20px; height: 20px; background: #0F2340; color: #C9A84C; border-radius: 50%; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .condition-line { flex: 1; border-bottom: 1px solid #d1d5db; min-height: 22px; }
+    .proj-types { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .proj-type { display: flex; gap: 8px; align-items: center; font-size: 14px; color: #374151; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="hoa-name">Beyond HOA — Lakeview Commons</div>
+        <div class="doc-title">Architectural Request Form</div>
+        <div class="doc-subtitle">ARC Application — Submit Before Starting Any Work</div>
+      </div>
+      <div class="badge">FORM</div>
+    </div>
+  </div>
+
+  <div class="notice">
+    <span class="notice-icon">⚠️</span>
+    <span>Submit this completed form to arc@beyondhoa.com or the management office. Include all attachments. The ARC will respond within 30 days. Do NOT begin work before receiving written approval. Incomplete applications will not be reviewed.</span>
+  </div>
+
+  <!-- OWNER INFORMATION -->
+  <div class="section">
+    <div class="section-header">Section 1 — Owner / Applicant Information</div>
+    <div class="section-body">
+      <div class="form-row">
+        <div class="form-label">Owner Name(s) *</div>
+        <div class="form-line"></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
+          <div class="form-label">Unit Address *</div>
+          <div class="form-line"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">Unit Number</div>
+          <div class="form-line"></div>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
+          <div class="form-label">Phone Number *</div>
+          <div class="form-line"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">Email Address *</div>
+          <div class="form-line"></div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-label">Mailing Address (if different from unit)</div>
+        <div class="form-line"></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
+          <div class="form-label">Is Unit Owner-Occupied?</div>
+          <div class="form-line"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">Submission Date</div>
+          <div class="form-line"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROJECT DESCRIPTION -->
+  <div class="section">
+    <div class="section-header">Section 2 — Project Description</div>
+    <div class="section-body">
+      <div class="form-row">
+        <div class="form-label">Type of Modification (check all that apply)</div>
+        <div class="proj-types" style="margin-top:10px;">
+          <div class="proj-type"><div class="checkbox"></div>Exterior Paint / Color Change</div>
+          <div class="proj-type"><div class="checkbox"></div>Entry Door Replacement</div>
+          <div class="proj-type"><div class="checkbox"></div>Window Replacement</div>
+          <div class="proj-type"><div class="checkbox"></div>Deck / Patio Construction</div>
+          <div class="proj-type"><div class="checkbox"></div>Fence Installation / Replacement</div>
+          <div class="proj-type"><div class="checkbox"></div>Landscaping Redesign</div>
+          <div class="proj-type"><div class="checkbox"></div>Solar Panel Installation</div>
+          <div class="proj-type"><div class="checkbox"></div>Satellite Dish / Antenna</div>
+          <div class="proj-type"><div class="checkbox"></div>Generator Installation</div>
+          <div class="proj-type"><div class="checkbox"></div>EV Charging Equipment</div>
+          <div class="proj-type"><div class="checkbox"></div>Exterior Lighting</div>
+          <div class="proj-type"><div class="checkbox"></div>Other (describe below)</div>
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:16px;">
+        <div class="form-label">Detailed Description of Proposed Work *</div>
+        <div class="form-textarea"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-label">Materials and Colors to be Used *</div>
+        <div class="form-textarea"></div>
+      </div>
+      <div class="form-grid-3">
+        <div class="form-row">
+          <div class="form-label">Proposed Start Date</div>
+          <div class="form-line"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">Estimated Duration</div>
+          <div class="form-line"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">Estimated Cost</div>
+          <div class="form-line"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTRACTOR -->
+  <div class="section">
+    <div class="section-header">Section 3 — Contractor Information (if applicable)</div>
+    <div class="section-body">
+      <div class="form-grid">
+        <div class="form-row">
+          <div class="form-label">Contractor / Company Name</div>
+          <div class="form-line"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">License Number</div>
+          <div class="form-line"></div>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
+          <div class="form-label">Contractor Phone</div>
+          <div class="form-line"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">Insurance Certificate on File?</div>
+          <div class="form-line"></div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-label">Municipal Building Permit Required? (Check one)</div>
+        <div style="display:flex;gap:24px;margin-top:8px;">
+          <div class="proj-type"><div class="checkbox"></div>Yes — Permit # _________________</div>
+          <div class="proj-type"><div class="checkbox"></div>No</div>
+          <div class="proj-type"><div class="checkbox"></div>Unknown / To be determined</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ATTACHMENTS -->
+  <div class="section">
+    <div class="section-header">Section 4 — Required Attachments Checklist</div>
+    <div class="section-body">
+      <ul class="checklist">
+        <li><div class="checkbox"></div>Site plan or diagram showing location, dimensions, and proximity to property lines</li>
+        <li><div class="checkbox"></div>Photographs of current condition of the area to be modified</li>
+        <li><div class="checkbox"></div>Material samples, color chips, or catalog photos of proposed materials</li>
+        <li><div class="checkbox"></div>Contractor license and insurance certificate (if contractor used)</li>
+        <li><div class="checkbox"></div>Copy of municipal building permit or permit application (if required)</li>
+        <li><div class="checkbox"></div>Engineered drawings (required for decks over 30" above grade and structural changes)</li>
+        <li><div class="checkbox"></div>Manufacturer specifications sheet (for solar panels, generators, and mechanical equipment)</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- OWNER CERTIFICATION -->
+  <div class="section">
+    <div class="section-header">Section 5 — Owner Certification and Signature</div>
+    <div class="section-body">
+      <div style="font-size: 14px; color: #374151; line-height: 1.7; margin-bottom: 16px;">I/We, the undersigned, hereby certify that all information provided in this application is true and accurate. I/We understand that: (1) work may not commence until written approval is received from the ARC; (2) any work performed without prior approval is subject to mandatory restoration at the owner's expense; (3) approval is contingent on compliance with all applicable codes, laws, and Association standards; and (4) the ARC may inspect completed work and require corrections if it deviates from the approved plans.</div>
+      <div class="form-grid">
+        <div class="form-row">
+          <div class="form-label">Owner Signature</div>
+          <div class="form-line"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">Date</div>
+          <div class="form-line"></div>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
+          <div class="form-label">Co-Owner Signature (if applicable)</div>
+          <div class="form-line"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">Date</div>
+          <div class="form-line"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARC USE ONLY -->
+  <div class="section">
+    <div class="section-header">For ARC Use Only — Do Not Complete</div>
+    <div class="section-body">
+      <div class="approval-block">
+        <div class="approval-label">Decision</div>
+        <div style="display:flex;gap:24px;margin-bottom:14px;">
+          <div class="proj-type"><div class="checkbox"></div>Approved</div>
+          <div class="proj-type"><div class="checkbox"></div>Approved with Conditions</div>
+          <div class="proj-type"><div class="checkbox"></div>Denied</div>
+          <div class="proj-type"><div class="checkbox"></div>Deferred — More Info Needed</div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">Conditions / Notes</div>
+          <div style="margin-top:6px;">
+            <div class="condition-row"><div class="condition-num">1</div><div class="condition-line"></div></div>
+            <div class="condition-row"><div class="condition-num">2</div><div class="condition-line"></div></div>
+            <div class="condition-row"><div class="condition-num">3</div><div class="condition-line"></div></div>
+          </div>
+        </div>
+        <div class="approval-grid" style="margin-top:16px;">
+          <div><div class="approval-row"></div><div class="approval-sub">ARC Member Signature</div></div>
+          <div><div class="approval-row"></div><div class="approval-sub">Print Name</div></div>
+          <div><div class="approval-row"></div><div class="approval-sub">Decision Date</div></div>
+        </div>
+        <div style="margin-top: 14px;">
+          <div class="form-label">Work Must Be Completed By</div>
+          <div class="form-line"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

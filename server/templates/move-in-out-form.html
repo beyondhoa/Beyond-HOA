@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Move-In / Move-Out Request Form — Beyond HOA</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; background: #f5f6fa; color: #1a1a2e; line-height: 1.6; padding: 24px 16px 60px; }
+    .page { max-width: 720px; margin: 0 auto; }
+    .header { background: linear-gradient(135deg, #0F2340 0%, #1a3a60 100%); border-radius: 16px; padding: 28px 28px 24px; margin-bottom: 24px; color: #fff; }
+    .header-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+    .hoa-name { font-size: 13px; font-weight: 600; letter-spacing: 1.2px; color: #C9A84C; margin-bottom: 4px; text-transform: uppercase; }
+    .doc-title { font-size: 26px; font-weight: 700; color: #fff; }
+    .doc-subtitle { font-size: 14px; color: rgba(255,255,255,0.65); margin-top: 4px; }
+    .badge { background: #C9A84C; color: #0F2340; font-size: 13px; font-weight: 700; padding: 6px 14px; border-radius: 20px; white-space: nowrap; height: fit-content; }
+    .notice { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #1e3a5f; margin-bottom: 24px; display: flex; gap: 8px; }
+    .notice-icon { font-size: 16px; flex-shrink: 0; }
+    .section { background: #fff; border-radius: 14px; margin-bottom: 20px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .section-header { background: #0F2340; padding: 12px 20px; color: #C9A84C; font-size: 13px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; }
+    .section-body { padding: 16px 20px; }
+    .form-row { margin-bottom: 18px; }
+    .form-row:last-child { margin-bottom: 0; }
+    .form-label { font-size: 12px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .form-line { border-bottom: 1.5px solid #d1d5db; min-height: 28px; width: 100%; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .form-textarea { border: 1.5px solid #d1d5db; border-radius: 8px; min-height: 70px; width: 100%; padding: 8px; }
+    .radio-row { display: flex; gap: 24px; margin-top: 8px; }
+    .radio-opt { display: flex; gap: 8px; align-items: center; font-size: 14px; color: #374151; }
+    .radio-circle { width: 18px; height: 18px; border: 2px solid #d1d5db; border-radius: 50%; flex-shrink: 0; }
+    .checklist { list-style: none; }
+    .checklist li { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid #f0f1f5; font-size: 14px; color: #374151; }
+    .checklist li:last-child { border-bottom: none; }
+    .checkbox { width: 18px; height: 18px; border: 2px solid #d1d5db; border-radius: 4px; flex-shrink: 0; margin-top: 2px; }
+    .info-card { background: #f9fafb; border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; }
+    .info-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f0f1f5; font-size: 14px; }
+    .info-row:last-child { border-bottom: none; }
+    .info-key { color: #6b7280; font-weight: 500; }
+    .info-val { color: #0F2340; font-weight: 600; }
+    .approval-block { border: 2px solid #0F2340; border-radius: 10px; padding: 16px; }
+    .approval-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-top: 10px; }
+    .approval-row { border-bottom: 1px solid #d1d5db; min-height: 28px; }
+    .approval-sub { font-size: 11px; color: #9ca3af; margin-top: 3px; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="hoa-name">Beyond HOA — Lakeview Commons</div>
+        <div class="doc-title">Move-In / Move-Out Request</div>
+        <div class="doc-subtitle">Required for Elevator &amp; Loading Dock Reservation</div>
+      </div>
+      <div class="badge">FORM</div>
+    </div>
+  </div>
+
+  <div class="notice">
+    <span class="notice-icon">ℹ️</span>
+    <span>All move-ins and move-outs require advance scheduling. Submit this form at least <strong>72 hours before</strong> your planned move date. Elevator and loading dock reservations are required and subject to availability. Moves without an approved reservation may be refused access to building facilities.</span>
+  </div>
+
+  <!-- MOVE TYPE -->
+  <div class="section">
+    <div class="section-header">Section 1 — Type of Move</div>
+    <div class="section-body">
+      <div class="form-row">
+        <div class="form-label">Move Type *</div>
+        <div class="radio-row">
+          <div class="radio-opt"><div class="radio-circle"></div>Moving In</div>
+          <div class="radio-opt"><div class="radio-circle"></div>Moving Out</div>
+          <div class="radio-opt"><div class="radio-circle"></div>Large Furniture Delivery Only</div>
+          <div class="radio-opt"><div class="radio-circle"></div>Appliance Delivery / Removal</div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-label">Resident Status *</div>
+        <div class="radio-row">
+          <div class="radio-opt"><div class="radio-circle"></div>Owner</div>
+          <div class="radio-opt"><div class="radio-circle"></div>New Tenant</div>
+          <div class="radio-opt"><div class="radio-circle"></div>Departing Tenant</div>
+          <div class="radio-opt"><div class="radio-circle"></div>Owner Representative</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESIDENT INFORMATION -->
+  <div class="section">
+    <div class="section-header">Section 2 — Resident Information</div>
+    <div class="section-body">
+      <div class="form-row">
+        <div class="form-label">Resident / Tenant Name(s) *</div>
+        <div class="form-line"></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
+          <div class="form-label">Unit Number *</div>
+          <div class="form-line"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">Floor</div>
+          <div class="form-line"></div>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
+          <div class="form-label">Phone Number *</div>
+          <div class="form-line"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">Email Address *</div>
+          <div class="form-line"></div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-label">Owner Name (if tenant submitting)</div>
+        <div class="form-line"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-label">Owner Contact / Phone (if tenant submitting)</div>
+        <div class="form-line"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOVE DATE AND TIME -->
+  <div class="section">
+    <div class="section-header">Section 3 — Move Date and Time</div>
+    <div class="section-body">
+      <div class="info-card">
+        <div class="info-row"><span class="info-key">Move Hours (Mon–Fri)</span><span class="info-val">8:00 AM – 5:00 PM</span></div>
+        <div class="info-row"><span class="info-key">Move Hours (Saturday)</span><span class="info-val">9:00 AM – 4:00 PM</span></div>
+        <div class="info-row"><span class="info-key">Sundays & Holidays</span><span class="info-val">Not Permitted</span></div>
+        <div class="info-row"><span class="info-key">Maximum Booking</span><span class="info-val">4 hours per reservation</span></div>
+        <div class="info-row"><span class="info-key">Elevator Padding Deposit</span><span class="info-val">$250 refundable (charged at booking)</span></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
+          <div class="form-label">Requested Move Date *</div>
+          <div class="form-line"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">Day of Week</div>
+          <div class="form-line"></div>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
+          <div class="form-label">Start Time Requested *</div>
+          <div class="form-line"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">End Time Requested *</div>
+          <div class="form-line"></div>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
+          <div class="form-label">Alternate Date (if first unavailable)</div>
+          <div class="form-line"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">Alternate Start Time</div>
+          <div class="form-line"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOVE DETAILS -->
+  <div class="section">
+    <div class="section-header">Section 4 — Move Details</div>
+    <div class="section-body">
+      <div class="form-row">
+        <div class="form-label">Moving Company Name (or "Self-Move")</div>
+        <div class="form-line"></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
+          <div class="form-label">Moving Company Phone</div>
+          <div class="form-line"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">Number of Movers</div>
+          <div class="form-line"></div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-label">Vehicle Type(s) — Describe truck/van sizes</div>
+        <div class="form-line"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-label">Estimated Volume (check one)</div>
+        <div class="radio-row" style="flex-wrap:wrap;gap:12px;margin-top:8px;">
+          <div class="radio-opt"><div class="radio-circle"></div>Studio / Small (1 bedroom)</div>
+          <div class="radio-opt"><div class="radio-circle"></div>Standard (2–3 bedrooms)</div>
+          <div class="radio-opt"><div class="radio-circle"></div>Large (3+ bedrooms / full household)</div>
+          <div class="radio-opt"><div class="radio-circle"></div>Furniture / Items Only</div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-label">Special Equipment or Oversized Items (piano, safe, large appliance, etc.)</div>
+        <div class="form-textarea"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-label">Elevator Required?</div>
+        <div class="radio-row">
+          <div class="radio-opt"><div class="radio-circle"></div>Yes — Reservation Required</div>
+          <div class="radio-opt"><div class="radio-circle"></div>No — Ground Floor Unit</div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-label">Loading Dock Access Required?</div>
+        <div class="radio-row">
+          <div class="radio-opt"><div class="radio-circle"></div>Yes</div>
+          <div class="radio-opt"><div class="radio-circle"></div>No</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHECKLIST -->
+  <div class="section">
+    <div class="section-header">Section 5 — Pre-Move Checklist (complete all that apply)</div>
+    <div class="section-body">
+      <ul class="checklist">
+        <li><div class="checkbox"></div>All assessments are current and paid through the move date</li>
+        <li><div class="checkbox"></div>Move-in inspection scheduled with management office (new tenants/owners)</li>
+        <li><div class="checkbox"></div>Move-out inspection scheduled with management office (departing residents)</li>
+        <li><div class="checkbox"></div>Key fob(s) and parking hang tag(s) obtained (new residents) or returned (departing)</li>
+        <li><div class="checkbox"></div>Pet(s) registered with management office (if applicable)</li>
+        <li><div class="checkbox"></div>Vehicle(s) registered for parking assignments</li>
+        <li><div class="checkbox"></div>Elevator padding deposit payment arranged ($250 refundable)</li>
+        <li><div class="checkbox"></div>Moving company notified of building rules and access requirements</li>
+        <li><div class="checkbox"></div>Utility transfer notifications sent to electric, gas, and water providers</li>
+        <li><div class="checkbox"></div>Forwarding address provided to management office (departing residents)</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- AGREEMENT -->
+  <div class="section">
+    <div class="section-header">Section 6 — Resident Agreement and Signature</div>
+    <div class="section-body">
+      <div style="font-size: 14px; color: #374151; line-height: 1.7; margin-bottom: 16px;">I/We understand and agree that: (1) all moves must be conducted during approved hours only; (2) the loading dock and elevator are for move use only during the reserved time; (3) I am responsible for any damage to common areas caused by movers or moving activities, and such damage will be charged to the unit; (4) the $250 elevator padding deposit will be refunded within 5 business days after a satisfactory post-move inspection confirms no damage; and (5) violations of these terms may result in loss of move reservation and forfeiture of the deposit.</div>
+      <div class="form-grid">
+        <div class="form-row">
+          <div class="form-label">Resident Signature *</div>
+          <div class="form-line"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">Date</div>
+          <div class="form-line"></div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-label">Print Name</div>
+        <div class="form-line"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MANAGEMENT USE -->
+  <div class="section">
+    <div class="section-header">For Management Use Only</div>
+    <div class="section-body">
+      <div class="approval-block">
+        <div style="display:flex;gap:24px;margin-bottom:12px;">
+          <div class="radio-opt"><div class="radio-circle"></div>Approved</div>
+          <div class="radio-opt"><div class="radio-circle"></div>Approved — Modified Date/Time</div>
+          <div class="radio-opt"><div class="radio-circle"></div>Denied</div>
+        </div>
+        <div class="form-grid">
+          <div class="form-row">
+            <div class="form-label">Confirmed Date</div>
+            <div class="form-line"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-label">Confirmed Time Window</div>
+            <div class="form-line"></div>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-row">
+            <div class="form-label">Deposit Collected?</div>
+            <div class="form-line"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-label">Deposit Method</div>
+            <div class="form-line"></div>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-row">
+            <div class="form-label">Deposit Refunded?</div>
+            <div class="form-line"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-label">Damage Noted?</div>
+            <div class="form-line"></div>
+          </div>
+        </div>
+        <div class="approval-grid">
+          <div><div class="approval-row"></div><div class="approval-sub">Staff Signature</div></div>
+          <div><div class="approval-row"></div><div class="approval-sub">Print Name</div></div>
+          <div><div class="approval-row"></div><div class="approval-sub">Date Processed</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

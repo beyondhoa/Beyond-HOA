@@ -29,18 +29,18 @@ interface HoaDocument {
 }
 
 const SEED_DOCS: HoaDocument[] = [
-  { id: "1", title: "HOA Bylaws – 2024 Revision", category: "bylaws", date: "2024-01-15", size: "1.2 MB", description: "Governing bylaws for Beyond HOA, revised January 2024." },
-  { id: "2", title: "Community Rules & Regulations", category: "rules", date: "2024-03-01", size: "856 KB", description: "Complete rules covering landscaping, parking, noise, and pets." },
-  { id: "3", title: "Architectural Review Guidelines", category: "rules", date: "2023-11-10", size: "432 KB", description: "Standards and approval process for exterior modifications." },
+  { id: "1", title: "HOA Bylaws – 2024 Revision", category: "bylaws", date: "2024-01-15", size: "1.2 MB", description: "Governing bylaws for Beyond HOA, revised January 2024.", docPath: "/documents/bylaws-2024" },
+  { id: "2", title: "Community Rules & Regulations", category: "rules", date: "2024-03-01", size: "856 KB", description: "Complete rules covering landscaping, parking, noise, and pets.", docPath: "/documents/rules-regulations" },
+  { id: "3", title: "Architectural Review Guidelines", category: "rules", date: "2023-11-10", size: "432 KB", description: "Standards and approval process for exterior modifications.", docPath: "/documents/architectural-guidelines" },
   { id: "4", title: "Q4 2025 Board Meeting Minutes", category: "minutes", date: "2025-12-20", size: "124 KB", description: "Official minutes from the December quarterly board meeting.", docPath: "/documents/minutes-q4-2025" },
   { id: "5", title: "Q3 2025 Board Meeting Minutes", category: "minutes", date: "2025-09-18", size: "118 KB", description: "Official minutes from the September quarterly board meeting.", docPath: "/documents/minutes-q3-2025" },
-  { id: "6", title: "Annual Financial Report 2025", category: "financial", date: "2026-01-31", size: "2.1 MB", description: "Year-end financial statements and budget overview for 2025." },
+  { id: "6", title: "Annual Financial Report 2025", category: "financial", date: "2026-01-31", size: "2.1 MB", description: "Year-end financial statements and budget overview for 2025.", docPath: "/documents/financial-report-2025" },
   { id: "7", title: "2026 Operating Budget", category: "financial", date: "2025-12-01", size: "445 KB", description: "Approved operating and reserve budget for fiscal year 2026.", docPath: "/documents/budget-2026" },
-  { id: "8", title: "Architectural Request Form", category: "forms", date: "2024-01-01", size: "88 KB", description: "Submit for any exterior changes requiring board approval." },
-  { id: "9", title: "Move-In/Out Request Form", category: "forms", date: "2024-01-01", size: "56 KB", description: "Required for scheduling elevator and loading dock access." },
-  { id: "10", title: "CC&Rs – Declaration of Covenants", category: "legal", date: "2015-06-10", size: "3.4 MB", description: "Original Declaration of Covenants, Conditions, and Restrictions." },
-  { id: "11", title: "Reserve Study 2024–2034", category: "financial", date: "2024-07-01", size: "1.8 MB", description: "10-year reserve study and funding plan for major repairs." },
-  { id: "12", title: "Pet Policy Addendum", category: "rules", date: "2023-05-15", size: "92 KB", description: "Updated pet registration requirements and breed restrictions." },
+  { id: "8", title: "Architectural Request Form", category: "forms", date: "2024-01-01", size: "88 KB", description: "Submit for any exterior changes requiring board approval.", docPath: "/documents/architectural-request-form" },
+  { id: "9", title: "Move-In/Out Request Form", category: "forms", date: "2024-01-01", size: "56 KB", description: "Required for scheduling elevator and loading dock access.", docPath: "/documents/move-in-out-form" },
+  { id: "10", title: "CC&Rs – Declaration of Covenants", category: "legal", date: "2015-06-10", size: "3.4 MB", description: "Original Declaration of Covenants, Conditions, and Restrictions.", docPath: "/documents/ccrs-declaration" },
+  { id: "11", title: "Reserve Study 2024–2034", category: "financial", date: "2024-07-01", size: "1.8 MB", description: "10-year reserve study and funding plan for major repairs.", docPath: "/documents/reserve-study-2024" },
+  { id: "12", title: "Pet Policy Addendum", category: "rules", date: "2023-05-15", size: "92 KB", description: "Updated pet registration requirements and breed restrictions.", docPath: "/documents/pet-policy" },
 ];
 
 const STORAGE_KEY = "hoa_documents";

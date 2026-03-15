@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Architectural Review Guidelines — Beyond HOA</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; background: #f5f6fa; color: #1a1a2e; line-height: 1.6; padding: 24px 16px 60px; }
+    .page { max-width: 720px; margin: 0 auto; }
+    .header { background: linear-gradient(135deg, #0F2340 0%, #1a3a60 100%); border-radius: 16px; padding: 28px 28px 24px; margin-bottom: 24px; color: #fff; }
+    .header-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+    .hoa-name { font-size: 13px; font-weight: 600; letter-spacing: 1.2px; color: #C9A84C; margin-bottom: 4px; text-transform: uppercase; }
+    .doc-title { font-size: 26px; font-weight: 700; color: #fff; }
+    .doc-subtitle { font-size: 14px; color: rgba(255,255,255,0.65); margin-top: 4px; }
+    .badge { background: #7C3AED; color: #fff; font-size: 13px; font-weight: 700; padding: 6px 14px; border-radius: 20px; white-space: nowrap; height: fit-content; }
+    .header-meta { display: flex; gap: 24px; margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.12); flex-wrap: wrap; }
+    .meta-label { font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.8px; }
+    .meta-value { font-size: 15px; font-weight: 600; color: #fff; margin-top: 2px; }
+    .section { background: #fff; border-radius: 14px; margin-bottom: 20px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .section-header { display: flex; align-items: center; gap: 10px; padding: 14px 20px; border-bottom: 1px solid #f0f1f5; background: #fafbff; }
+    .section-icon { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+    .section-title { font-size: 15px; font-weight: 700; color: #0F2340; }
+    .section-body { padding: 16px 20px; }
+    .guideline { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #f0f1f5; }
+    .guideline:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+    .guideline-title { font-size: 14px; font-weight: 700; color: #0F2340; margin-bottom: 6px; }
+    .guideline-text { font-size: 14px; color: #374151; line-height: 1.7; }
+    .guideline-list { margin-top: 8px; padding-left: 20px; }
+    .guideline-list li { font-size: 14px; color: #374151; margin-bottom: 5px; line-height: 1.6; }
+    .process-step { display: flex; gap: 14px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #f0f1f5; align-items: flex-start; }
+    .process-step:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+    .step-num { width: 30px; height: 30px; border-radius: 50%; background: #0F2340; color: #C9A84C; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+    .step-body { flex: 1; }
+    .step-title { font-size: 14px; font-weight: 700; color: #0F2340; margin-bottom: 4px; }
+    .step-text { font-size: 14px; color: #374151; line-height: 1.6; }
+    .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .status-card { border-radius: 10px; padding: 14px; }
+    .status-card.approved { background: #f0fdf4; border: 1px solid #bbf7d0; }
+    .status-card.requires { background: #fffbeb; border: 1px solid #fcd34d; }
+    .status-card.prohibited { background: #fef2f2; border: 1px solid #fecaca; }
+    .status-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .status-card.approved .status-label { color: #16a34a; }
+    .status-card.requires .status-label { color: #b45309; }
+    .status-card.prohibited .status-label { color: #dc2626; }
+    .status-list { font-size: 13px; color: #374151; line-height: 1.8; }
+    .notice { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #78350f; margin-bottom: 24px; display: flex; gap: 8px; }
+    .notice-icon { font-size: 16px; flex-shrink: 0; }
+    .timeline-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f1f5; }
+    .timeline-row:last-child { border-bottom: none; }
+    .timeline-event { font-size: 14px; font-weight: 600; color: #1f2937; }
+    .timeline-days { font-size: 14px; color: #6b7280; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="hoa-name">Beyond HOA — Lakeview Commons</div>
+        <div class="doc-title">Architectural Review Guidelines</div>
+        <div class="doc-subtitle">Standards and Approval Process — Revised November 10, 2023</div>
+      </div>
+      <div class="badge">ARC</div>
+    </div>
+    <div class="header-meta">
+      <div class="meta-item"><div class="meta-label">Revised</div><div class="meta-value">November 10, 2023</div></div>
+      <div class="meta-item"><div class="meta-label">ARC Members</div><div class="meta-value">3 (Board-Appointed)</div></div>
+      <div class="meta-item"><div class="meta-label">Review Period</div><div class="meta-value">30 Days</div></div>
+    </div>
+  </div>
+
+  <div class="notice">
+    <span class="notice-icon">⚠️</span>
+    <span><strong>Important:</strong> Beginning any exterior modification without prior ARC approval is a violation of the Bylaws and may result in mandatory restoration at the owner's expense. When in doubt, submit an application before starting work.</span>
+  </div>
+
+  <!-- WHAT REQUIRES APPROVAL -->
+  <div class="section">
+    <div class="section-header"><div class="section-icon" style="background:#eff6ff;">📋</div><span class="section-title">What Requires ARC Approval</span></div>
+    <div class="section-body">
+      <div style="margin-bottom: 16px; font-size: 14px; color: #374151; line-height: 1.7;">Any alteration, addition, or improvement to the exterior of a unit or any portion of the property visible from common areas or neighboring units requires prior written approval from the Architectural Review Committee.</div>
+      <div class="status-grid">
+        <div class="status-card approved">
+          <div class="status-label">✓ Pre-Approved (No Application)</div>
+          <div class="status-list">
+            Like-for-like paint (same color)<br>
+            Window screen replacement<br>
+            Interior modifications<br>
+            Storm door (approved models)<br>
+            Seasonal wreaths &lt; 24"
+          </div>
+        </div>
+        <div class="status-card requires">
+          <div class="status-label">⚡ Application Required</div>
+          <div class="status-list">
+            Exterior paint (color change)<br>
+            New or replacement doors<br>
+            Deck/patio construction<br>
+            Fencing installation<br>
+            Solar panels<br>
+            Satellite dishes &gt; 18"<br>
+            Generator installations<br>
+            Landscaping redesign
+          </div>
+        </div>
+        <div class="status-card prohibited" style="grid-column: 1 / -1;">
+          <div class="status-label">✗ Prohibited (No Exceptions)</div>
+          <div class="status-list">
+            Detached storage structures (sheds, barns) · Commercial signage · Roof additions or dormers · Outdoor wood-burning fireplaces or fire pits within 20 ft. of structures · Above-ground pools · Exterior lighting exceeding 1,500 lumens without shielding
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPLICATION PROCESS -->
+  <div class="section">
+    <div class="section-header"><div class="section-icon" style="background:#f0fdf4;">📝</div><span class="section-title">Application Process</span></div>
+    <div class="section-body">
+      <div class="process-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Complete the Application</div>
+          <div class="step-text">Download and complete the Architectural Review Request Form (available in the Documents section of the Beyond HOA app or from the management office). Provide detailed description of proposed work, materials, colors, and dimensions.</div>
+        </div>
+      </div>
+      <div class="process-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Submit Supporting Documents</div>
+          <div class="step-text">Include site plan or sketch showing location and dimensions; samples or photos of materials and colors; contractor name and license number (if applicable); and any required municipal permits (if applicable). Incomplete applications will be returned without review.</div>
+        </div>
+      </div>
+      <div class="process-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">ARC Review</div>
+          <div class="step-text">The ARC will review your application within thirty (30) calendar days of receiving a complete application. The ARC may request additional information, schedule a site visit, or conditionally approve an application with modifications.</div>
+        </div>
+      </div>
+      <div class="process-step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">Receive Written Decision</div>
+          <div class="step-text">You will receive a written decision via email. Approval letters include any conditions that must be met. Work must commence within ninety (90) days of approval and be completed within the timeframe specified in the approval letter (typically 90 days for minor work, 180 days for major projects).</div>
+        </div>
+      </div>
+      <div class="process-step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <div class="step-title">Final Inspection</div>
+          <div class="step-text">Upon completion, notify the ARC in writing for a final inspection. The ARC will inspect the completed work to confirm compliance with the approved plans within fifteen (15) days of notification. Non-compliant work must be corrected within thirty (30) days or be subject to restoration orders.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REVIEW TIMELINE -->
+  <div class="section">
+    <div class="section-header"><div class="section-icon" style="background:#fef3c7;">📅</div><span class="section-title">Review Timeline</span></div>
+    <div class="section-body">
+      <div class="timeline-row"><span class="timeline-event">Application submitted (complete)</span><span class="timeline-days">Day 0</span></div>
+      <div class="timeline-row"><span class="timeline-event">Acknowledgment sent to applicant</span><span class="timeline-days">Within 3 business days</span></div>
+      <div class="timeline-row"><span class="timeline-event">Site visit (if required)</span><span class="timeline-days">Within 14 days</span></div>
+      <div class="timeline-row"><span class="timeline-event">Written decision issued</span><span class="timeline-days">Within 30 days</span></div>
+      <div class="timeline-row"><span class="timeline-event">Work must commence (if approved)</span><span class="timeline-days">Within 90 days</span></div>
+      <div class="timeline-row"><span class="timeline-event">Work must be completed</span><span class="timeline-days">Per approval letter</span></div>
+      <div class="timeline-row"><span class="timeline-event">Final inspection conducted</span><span class="timeline-days">Within 15 days of notice</span></div>
+    </div>
+  </div>
+
+  <!-- DESIGN STANDARDS -->
+  <div class="section">
+    <div class="section-header"><div class="section-icon" style="background:#fdf4ff;">🎨</div><span class="section-title">Design Standards</span></div>
+    <div class="section-body">
+      <div class="guideline">
+        <div class="guideline-title">Exterior Colors</div>
+        <div class="guideline-text">Exterior paint colors must harmonize with the community's established color palette. The ARC-approved color families are earth tones (warm beiges, taupes, sage greens), coastal neutrals (soft grays, slate blues, off-whites), and traditional brick complement colors. Bright or primary colors, fluorescent finishes, and high-gloss paint on siding are not approved. The ARC maintains a binder of approved colors available for inspection at the management office.</div>
+      </div>
+      <div class="guideline">
+        <div class="guideline-title">Fencing</div>
+        <div class="guideline-text">Permitted fence materials include cedar, redwood, pressure-treated pine (painted or stained), vinyl in earth tones, and black powder-coated aluminum. Maximum height is 6 feet in rear yards and 4 feet in side yards visible from the street. Chain-link, barbed wire, and corrugated metal fencing are prohibited.</div>
+      </div>
+      <div class="guideline">
+        <div class="guideline-title">Decks and Patios</div>
+        <div class="guideline-text">Decks must be constructed of approved materials: natural wood (sealed or stained), composite decking in earth tones, or stamped/brushed concrete for patios. All decks must include proper drainage and conform to applicable building codes. Decks over 30 inches above grade require engineered plans and a municipal building permit, which must be submitted with the ARC application.</div>
+      </div>
+      <div class="guideline">
+        <div class="guideline-title">Solar Panels</div>
+        <div class="guideline-text">Solar panels are permitted on rear roof slopes not visible from the street or must be architecturally integrated. Panels must not extend beyond the roofline. Wiring and conduit must be concealed or painted to match exterior. ARC approval required but cannot be unreasonably withheld for solar installations under State solar access laws.</div>
+      </div>
+      <div class="guideline">
+        <div class="guideline-title">Doors and Windows</div>
+        <div class="guideline-text">Replacement windows must match or improve the style and proportion of original windows. Reflective, tinted, or painted glass is prohibited. Entry doors may be painted in accent colors within the approved palette (burgundy, forest green, navy, charcoal, and classic black are pre-approved accent door colors). Storm doors must be full-view style in the appropriate finish for the door color.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPEALS -->
+  <div class="section">
+    <div class="section-header"><div class="section-icon" style="background:#fef2f2;">⚖️</div><span class="section-title">Appeals Process</span></div>
+    <div class="section-body">
+      <div class="guideline">
+        <div class="guideline-title">Grounds for Appeal</div>
+        <div class="guideline-text">Applicants who receive a denial or conditional approval from the ARC may appeal to the full Board of Directors within fifteen (15) calendar days of receiving the written decision. Appeals must be in writing and state specifically the grounds for the appeal and any new information not previously considered.</div>
+      </div>
+      <div class="guideline">
+        <div class="guideline-title">Appeal Hearing</div>
+        <div class="guideline-text">The Board shall hear the appeal at the next regularly scheduled Board meeting following receipt of the appeal, provided the appeal is received at least seven (7) days before the meeting. The applicant may present their case for up to ten (10) minutes. The Board's decision shall be final and rendered in writing within five (5) business days of the hearing.</div>
+      </div>
+      <div class="guideline">
+        <div class="guideline-title">ARC Contact</div>
+        <div class="guideline-text">ARC inquiries: arc@beyondhoa.com | Application forms and standards binder are available at the management office (Suite 100) during business hours, Monday–Friday 9:00 AM – 5:00 PM, or through the Beyond HOA app Document Library.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

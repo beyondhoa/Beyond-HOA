@@ -282,6 +282,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile(filePath);
   });
 
+  app.get("/documents/bylaws-2024", (_req, res) => {
+    const filePath = require("path").resolve(process.cwd(), "server", "templates", "bylaws-2024.html");
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.sendFile(filePath);
+  });
+
+  app.get("/documents/rules-regulations", (_req, res) => {
+    const filePath = require("path").resolve(process.cwd(), "server", "templates", "rules-regulations.html");
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.sendFile(filePath);
+  });
+
+  app.get("/documents/architectural-guidelines", (_req, res) => {
+    const filePath = require("path").resolve(process.cwd(), "server", "templates", "architectural-guidelines.html");
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.sendFile(filePath);
+  });
+
+  app.get("/documents/financial-report-2025", (_req, res) => {
+    const filePath = require("path").resolve(process.cwd(), "server", "templates", "financial-report-2025.html");
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.sendFile(filePath);
+  });
+
+  app.get("/documents/ccrs-declaration", (_req, res) => {
+    const filePath = require("path").resolve(process.cwd(), "server", "templates", "ccrs-declaration.html");
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.sendFile(filePath);
+  });
+
+  app.get("/documents/reserve-study-2024", (_req, res) => {
+    const filePath = require("path").resolve(process.cwd(), "server", "templates", "reserve-study-2024.html");
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.sendFile(filePath);
+  });
+
+  app.get("/documents/pet-policy", (_req, res) => {
+    const filePath = require("path").resolve(process.cwd(), "server", "templates", "pet-policy.html");
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.sendFile(filePath);
+  });
+
+  app.get("/documents/architectural-request-form", (_req, res) => {
+    const filePath = require("path").resolve(process.cwd(), "server", "templates", "architectural-request-form.html");
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.sendFile(filePath);
+  });
+
+  app.get("/documents/move-in-out-form", (_req, res) => {
+    const filePath = require("path").resolve(process.cwd(), "server", "templates", "move-in-out-form.html");
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.sendFile(filePath);
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
