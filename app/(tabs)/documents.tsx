@@ -8,7 +8,8 @@ import {
   Platform,
   RefreshControl,
   TextInput,
-  Alert,
+  Modal,
+  Pressable,
   Linking,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -56,12 +57,23 @@ const categoryConfig: Record<string, { label: string; color: string; icon: any }
 
 const CATEGORIES = ["all", "bylaws", "rules", "minutes", "financial", "forms", "legal"] as const;
 
+function openDocUrl(docPath: string) {
+  const url = new URL(docPath, getApiUrl()).toString();
+  if (Platform.OS === "web") {
+    window.open(url, "_blank", "noopener,noreferrer");
+  } else {
+    Linking.openURL(url).catch(() => {});
+  }
+}
+
 export default function DocumentsScreen() {
   const insets = useSafeAreaInsets();
   const [docs, setDocs] = useState<HoaDocument[]>([]);
   const [filter, setFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState<HoaDocument | null>(null);
+  const topPadding = Platform.OS === "web" ? 67 : insets.top;
 
   const seedMap = Object.fromEntries(SEED_DOCS.map((d) => [d.id, d]));
   const mergePaths = (list: HoaDocument[]) =>
@@ -91,26 +103,7 @@ export default function DocumentsScreen() {
 
   const handleOpen = (doc: HoaDocument) => {
     Haptics.selectionAsync();
-    const dateStr = new Date(doc.date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-    const buttons: { text: string; style?: "cancel" | "default" | "destructive"; onPress?: () => void }[] = [
-      { text: "Close", style: "cancel" },
-    ];
-    if (doc.docPath) {
-      buttons.push({
-        text: "View Document",
-        onPress: () => {
-          const url = new URL(doc.docPath!, getApiUrl()).toString();
-          Linking.openURL(url).catch(() =>
-            Alert.alert("Unable to open", "Could not open the document. Please try again.")
-          );
-        },
-      });
-    }
-    Alert.alert(
-      doc.title,
-      `${doc.description}\n\nFile size: ${doc.size}\nUpdated: ${dateStr}${doc.docPath ? "" : "\n\nDocument not yet available for viewing."}`,
-      buttons
-    );
+    setSelectedDoc(doc);
   };
 
   const filtered = docs
@@ -119,7 +112,7 @@ export default function DocumentsScreen() {
       !search || d.title.toLowerCase().includes(search.toLowerCase()) || d.description.toLowerCase().includes(search.toLowerCase())
     );
 
-  const topPadding = Platform.OS === "web" ? 67 : insets.top;
+  const selectedConfig = selectedDoc ? categoryConfig[selectedDoc.category] : null;
 
   return (
     <View style={[styles.container, { paddingTop: topPadding }]}>
@@ -216,6 +209,75 @@ export default function DocumentsScreen() {
         </View>
         <View style={{ height: Platform.OS === "web" ? 34 : 100 }} />
       </ScrollView>
+
+      {/* Document Detail Modal */}
+      <Modal
+        visible={!!selectedDoc}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setSelectedDoc(null)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setSelectedDoc(null)}>
+          <Pressable style={styles.modalSheet} onPress={(e) => e.stopPropagation()}>
+            {selectedDoc && selectedConfig && (
+              <>
+                <View style={styles.modalHandle} />
+
+                <View style={styles.modalHeader}>
+                  <View style={[styles.modalDocIcon, { backgroundColor: selectedConfig.color + "18" }]}>
+                    <Ionicons name={selectedConfig.icon} size={28} color={selectedConfig.color} />
+                  </View>
+                  <View style={styles.modalHeaderText}>
+                    <View style={[styles.catBadge, { backgroundColor: selectedConfig.color + "18", alignSelf: "flex-start", marginBottom: 6 }]}>
+                      <Text style={[styles.catBadgeText, { color: selectedConfig.color }]}>{selectedConfig.label}</Text>
+                    </View>
+                    <Text style={styles.modalTitle}>{selectedDoc.title}</Text>
+                  </View>
+                </View>
+
+                <Text style={styles.modalDesc}>{selectedDoc.description}</Text>
+
+                <View style={styles.modalMeta}>
+                  <View style={styles.modalMetaItem}>
+                    <Ionicons name="calendar-outline" size={14} color={Colors.textSecondary} />
+                    <Text style={styles.modalMetaText}>
+                      {new Date(selectedDoc.date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                    </Text>
+                  </View>
+                  <View style={styles.modalMetaItem}>
+                    <Ionicons name="document-outline" size={14} color={Colors.textSecondary} />
+                    <Text style={styles.modalMetaText}>{selectedDoc.size}</Text>
+                  </View>
+                </View>
+
+                <View style={styles.modalActions}>
+                  <TouchableOpacity style={styles.closeBtn} onPress={() => setSelectedDoc(null)} activeOpacity={0.7}>
+                    <Text style={styles.closeBtnText}>Close</Text>
+                  </TouchableOpacity>
+                  {selectedDoc.docPath ? (
+                    <TouchableOpacity
+                      style={styles.viewBtn}
+                      activeOpacity={0.8}
+                      onPress={() => {
+                        setSelectedDoc(null);
+                        openDocUrl(selectedDoc.docPath!);
+                      }}
+                    >
+                      <Ionicons name="open-outline" size={16} color="#fff" />
+                      <Text style={styles.viewBtnText}>View Document</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <View style={[styles.viewBtn, { opacity: 0.4 }]}>
+                      <Ionicons name="time-outline" size={16} color="#fff" />
+                      <Text style={styles.viewBtnText}>Coming Soon</Text>
+                    </View>
+                  )}
+                </View>
+              </>
+            )}
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -333,8 +395,111 @@ const styles = StyleSheet.create({
   docTitle: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: Colors.text },
   docDesc: { fontFamily: "Inter_400Regular", fontSize: 12, color: Colors.textSecondary, marginTop: 2 },
   docCardLinked: { borderWidth: 1, borderColor: Colors.success + "40" },
-  availableBadge: { flexDirection: "row", alignItems: "center", gap: 3, backgroundColor: Colors.success + "18", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
-  availableBadgeText: { fontFamily: "Inter_600SemiBold", fontSize: 9, color: Colors.success, textTransform: "uppercase", letterSpacing: 0.4 },
+  availableBadge: {
+    flexDirection: "row", alignItems: "center", gap: 3,
+    backgroundColor: Colors.success + "18", paddingHorizontal: 6,
+    paddingVertical: 2, borderRadius: 6,
+  },
+  availableBadgeText: {
+    fontFamily: "Inter_600SemiBold", fontSize: 9, color: Colors.success,
+    textTransform: "uppercase", letterSpacing: 0.4,
+  },
   emptyState: { alignItems: "center", paddingVertical: 60, gap: 12 },
   emptyText: { fontFamily: "Inter_400Regular", fontSize: 15, color: Colors.slate },
+
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  modalSheet: {
+    backgroundColor: Colors.card,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: Platform.OS === "web" ? 34 : 40,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: Colors.border,
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: 20,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 14,
+    marginBottom: 14,
+  },
+  modalDocIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  modalHeaderText: { flex: 1 },
+  modalTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 17,
+    color: Colors.text,
+    lineHeight: 24,
+  },
+  modalDesc: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+    color: Colors.textSecondary,
+    lineHeight: 21,
+    marginBottom: 16,
+  },
+  modalMeta: {
+    flexDirection: "row",
+    gap: 20,
+    marginBottom: 24,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+  modalMetaItem: { flexDirection: "row", alignItems: "center", gap: 6 },
+  modalMetaText: { fontFamily: "Inter_400Regular", fontSize: 13, color: Colors.textSecondary },
+  modalActions: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  closeBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: "center",
+  },
+  closeBtnText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 15,
+    color: Colors.textSecondary,
+  },
+  viewBtn: {
+    flex: 2,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: Colors.navy,
+  },
+  viewBtnText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 15,
+    color: "#fff",
+  },
 });
