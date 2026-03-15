@@ -1,8 +1,18 @@
 import type { Express } from "express";
 import { createServer, type Server } from "node:http";
+import { resolve as resolvePath } from "node:path";
+import { fileURLToPath } from "node:url";
+import { dirname } from "node:path";
 import OpenAI from "openai";
 import { pool } from "./db";
 import { createCheckoutSession, retrieveCheckoutSession, isStripeConfigured } from "./stripeClient";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+function templatePath(name: string): string {
+  return resolvePath(__dirname, "..", "server", "templates", name);
+}
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
@@ -266,73 +276,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/documents/budget-2026", (_req, res) => {
-    const filePath = require("path").resolve(process.cwd(), "server", "templates", "budget-2026.html");
+    const filePath = templatePath("budget-2026.html");
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.sendFile(filePath);
   });
 
   app.get("/documents/minutes-q4-2025", (_req, res) => {
-    const filePath = require("path").resolve(process.cwd(), "server", "templates", "minutes-q4-2025.html");
+    const filePath = templatePath("minutes-q4-2025.html");
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.sendFile(filePath);
   });
 
   app.get("/documents/minutes-q3-2025", (_req, res) => {
-    const filePath = require("path").resolve(process.cwd(), "server", "templates", "minutes-q3-2025.html");
+    const filePath = templatePath("minutes-q3-2025.html");
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.sendFile(filePath);
   });
 
   app.get("/documents/bylaws-2024", (_req, res) => {
-    const filePath = require("path").resolve(process.cwd(), "server", "templates", "bylaws-2024.html");
+    const filePath = templatePath("bylaws-2024.html");
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.sendFile(filePath);
   });
 
   app.get("/documents/rules-regulations", (_req, res) => {
-    const filePath = require("path").resolve(process.cwd(), "server", "templates", "rules-regulations.html");
+    const filePath = templatePath("rules-regulations.html");
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.sendFile(filePath);
   });
 
   app.get("/documents/architectural-guidelines", (_req, res) => {
-    const filePath = require("path").resolve(process.cwd(), "server", "templates", "architectural-guidelines.html");
+    const filePath = templatePath("architectural-guidelines.html");
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.sendFile(filePath);
   });
 
   app.get("/documents/financial-report-2025", (_req, res) => {
-    const filePath = require("path").resolve(process.cwd(), "server", "templates", "financial-report-2025.html");
+    const filePath = templatePath("financial-report-2025.html");
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.sendFile(filePath);
   });
 
   app.get("/documents/ccrs-declaration", (_req, res) => {
-    const filePath = require("path").resolve(process.cwd(), "server", "templates", "ccrs-declaration.html");
+    const filePath = templatePath("ccrs-declaration.html");
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.sendFile(filePath);
   });
 
   app.get("/documents/reserve-study-2024", (_req, res) => {
-    const filePath = require("path").resolve(process.cwd(), "server", "templates", "reserve-study-2024.html");
+    const filePath = templatePath("reserve-study-2024.html");
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.sendFile(filePath);
   });
 
   app.get("/documents/pet-policy", (_req, res) => {
-    const filePath = require("path").resolve(process.cwd(), "server", "templates", "pet-policy.html");
+    const filePath = templatePath("pet-policy.html");
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.sendFile(filePath);
   });
 
   app.get("/documents/architectural-request-form", (_req, res) => {
-    const filePath = require("path").resolve(process.cwd(), "server", "templates", "architectural-request-form.html");
+    const filePath = templatePath("architectural-request-form.html");
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.sendFile(filePath);
   });
 
   app.get("/documents/move-in-out-form", (_req, res) => {
-    const filePath = require("path").resolve(process.cwd(), "server", "templates", "move-in-out-form.html");
+    const filePath = templatePath("move-in-out-form.html");
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.sendFile(filePath);
   });

@@ -1,15 +1,11 @@
-var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, {
-  get: (a, b) => (typeof require !== "undefined" ? require : a)[b]
-}) : x)(function(x) {
-  if (typeof require !== "undefined") return require.apply(this, arguments);
-  throw Error('Dynamic require of "' + x + '" is not supported');
-});
-
 // server/index.ts
 import express from "express";
 
 // server/routes.ts
 import { createServer } from "node:http";
+import { resolve as resolvePath } from "node:path";
+import { fileURLToPath } from "node:url";
+import { dirname } from "node:path";
 import OpenAI from "openai";
 
 // server/db.ts
@@ -74,6 +70,11 @@ async function retrieveCheckoutSession(sessionId) {
 }
 
 // server/routes.ts
+var __filename = fileURLToPath(import.meta.url);
+var __dirname = dirname(__filename);
+function templatePath(name) {
+  return resolvePath(__dirname, "..", "server", "templates", name);
+}
 var openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL
@@ -333,62 +334,62 @@ async function registerRoutes(app2) {
     }
   });
   app2.get("/documents/budget-2026", (_req, res) => {
-    const filePath = __require("path").resolve(process.cwd(), "server", "templates", "budget-2026.html");
+    const filePath = templatePath("budget-2026.html");
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.sendFile(filePath);
   });
   app2.get("/documents/minutes-q4-2025", (_req, res) => {
-    const filePath = __require("path").resolve(process.cwd(), "server", "templates", "minutes-q4-2025.html");
+    const filePath = templatePath("minutes-q4-2025.html");
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.sendFile(filePath);
   });
   app2.get("/documents/minutes-q3-2025", (_req, res) => {
-    const filePath = __require("path").resolve(process.cwd(), "server", "templates", "minutes-q3-2025.html");
+    const filePath = templatePath("minutes-q3-2025.html");
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.sendFile(filePath);
   });
   app2.get("/documents/bylaws-2024", (_req, res) => {
-    const filePath = __require("path").resolve(process.cwd(), "server", "templates", "bylaws-2024.html");
+    const filePath = templatePath("bylaws-2024.html");
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.sendFile(filePath);
   });
   app2.get("/documents/rules-regulations", (_req, res) => {
-    const filePath = __require("path").resolve(process.cwd(), "server", "templates", "rules-regulations.html");
+    const filePath = templatePath("rules-regulations.html");
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.sendFile(filePath);
   });
   app2.get("/documents/architectural-guidelines", (_req, res) => {
-    const filePath = __require("path").resolve(process.cwd(), "server", "templates", "architectural-guidelines.html");
+    const filePath = templatePath("architectural-guidelines.html");
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.sendFile(filePath);
   });
   app2.get("/documents/financial-report-2025", (_req, res) => {
-    const filePath = __require("path").resolve(process.cwd(), "server", "templates", "financial-report-2025.html");
+    const filePath = templatePath("financial-report-2025.html");
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.sendFile(filePath);
   });
   app2.get("/documents/ccrs-declaration", (_req, res) => {
-    const filePath = __require("path").resolve(process.cwd(), "server", "templates", "ccrs-declaration.html");
+    const filePath = templatePath("ccrs-declaration.html");
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.sendFile(filePath);
   });
   app2.get("/documents/reserve-study-2024", (_req, res) => {
-    const filePath = __require("path").resolve(process.cwd(), "server", "templates", "reserve-study-2024.html");
+    const filePath = templatePath("reserve-study-2024.html");
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.sendFile(filePath);
   });
   app2.get("/documents/pet-policy", (_req, res) => {
-    const filePath = __require("path").resolve(process.cwd(), "server", "templates", "pet-policy.html");
+    const filePath = templatePath("pet-policy.html");
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.sendFile(filePath);
   });
   app2.get("/documents/architectural-request-form", (_req, res) => {
-    const filePath = __require("path").resolve(process.cwd(), "server", "templates", "architectural-request-form.html");
+    const filePath = templatePath("architectural-request-form.html");
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.sendFile(filePath);
   });
   app2.get("/documents/move-in-out-form", (_req, res) => {
-    const filePath = __require("path").resolve(process.cwd(), "server", "templates", "move-in-out-form.html");
+    const filePath = templatePath("move-in-out-form.html");
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.sendFile(filePath);
   });
@@ -671,13 +672,13 @@ function serveLandingPage({
   res.status(200).send(html);
 }
 function configureExpoAndLanding(app2) {
-  const templatePath = path.resolve(
+  const templatePath2 = path.resolve(
     process.cwd(),
     "server",
     "templates",
     "landing-page.html"
   );
-  const landingPageTemplate = fs.readFileSync(templatePath, "utf-8");
+  const landingPageTemplate = fs.readFileSync(templatePath2, "utf-8");
   const appName = getAppName();
   log("Serving static Expo files with dynamic manifest routing");
   app2.use((req, res, next) => {
