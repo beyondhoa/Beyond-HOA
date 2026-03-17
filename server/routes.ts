@@ -162,21 +162,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const {
         resident_name, unit, violation_type, notice_number,
         incident_date, description, required_action, compliance_deadline,
-        fine_amount, notes, issued_by,
+        fine_amount, notes, issued_by, photo_url, assigned_vendor,
       } = req.body;
       if (!resident_name || !unit || !violation_type || !incident_date || !description || !required_action || !compliance_deadline) {
         return res.status(400).json({ error: "Missing required fields" });
       }
       const result = await pool.query(
         `INSERT INTO violations
-          (resident_name, unit, violation_type, notice_number, incident_date, description, required_action, compliance_deadline, fine_amount, notes, issued_by, status)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'open') RETURNING *`,
-        [resident_name, unit, violation_type, notice_number || 1, incident_date, description, required_action, compliance_deadline, fine_amount || null, notes || null, issued_by || null]
+          (resident_name, unit, violation_type, notice_number, incident_date, description, required_action,
+           compliance_deadline, fine_amount, notes, issued_by, photo_url, assigned_vendor, status)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'open') RETURNING *`,
+        [resident_name, unit, violation_type, notice_number || 1, incident_date, description, required_action,
+         compliance_deadline, fine_amount || null, notes || null, issued_by || null,
+         photo_url || null, assigned_vendor || null]
       );
       res.status(201).json(result.rows[0]);
     } catch (err) {
       console.error("Violation create error:", err);
       res.status(500).json({ error: "Failed to create violation" });
+    }
+  });
+
+  app.post("/api/violations/analyze-image", async (req, res) => {
+    try {
+      const { imageBase64, mimeType = "image/jpeg" } = req.body;
+      if (!imageBase64) return res.status(400).json({ error: "imageBase64 required" });
+
+      const systemPrompt = `You are an HOA compliance agent. Analyze the provided photo of a potential HOA violation.
+Return a JSON object with exactly these fields:
+{
+  "violation_type": one of ["Landscaping / Lawn Care","Parking Violation","Noise / Nuisance","Pet Policy","Architectural Modification","Trash / Debris","Common Area Misuse","Short-Term Rental","Other"],
+  "description": "2-3 sentence factual description of what is observed in the photo that constitutes the violation",
+  "required_action": "specific action the resident must take to remedy the violation",
+  "severity": one of ["low","medium","high"],
+  "fine_suggestion": numeric dollar amount (e.g. 100, 250, 500) or null,
+  "compliance_days": number of days to remedy (typically 7, 14, or 30),
+  "summary": "one-line summary for the notice title"
+}
+Be specific, professional, and factual. Only return valid JSON.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        max_tokens: 600,
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: systemPrompt },
+              {
+                type: "image_url",
+                image_url: { url: `data:${mimeType};base64,${imageBase64}`, detail: "high" },
+              },
+            ],
+          },
+        ],
+      });
+
+      const raw = response.choices[0]?.message?.content ?? "{}";
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) return res.status(500).json({ error: "Could not parse AI response" });
+      const analysis = JSON.parse(jsonMatch[0]);
+      res.json(analysis);
+    } catch (err) {
+      console.error("Violation image analysis error:", err);
+      res.status(500).json({ error: "Failed to analyze image" });
+    }
+  });
+
+  app.get("/api/vendors", async (req, res) => {
+    try {
+      const result = await pool.query("SELECT * FROM vendors WHERE active=TRUE ORDER BY name ASC");
+      res.json(result.rows);
+    } catch (err) {
+      console.error("Vendors fetch error:", err);
+      res.status(500).json({ error: "Failed to fetch vendors" });
+    }
+  });
+
+  app.post("/api/vendors", async (req, res) => {
+    try {
+      const { name, specialty, phone, email } = req.body;
+      if (!name || !specialty) return res.status(400).json({ error: "name and specialty required" });
+      const result = await pool.query(
+        "INSERT INTO vendors (name, specialty, phone, email) VALUES ($1,$2,$3,$4) RETURNING *",
+        [name, specialty, phone || null, email || null]
+      );
+      res.status(201).json(result.rows[0]);
+    } catch (err) {
+      console.error("Vendor create error:", err);
+      res.status(500).json({ error: "Failed to create vendor" });
     }
   });
 

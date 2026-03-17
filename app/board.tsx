@@ -55,6 +55,8 @@ interface Violation {
   status: "open" | "resolved" | "appealed";
   notes: string | null;
   issued_by: string | null;
+  photo_url: string | null;
+  assigned_vendor: string | null;
   created_at: string;
 }
 
@@ -292,6 +294,7 @@ export default function BoardScreen() {
     { id: "announce", icon: "megaphone", label: "New Announcement", color: Colors.navy },
     { id: "vote", icon: "checkmark-circle", label: "Create Ballot", color: "#7C3AED" },
     { id: "notice", icon: "mail", label: "Send Notice", color: Colors.warning },
+    { id: "agent", icon: "sparkles", label: "Violation Agent", color: Colors.gold },
     { id: "violation", icon: "alert-circle", label: "Log Violation", color: Colors.danger },
     { id: "maintenance", icon: "construct", label: "Work Order", color: "#0891B2" },
     { id: "report", icon: "bar-chart", label: "Generate Report", color: Colors.success },
@@ -299,7 +302,9 @@ export default function BoardScreen() {
 
   const handleToolPress = (tool: typeof adminTools[0]) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if (tool.id === "violation") {
+    if (tool.id === "agent") {
+      router.push("/violation-agent");
+    } else if (tool.id === "violation") {
       setForm({ ...EMPTY_FORM, incident_date: todayStr(), compliance_deadline: deadlineStr(14) });
       setViolationModal(true);
     } else if (tool.id === "announce") {
@@ -589,6 +594,20 @@ export default function BoardScreen() {
                       <Text style={styles.violationDate}>Incident: {fmtDate(v.incident_date)}</Text>
                       {v.fine_amount && (
                         <Text style={styles.violationFine}>${parseFloat(v.fine_amount).toFixed(2)} fine</Text>
+                      )}
+                    </View>
+                    <View style={styles.violationBadgeRow}>
+                      {v.photo_url && (
+                        <View style={styles.vBadge}>
+                          <Ionicons name="camera" size={10} color={Colors.navy} />
+                          <Text style={styles.vBadgeText}>Photo</Text>
+                        </View>
+                      )}
+                      {v.assigned_vendor && (
+                        <View style={[styles.vBadge, styles.vBadgeGold]}>
+                          <Ionicons name="business" size={10} color={Colors.gold} />
+                          <Text style={[styles.vBadgeText, { color: Colors.gold }]} numberOfLines={1}>{v.assigned_vendor}</Text>
+                        </View>
                       )}
                     </View>
                   </View>
@@ -1584,6 +1603,13 @@ const styles = StyleSheet.create({
   violationMeta: { flexDirection: "row", gap: 12, marginTop: 2 },
   violationDate: { fontFamily: "Inter_400Regular", fontSize: 11, color: Colors.slate },
   violationFine: { fontFamily: "Inter_600SemiBold", fontSize: 11, color: Colors.danger },
+  violationBadgeRow: { flexDirection: "row", gap: 6, marginTop: 4, flexWrap: "wrap" },
+  vBadge: {
+    flexDirection: "row", alignItems: "center", gap: 3,
+    backgroundColor: "#EFF1F5", borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2,
+  },
+  vBadgeGold: { backgroundColor: "#FEF6E4" },
+  vBadgeText: { fontSize: 10, fontWeight: "600", color: Colors.navy },
   statusPill: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
   statusPillText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
   emptyViolations: { alignItems: "center", padding: 24, gap: 8 },
