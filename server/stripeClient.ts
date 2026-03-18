@@ -1,22 +1,53 @@
 import Stripe from "stripe";
+import { StripeSync } from "stripe-replit-sync";
 
-let _stripe: Stripe | null = null;
+let _stripeSync: StripeSync | null = null;
 
-export function getStripeKey(): string | undefined {
-  return process.env.STRIPE_SECRET_KEY;
+async function getCredentials(): Promise<{ secretKey: string; publishableKey: string }> {
+  const replitConnectionsUrl = process.env.REPLIT_STRIPE_CONNECTIONS_URL;
+
+  if (replitConnectionsUrl) {
+    try {
+      const resp = await fetch(replitConnectionsUrl);
+      if (resp.ok) {
+        const data = await resp.json() as any;
+        const conn = Array.isArray(data) ? data[0] : data;
+        if (conn?.settings?.secret_key) {
+          return {
+            secretKey: conn.settings.secret_key,
+            publishableKey: conn.settings.publishable_key ?? "",
+          };
+        }
+      }
+    } catch {
+    }
+  }
+
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (secretKey) {
+    return { secretKey, publishableKey: process.env.STRIPE_PUBLISHABLE_KEY ?? "" };
+  }
+
+  throw new Error("No Stripe credentials found. Connect Stripe in the Integrations panel or set STRIPE_SECRET_KEY.");
 }
 
-export function getStripeClient(): Stripe {
-  const key = getStripeKey();
-  if (!key) throw new Error("STRIPE_SECRET_KEY environment variable is not set");
-  if (!_stripe) {
-    _stripe = new Stripe(key, { apiVersion: "2024-12-18.acacia" });
-  }
-  return _stripe;
+export async function getUncachableStripeClient(): Promise<Stripe> {
+  const { secretKey } = await getCredentials();
+  return new Stripe(secretKey, { apiVersion: "2024-12-18.acacia" });
+}
+
+export async function getStripeSync(): Promise<StripeSync> {
+  if (_stripeSync) return _stripeSync;
+  const { secretKey } = await getCredentials();
+  _stripeSync = new StripeSync({ secretKey });
+  return _stripeSync;
 }
 
 export function isStripeConfigured(): boolean {
-  return !!getStripeKey();
+  return !!(
+    process.env.REPLIT_STRIPE_CONNECTIONS_URL ||
+    process.env.STRIPE_SECRET_KEY
+  );
 }
 
 export async function createCheckoutSession(opts: {
@@ -26,7 +57,7 @@ export async function createCheckoutSession(opts: {
   successUrl: string;
   cancelUrl: string;
 }): Promise<{ url: string; sessionId: string }> {
-  const stripe = getStripeClient();
+  const stripe = await getUncachableStripeClient();
   const amountCents = Math.round(opts.amount * 100);
 
   const session = await stripe.checkout.sessions.create({
@@ -61,13 +92,14 @@ export async function retrieveCheckoutSession(sessionId: string): Promise<{
   paymentIntentId: string | null;
   metadata: Record<string, string>;
 }> {
-  const stripe = getStripeClient();
+  const stripe = await getUncachableStripeClient();
   const session = await stripe.checkout.sessions.retrieve(sessionId);
   return {
     paymentStatus: session.payment_status,
-    paymentIntentId: typeof session.payment_intent === "string"
-      ? session.payment_intent
-      : (session.payment_intent?.id ?? null),
+    paymentIntentId:
+      typeof session.payment_intent === "string"
+        ? session.payment_intent
+        : (session.payment_intent?.id ?? null),
     metadata: session.metadata ?? {},
   };
 }

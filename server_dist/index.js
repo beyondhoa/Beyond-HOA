@@ -16,23 +16,47 @@ var pool = new Pool({
 
 // server/stripeClient.ts
 import Stripe from "stripe";
-var _stripe = null;
-function getStripeKey() {
-  return process.env.STRIPE_SECRET_KEY;
-}
-function getStripeClient() {
-  const key = getStripeKey();
-  if (!key) throw new Error("STRIPE_SECRET_KEY environment variable is not set");
-  if (!_stripe) {
-    _stripe = new Stripe(key, { apiVersion: "2024-12-18.acacia" });
+import { StripeSync } from "stripe-replit-sync";
+var _stripeSync = null;
+async function getCredentials() {
+  const replitConnectionsUrl = process.env.REPLIT_STRIPE_CONNECTIONS_URL;
+  if (replitConnectionsUrl) {
+    try {
+      const resp = await fetch(replitConnectionsUrl);
+      if (resp.ok) {
+        const data = await resp.json();
+        const conn = Array.isArray(data) ? data[0] : data;
+        if (conn?.settings?.secret_key) {
+          return {
+            secretKey: conn.settings.secret_key,
+            publishableKey: conn.settings.publishable_key ?? ""
+          };
+        }
+      }
+    } catch {
+    }
   }
-  return _stripe;
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (secretKey) {
+    return { secretKey, publishableKey: process.env.STRIPE_PUBLISHABLE_KEY ?? "" };
+  }
+  throw new Error("No Stripe credentials found. Connect Stripe in the Integrations panel or set STRIPE_SECRET_KEY.");
+}
+async function getUncachableStripeClient() {
+  const { secretKey } = await getCredentials();
+  return new Stripe(secretKey, { apiVersion: "2024-12-18.acacia" });
+}
+async function getStripeSync() {
+  if (_stripeSync) return _stripeSync;
+  const { secretKey } = await getCredentials();
+  _stripeSync = new StripeSync({ secretKey });
+  return _stripeSync;
 }
 function isStripeConfigured() {
-  return !!getStripeKey();
+  return !!(process.env.REPLIT_STRIPE_CONNECTIONS_URL || process.env.STRIPE_SECRET_KEY);
 }
 async function createCheckoutSession(opts) {
-  const stripe = getStripeClient();
+  const stripe = await getUncachableStripeClient();
   const amountCents = Math.round(opts.amount * 100);
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
@@ -60,7 +84,7 @@ async function createCheckoutSession(opts) {
   return { url: session.url, sessionId: session.id };
 }
 async function retrieveCheckoutSession(sessionId) {
-  const stripe = getStripeClient();
+  const stripe = await getUncachableStripeClient();
   const session = await stripe.checkout.sessions.retrieve(sessionId);
   return {
     paymentStatus: session.payment_status,
@@ -224,21 +248,103 @@ async function registerRoutes(app2) {
         compliance_deadline,
         fine_amount,
         notes,
-        issued_by
+        issued_by,
+        photo_url,
+        assigned_vendor
       } = req.body;
       if (!resident_name || !unit || !violation_type || !incident_date || !description || !required_action || !compliance_deadline) {
         return res.status(400).json({ error: "Missing required fields" });
       }
       const result = await pool.query(
         `INSERT INTO violations
-          (resident_name, unit, violation_type, notice_number, incident_date, description, required_action, compliance_deadline, fine_amount, notes, issued_by, status)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'open') RETURNING *`,
-        [resident_name, unit, violation_type, notice_number || 1, incident_date, description, required_action, compliance_deadline, fine_amount || null, notes || null, issued_by || null]
+          (resident_name, unit, violation_type, notice_number, incident_date, description, required_action,
+           compliance_deadline, fine_amount, notes, issued_by, photo_url, assigned_vendor, status)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'open') RETURNING *`,
+        [
+          resident_name,
+          unit,
+          violation_type,
+          notice_number || 1,
+          incident_date,
+          description,
+          required_action,
+          compliance_deadline,
+          fine_amount || null,
+          notes || null,
+          issued_by || null,
+          photo_url || null,
+          assigned_vendor || null
+        ]
       );
       res.status(201).json(result.rows[0]);
     } catch (err) {
       console.error("Violation create error:", err);
       res.status(500).json({ error: "Failed to create violation" });
+    }
+  });
+  app2.post("/api/violations/analyze-image", async (req, res) => {
+    try {
+      const { imageBase64, mimeType = "image/jpeg" } = req.body;
+      if (!imageBase64) return res.status(400).json({ error: "imageBase64 required" });
+      const systemPrompt = `You are an HOA compliance agent. Analyze the provided photo of a potential HOA violation.
+Return a JSON object with exactly these fields:
+{
+  "violation_type": one of ["Landscaping / Lawn Care","Parking Violation","Noise / Nuisance","Pet Policy","Architectural Modification","Trash / Debris","Common Area Misuse","Short-Term Rental","Other"],
+  "description": "2-3 sentence factual description of what is observed in the photo that constitutes the violation",
+  "required_action": "specific action the resident must take to remedy the violation",
+  "severity": one of ["low","medium","high"],
+  "fine_suggestion": numeric dollar amount (e.g. 100, 250, 500) or null,
+  "compliance_days": number of days to remedy (typically 7, 14, or 30),
+  "summary": "one-line summary for the notice title"
+}
+Be specific, professional, and factual. Only return valid JSON.`;
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        max_tokens: 600,
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: systemPrompt },
+              {
+                type: "image_url",
+                image_url: { url: `data:${mimeType};base64,${imageBase64}`, detail: "high" }
+              }
+            ]
+          }
+        ]
+      });
+      const raw = response.choices[0]?.message?.content ?? "{}";
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) return res.status(500).json({ error: "Could not parse AI response" });
+      const analysis = JSON.parse(jsonMatch[0]);
+      res.json(analysis);
+    } catch (err) {
+      console.error("Violation image analysis error:", err);
+      res.status(500).json({ error: "Failed to analyze image" });
+    }
+  });
+  app2.get("/api/vendors", async (req, res) => {
+    try {
+      const result = await pool.query("SELECT * FROM vendors WHERE active=TRUE ORDER BY name ASC");
+      res.json(result.rows);
+    } catch (err) {
+      console.error("Vendors fetch error:", err);
+      res.status(500).json({ error: "Failed to fetch vendors" });
+    }
+  });
+  app2.post("/api/vendors", async (req, res) => {
+    try {
+      const { name, specialty, phone, email } = req.body;
+      if (!name || !specialty) return res.status(400).json({ error: "name and specialty required" });
+      const result = await pool.query(
+        "INSERT INTO vendors (name, specialty, phone, email) VALUES ($1,$2,$3,$4) RETURNING *",
+        [name, specialty, phone || null, email || null]
+      );
+      res.status(201).json(result.rows[0]);
+    } catch (err) {
+      console.error("Vendor create error:", err);
+      res.status(500).json({ error: "Failed to create vendor" });
     }
   });
   app2.put("/api/violations/:id/status", async (req, res) => {
@@ -559,7 +665,21 @@ async function registerRoutes(app2) {
   return httpServer;
 }
 
+// server/webhookHandlers.ts
+var WebhookHandlers = class {
+  static async processWebhook(payload, signature) {
+    if (!Buffer.isBuffer(payload)) {
+      throw new Error(
+        "STRIPE WEBHOOK ERROR: Payload must be a Buffer. Received type: " + typeof payload + ". Ensure webhook route is registered BEFORE app.use(express.json())."
+      );
+    }
+    const sync = await getStripeSync();
+    await sync.processWebhook(payload, signature);
+  }
+};
+
 // server/index.ts
+import { runMigrations } from "stripe-replit-sync";
 import * as fs from "fs";
 import * as path from "path";
 var app = express();
@@ -718,11 +838,51 @@ function setupErrorHandler(app2) {
     return res.status(status).json({ message });
   });
 }
+async function initStripe() {
+  if (!isStripeConfigured()) {
+    console.log("Stripe not configured \u2014 skipping initialization");
+    return;
+  }
+  try {
+    const databaseUrl = process.env.DATABASE_URL;
+    if (!databaseUrl) throw new Error("DATABASE_URL required");
+    console.log("Initializing Stripe schema...");
+    await runMigrations({ databaseUrl, schema: "stripe" });
+    console.log("Stripe schema ready");
+    const stripeSync = await getStripeSync();
+    const webhookBaseUrl = `https://${(process.env.REPLIT_DOMAINS ?? "").split(",")[0]}`;
+    if (webhookBaseUrl !== "https://") {
+      const wh = await stripeSync.findOrCreateManagedWebhook(`${webhookBaseUrl}/api/stripe/webhook`);
+      console.log("Stripe webhook configured:", wh.url);
+    }
+    stripeSync.syncBackfill().then(() => console.log("Stripe data synced")).catch((err) => console.error("Stripe backfill error:", err));
+  } catch (err) {
+    console.error("Stripe init error (non-fatal):", err);
+  }
+}
 (async () => {
   setupCors(app);
+  app.post(
+    "/api/stripe/webhook",
+    express.raw({ type: "application/json" }),
+    async (req, res) => {
+      const signature = req.headers["stripe-signature"];
+      if (!signature) return res.status(400).json({ error: "Missing stripe-signature" });
+      try {
+        const sig = Array.isArray(signature) ? signature[0] : signature;
+        await WebhookHandlers.processWebhook(req.body, sig);
+        res.status(200).json({ received: true });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Webhook error";
+        console.error("Stripe webhook error:", msg);
+        res.status(400).json({ error: "Webhook processing error" });
+      }
+    }
+  );
   setupBodyParsing(app);
   setupRequestLogging(app);
   configureExpoAndLanding(app);
+  await initStripe();
   const server = await registerRoutes(app);
   setupErrorHandler(app);
   const port = parseInt(process.env.PORT || "5000", 10);

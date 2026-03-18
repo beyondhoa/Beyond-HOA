@@ -1,6 +1,9 @@
 import express from "express";
 import type { Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
+import { WebhookHandlers } from "./webhookHandlers";
+import { getStripeSync, isStripeConfigured } from "./stripeClient";
+import { runMigrations } from "stripe-replit-sync";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -225,12 +228,62 @@ function setupErrorHandler(app: express.Application) {
   });
 }
 
+async function initStripe() {
+  if (!isStripeConfigured()) {
+    console.log("Stripe not configured — skipping initialization");
+    return;
+  }
+  try {
+    const databaseUrl = process.env.DATABASE_URL;
+    if (!databaseUrl) throw new Error("DATABASE_URL required");
+
+    console.log("Initializing Stripe schema...");
+    await runMigrations({ databaseUrl, schema: "stripe" });
+    console.log("Stripe schema ready");
+
+    const stripeSync = await getStripeSync();
+
+    const webhookBaseUrl = `https://${(process.env.REPLIT_DOMAINS ?? "").split(",")[0]}`;
+    if (webhookBaseUrl !== "https://") {
+      const wh = await stripeSync.findOrCreateManagedWebhook(`${webhookBaseUrl}/api/stripe/webhook`);
+      console.log("Stripe webhook configured:", wh.url);
+    }
+
+    stripeSync.syncBackfill()
+      .then(() => console.log("Stripe data synced"))
+      .catch((err: unknown) => console.error("Stripe backfill error:", err));
+  } catch (err) {
+    console.error("Stripe init error (non-fatal):", err);
+  }
+}
+
 (async () => {
   setupCors(app);
+
+  app.post(
+    "/api/stripe/webhook",
+    express.raw({ type: "application/json" }),
+    async (req: Request, res: Response) => {
+      const signature = req.headers["stripe-signature"];
+      if (!signature) return res.status(400).json({ error: "Missing stripe-signature" });
+      try {
+        const sig = Array.isArray(signature) ? signature[0] : signature;
+        await WebhookHandlers.processWebhook(req.body as Buffer, sig);
+        res.status(200).json({ received: true });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Webhook error";
+        console.error("Stripe webhook error:", msg);
+        res.status(400).json({ error: "Webhook processing error" });
+      }
+    }
+  );
+
   setupBodyParsing(app);
   setupRequestLogging(app);
 
   configureExpoAndLanding(app);
+
+  await initStripe();
 
   const server = await registerRoutes(app);
 
