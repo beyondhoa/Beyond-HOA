@@ -18,7 +18,21 @@ var pool = new Pool({
 import Stripe from "stripe";
 import { StripeSync } from "stripe-replit-sync";
 var _stripeSync = null;
-async function getCredentials() {
+async function getStoredStripeKey() {
+  try {
+    const result = await pool.query(
+      "SELECT value FROM hoa_settings WHERE key='stripe_secret_key' LIMIT 1"
+    );
+    return result.rows[0]?.value ?? null;
+  } catch {
+    return null;
+  }
+}
+async function resolveSecretKey() {
+  const envKey = process.env.STRIPE_SECRET_KEY;
+  if (envKey) return envKey;
+  const dbKey = await getStoredStripeKey();
+  if (dbKey) return dbKey;
   const replitConnectionsUrl = process.env.REPLIT_STRIPE_CONNECTIONS_URL;
   if (replitConnectionsUrl) {
     try {
@@ -26,34 +40,30 @@ async function getCredentials() {
       if (resp.ok) {
         const data = await resp.json();
         const conn = Array.isArray(data) ? data[0] : data;
-        if (conn?.settings?.secret_key) {
-          return {
-            secretKey: conn.settings.secret_key,
-            publishableKey: conn.settings.publishable_key ?? ""
-          };
-        }
+        if (conn?.settings?.secret_key) return conn.settings.secret_key;
       }
     } catch {
     }
   }
-  const secretKey = process.env.STRIPE_SECRET_KEY;
-  if (secretKey) {
-    return { secretKey, publishableKey: process.env.STRIPE_PUBLISHABLE_KEY ?? "" };
-  }
-  throw new Error("No Stripe credentials found. Connect Stripe in the Integrations panel or set STRIPE_SECRET_KEY.");
+  throw new Error(
+    "Stripe not configured. Enter your Stripe Secret Key in Board \u2192 Payment Setup."
+  );
 }
 async function getUncachableStripeClient() {
-  const { secretKey } = await getCredentials();
+  const secretKey = await resolveSecretKey();
   return new Stripe(secretKey, { apiVersion: "2024-12-18.acacia" });
 }
 async function getStripeSync() {
   if (_stripeSync) return _stripeSync;
-  const { secretKey } = await getCredentials();
+  const secretKey = await resolveSecretKey();
   _stripeSync = new StripeSync({ secretKey });
   return _stripeSync;
 }
-function isStripeConfigured() {
-  return !!(process.env.REPLIT_STRIPE_CONNECTIONS_URL || process.env.STRIPE_SECRET_KEY);
+async function isStripeConfigured() {
+  if (process.env.STRIPE_SECRET_KEY) return true;
+  if (process.env.REPLIT_STRIPE_CONNECTIONS_URL) return true;
+  const dbKey = await getStoredStripeKey();
+  return !!dbKey;
 }
 async function createCheckoutSession(opts) {
   const stripe = await getUncachableStripeClient();
@@ -499,8 +509,69 @@ Be specific, professional, and factual. Only return valid JSON.`;
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.sendFile(filePath);
   });
-  app2.get("/api/dues/stripe-configured", (_req, res) => {
-    res.json({ configured: isStripeConfigured() });
+  app2.get("/api/dues/stripe-configured", async (_req, res) => {
+    res.json({ configured: await isStripeConfigured() });
+  });
+  app2.get("/api/admin/stripe-status", async (_req, res) => {
+    try {
+      const configured = await isStripeConfigured();
+      const pkResult = await pool.query(
+        "SELECT value FROM hoa_settings WHERE key='stripe_publishable_key' LIMIT 1"
+      );
+      const publishableKey = pkResult.rows[0]?.value ?? null;
+      const hasEnvKey = !!process.env.STRIPE_SECRET_KEY;
+      const skResult = await pool.query(
+        "SELECT value FROM hoa_settings WHERE key='stripe_secret_key' LIMIT 1"
+      );
+      const hasDbKey = !!skResult.rows[0]?.value;
+      res.json({ configured, publishableKey, hasEnvKey, hasDbKey });
+    } catch (err) {
+      console.error("Stripe status error:", err);
+      res.status(500).json({ error: "Failed to get Stripe status" });
+    }
+  });
+  app2.post("/api/admin/stripe-setup", async (req, res) => {
+    try {
+      const { secretKey, publishableKey } = req.body;
+      if (!secretKey) return res.status(400).json({ error: "secretKey is required" });
+      if (!secretKey.startsWith("sk_")) {
+        return res.status(400).json({ error: "Invalid secret key. Must start with sk_test_ or sk_live_" });
+      }
+      const stripe = new (await import("stripe")).default(secretKey, { apiVersion: "2024-12-18.acacia" });
+      try {
+        await stripe.accounts.retrieve();
+      } catch (err) {
+        if (err?.type === "StripeAuthenticationError") {
+          return res.status(400).json({ error: "Invalid Stripe secret key \u2014 authentication failed" });
+        }
+      }
+      await pool.query(
+        `INSERT INTO hoa_settings (key, value, updated_at)
+         VALUES ('stripe_secret_key', $1, NOW())
+         ON CONFLICT (key) DO UPDATE SET value=$1, updated_at=NOW()`,
+        [secretKey]
+      );
+      if (publishableKey) {
+        await pool.query(
+          `INSERT INTO hoa_settings (key, value, updated_at)
+           VALUES ('stripe_publishable_key', $1, NOW())
+           ON CONFLICT (key) DO UPDATE SET value=$1, updated_at=NOW()`,
+          [publishableKey]
+        );
+      }
+      res.json({ success: true, live: secretKey.startsWith("sk_live_") });
+    } catch (err) {
+      console.error("Stripe setup error:", err);
+      res.status(500).json({ error: "Failed to save Stripe configuration" });
+    }
+  });
+  app2.delete("/api/admin/stripe-setup", async (_req, res) => {
+    try {
+      await pool.query("DELETE FROM hoa_settings WHERE key IN ('stripe_secret_key','stripe_publishable_key')");
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to remove Stripe configuration" });
+    }
   });
   app2.post("/api/dues/checkout", async (req, res) => {
     try {

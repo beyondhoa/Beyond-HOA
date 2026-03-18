@@ -1,53 +1,72 @@
 import Stripe from "stripe";
 import { StripeSync } from "stripe-replit-sync";
+import { pool } from "./db";
 
 let _stripeSync: StripeSync | null = null;
 
-async function getCredentials(): Promise<{ secretKey: string; publishableKey: string }> {
-  const replitConnectionsUrl = process.env.REPLIT_STRIPE_CONNECTIONS_URL;
+export async function getStoredStripeKey(): Promise<string | null> {
+  try {
+    const result = await pool.query(
+      "SELECT value FROM hoa_settings WHERE key='stripe_secret_key' LIMIT 1"
+    );
+    return result.rows[0]?.value ?? null;
+  } catch {
+    return null;
+  }
+}
 
+export async function getStoredPublishableKey(): Promise<string | null> {
+  try {
+    const result = await pool.query(
+      "SELECT value FROM hoa_settings WHERE key='stripe_publishable_key' LIMIT 1"
+    );
+    return result.rows[0]?.value ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function resolveSecretKey(): Promise<string> {
+  const envKey = process.env.STRIPE_SECRET_KEY;
+  if (envKey) return envKey;
+
+  const dbKey = await getStoredStripeKey();
+  if (dbKey) return dbKey;
+
+  const replitConnectionsUrl = process.env.REPLIT_STRIPE_CONNECTIONS_URL;
   if (replitConnectionsUrl) {
     try {
       const resp = await fetch(replitConnectionsUrl);
       if (resp.ok) {
-        const data = await resp.json() as any;
+        const data = (await resp.json()) as any;
         const conn = Array.isArray(data) ? data[0] : data;
-        if (conn?.settings?.secret_key) {
-          return {
-            secretKey: conn.settings.secret_key,
-            publishableKey: conn.settings.publishable_key ?? "",
-          };
-        }
+        if (conn?.settings?.secret_key) return conn.settings.secret_key;
       }
-    } catch {
-    }
+    } catch {}
   }
 
-  const secretKey = process.env.STRIPE_SECRET_KEY;
-  if (secretKey) {
-    return { secretKey, publishableKey: process.env.STRIPE_PUBLISHABLE_KEY ?? "" };
-  }
-
-  throw new Error("No Stripe credentials found. Connect Stripe in the Integrations panel or set STRIPE_SECRET_KEY.");
+  throw new Error(
+    "Stripe not configured. Enter your Stripe Secret Key in Board → Payment Setup."
+  );
 }
 
 export async function getUncachableStripeClient(): Promise<Stripe> {
-  const { secretKey } = await getCredentials();
+  const secretKey = await resolveSecretKey();
   return new Stripe(secretKey, { apiVersion: "2024-12-18.acacia" });
 }
 
 export async function getStripeSync(): Promise<StripeSync> {
   if (_stripeSync) return _stripeSync;
-  const { secretKey } = await getCredentials();
+  const secretKey = await resolveSecretKey();
   _stripeSync = new StripeSync({ secretKey });
   return _stripeSync;
 }
 
-export function isStripeConfigured(): boolean {
-  return !!(
-    process.env.REPLIT_STRIPE_CONNECTIONS_URL ||
-    process.env.STRIPE_SECRET_KEY
-  );
+export async function isStripeConfigured(): Promise<boolean> {
+  if (process.env.STRIPE_SECRET_KEY) return true;
+  if (process.env.REPLIT_STRIPE_CONNECTIONS_URL) return true;
+  const dbKey = await getStoredStripeKey();
+  return !!dbKey;
 }
 
 export async function createCheckoutSession(opts: {

@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   Switch,
+  Linking,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -189,6 +190,13 @@ export default function BoardScreen() {
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [typePickerOpen, setTypePickerOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [stripeModal, setStripeModal] = useState(false);
+  const [stripeSecretKey, setStripeSecretKey] = useState("");
+  const [stripePublishableKey, setStripePublishableKey] = useState("");
+  const [stripeSaving, setStripeSaving] = useState(false);
+  const [stripeError, setStripeError] = useState<string | null>(null);
+  const [stripeSuccess, setStripeSuccess] = useState<string | null>(null);
+  const [showSecretKey, setShowSecretKey] = useState(false);
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
   const bottomPadding = Platform.OS === "web" ? 34 : insets.bottom;
   const queryClient = useQueryClient();
@@ -196,6 +204,9 @@ export default function BoardScreen() {
   const { data: violations = [] } = useQuery<Violation[]>({ queryKey: ["/api/violations"] });
   const { data: workOrders = [] } = useQuery<WorkOrder[]>({ queryKey: ["/api/work-orders"] });
   const { data: residents = [] } = useQuery<Resident[]>({ queryKey: ["/api/residents"] });
+  const { data: stripeStatus, refetch: refetchStripeStatus } = useQuery<{
+    configured: boolean; publishableKey: string | null; hasEnvKey: boolean; hasDbKey: boolean;
+  }>({ queryKey: ["/api/admin/stripe-status"], refetchInterval: false });
 
   const saveAnnouncement = async () => {
     if (!announceForm.title.trim() || !announceForm.body.trim()) {
@@ -297,6 +308,7 @@ export default function BoardScreen() {
     { id: "agent", icon: "sparkles", label: "Violation Agent", color: Colors.gold },
     { id: "violation", icon: "alert-circle", label: "Log Violation", color: Colors.danger },
     { id: "maintenance", icon: "construct", label: "Work Order", color: "#0891B2" },
+    { id: "payment", icon: "card", label: "Payment Setup", color: "#1DB954" },
     { id: "report", icon: "bar-chart", label: "Generate Report", color: Colors.success },
   ];
 
@@ -304,6 +316,12 @@ export default function BoardScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (tool.id === "agent") {
       router.push("/violation-agent");
+    } else if (tool.id === "payment") {
+      setStripeError(null);
+      setStripeSuccess(null);
+      setStripeSecretKey("");
+      setStripePublishableKey("");
+      setStripeModal(true);
     } else if (tool.id === "violation") {
       setForm({ ...EMPTY_FORM, incident_date: todayStr(), compliance_deadline: deadlineStr(14) });
       setViolationModal(true);
@@ -1505,6 +1523,153 @@ export default function BoardScreen() {
         </View>
       </Modal>
 
+      {/* ── STRIPE SETUP MODAL ─────────────────────────────────── */}
+      <Modal visible={stripeModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setStripeModal(false)}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Payment Setup</Text>
+            <TouchableOpacity onPress={() => setStripeModal(false)} style={styles.modalCloseBtn}>
+              <Ionicons name="close" size={22} color={Colors.text} />
+            </TouchableOpacity>
+          </View>
+          <ScrollView style={styles.modalScroll} contentContainerStyle={{ padding: 20, paddingBottom: 60, gap: 0 }} keyboardShouldPersistTaps="handled">
+
+            {/* Status banner */}
+            <View style={[styles.stripeStatusBanner, stripeStatus?.configured ? styles.stripeStatusBannerOk : styles.stripeStatusBannerWarn]}>
+              <Ionicons
+                name={stripeStatus?.configured ? "checkmark-circle" : "alert-circle"}
+                size={22}
+                color={stripeStatus?.configured ? Colors.success : Colors.warning}
+              />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.stripeStatusTitle}>
+                  {stripeStatus?.configured ? "Stripe Connected" : "Stripe Not Connected"}
+                </Text>
+                <Text style={styles.stripeStatusSub}>
+                  {stripeStatus?.configured
+                    ? stripeStatus.hasEnvKey
+                      ? "Using key from environment variable"
+                      : "Using key saved in app settings"
+                    : "Enter your Stripe secret key to enable live payments"}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.stripeInfoBox}>
+              <Ionicons name="information-circle-outline" size={16} color={Colors.navy} />
+              <Text style={styles.stripeInfoText}>
+                Get your API keys from{" "}
+                <Text style={styles.stripeInfoLink} onPress={() => Linking.openURL("https://dashboard.stripe.com/apikeys")}>
+                  dashboard.stripe.com/apikeys
+                </Text>
+                {"\n"}Use{" "}
+                <Text style={{ fontWeight: "600" }}>sk_test_</Text> keys for testing,{" "}
+                <Text style={{ fontWeight: "600" }}>sk_live_</Text> keys for real payments.
+              </Text>
+            </View>
+
+            <Text style={styles.vLabel}>Secret Key *</Text>
+            <View style={styles.stripeKeyRow}>
+              <TextInput
+                style={[styles.vInput, { flex: 1, marginBottom: 0 }]}
+                value={stripeSecretKey}
+                onChangeText={setStripeSecretKey}
+                placeholder="sk_live_... or sk_test_..."
+                placeholderTextColor={Colors.slate}
+                secureTextEntry={!showSecretKey}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              <TouchableOpacity style={styles.stripeEyeBtn} onPress={() => setShowSecretKey((v) => !v)}>
+                <Ionicons name={showSecretKey ? "eye-off" : "eye"} size={18} color={Colors.slate} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.vLabel}>Publishable Key (optional)</Text>
+            <TextInput
+              style={styles.vInput}
+              value={stripePublishableKey}
+              onChangeText={setStripePublishableKey}
+              placeholder="pk_live_... or pk_test_..."
+              placeholderTextColor={Colors.slate}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+
+            {stripeError && (
+              <View style={styles.stripeErrorBox}>
+                <Ionicons name="alert-circle" size={16} color={Colors.danger} />
+                <Text style={styles.stripeErrorText}>{stripeError}</Text>
+              </View>
+            )}
+            {stripeSuccess && (
+              <View style={styles.stripeSuccessBox}>
+                <Ionicons name="checkmark-circle" size={16} color={Colors.success} />
+                <Text style={styles.stripeSuccessText}>{stripeSuccess}</Text>
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={[styles.modalSaveBtn, (!stripeSecretKey.trim() || stripeSaving) && styles.modalSaveBtnDisabled]}
+              disabled={!stripeSecretKey.trim() || stripeSaving}
+              onPress={async () => {
+                setStripeError(null);
+                setStripeSuccess(null);
+                setStripeSaving(true);
+                try {
+                  const url = new URL("/api/admin/stripe-setup", getApiUrl()).toString();
+                  const resp = await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ secretKey: stripeSecretKey.trim(), publishableKey: stripePublishableKey.trim() || undefined }),
+                  });
+                  const data = await resp.json();
+                  if (!resp.ok) {
+                    setStripeError(data.error ?? "Failed to save key");
+                  } else {
+                    setStripeSuccess(data.live ? "Live payments enabled! Stripe is now connected." : "Test mode active. Use sk_live_ keys for real payments.");
+                    queryClient.invalidateQueries({ queryKey: ["/api/admin/stripe-status"] });
+                    queryClient.invalidateQueries({ queryKey: ["/api/dues/stripe-configured"] });
+                    setStripeSecretKey("");
+                    setStripePublishableKey("");
+                  }
+                } catch {
+                  setStripeError("Network error — please try again");
+                } finally {
+                  setStripeSaving(false);
+                }
+              }}
+            >
+              {stripeSaving
+                ? <ActivityIndicator size="small" color="#fff" />
+                : <Text style={styles.modalSaveBtnText}>Save & Activate</Text>}
+            </TouchableOpacity>
+
+            {stripeStatus?.hasDbKey && (
+              <TouchableOpacity
+                style={styles.stripeRemoveBtn}
+                onPress={async () => {
+                  setStripeError(null);
+                  try {
+                    const url = new URL("/api/admin/stripe-setup", getApiUrl()).toString();
+                    await fetch(url, { method: "DELETE" });
+                    queryClient.invalidateQueries({ queryKey: ["/api/admin/stripe-status"] });
+                    queryClient.invalidateQueries({ queryKey: ["/api/dues/stripe-configured"] });
+                    setStripeSuccess("Stripe key removed.");
+                  } catch {
+                    setStripeError("Failed to remove key");
+                  }
+                }}
+              >
+                <Ionicons name="trash-outline" size={15} color={Colors.danger} />
+                <Text style={styles.stripeRemoveText}>Remove saved key</Text>
+              </TouchableOpacity>
+            )}
+
+          </ScrollView>
+        </View>
+      </Modal>
+
     </View>
   );
 }
@@ -1777,4 +1942,45 @@ const styles = StyleSheet.create({
   woFilterText: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: Colors.textSecondary },
   woFilterBadge: { minWidth: 20, height: 20, borderRadius: 10, backgroundColor: Colors.background, alignItems: "center", justifyContent: "center", paddingHorizontal: 5 },
   woFilterBadgeText: { fontFamily: "Inter_700Bold", fontSize: 11, color: Colors.textSecondary },
+
+  stripeStatusBanner: {
+    flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 14, padding: 16, marginBottom: 16,
+    borderWidth: 1,
+  },
+  stripeStatusBannerOk: { backgroundColor: "#F0FDF4", borderColor: "#BBF7D0" },
+  stripeStatusBannerWarn: { backgroundColor: "#FFFBEB", borderColor: "#FDE68A" },
+  stripeStatusTitle: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: Colors.text },
+  stripeStatusSub: { fontFamily: "Inter_400Regular", fontSize: 12, color: Colors.slate, marginTop: 2 },
+
+  stripeInfoBox: {
+    flexDirection: "row", gap: 10, backgroundColor: "#EFF4FF", borderRadius: 12, padding: 14, marginBottom: 20,
+  },
+  stripeInfoText: { flex: 1, fontFamily: "Inter_400Regular", fontSize: 12, color: Colors.text, lineHeight: 18 },
+  stripeInfoLink: { fontFamily: "Inter_600SemiBold", color: Colors.navy, textDecorationLine: "underline" },
+
+  stripeKeyRow: {
+    flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: Colors.border,
+    borderRadius: 10, backgroundColor: Colors.card, marginBottom: 4, overflow: "hidden",
+  },
+  stripeEyeBtn: { padding: 12 },
+
+  stripeErrorBox: {
+    flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#FDF0EF",
+    borderRadius: 10, padding: 12, marginTop: 8, borderWidth: 1, borderColor: "#FACCC9",
+  },
+  stripeErrorText: { flex: 1, fontFamily: "Inter_400Regular", fontSize: 13, color: Colors.danger },
+
+  stripeSuccessBox: {
+    flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#F0FDF4",
+    borderRadius: 10, padding: 12, marginTop: 8, borderWidth: 1, borderColor: "#BBF7D0",
+  },
+  stripeSuccessText: { flex: 1, fontFamily: "Inter_400Regular", fontSize: 13, color: Colors.success },
+
+  stripeRemoveBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
+    marginTop: 16, paddingVertical: 10,
+  },
+  stripeRemoveText: { fontFamily: "Inter_500Medium", fontSize: 13, color: Colors.danger },
+
+  modalSaveBtnDisabled: { opacity: 0.45 },
 });

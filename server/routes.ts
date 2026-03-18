@@ -423,8 +423,76 @@ Be specific, professional, and factual. Only return valid JSON.`;
 
   // ── DUES PAYMENTS ──────────────────────────────────────────────────────────
 
-  app.get("/api/dues/stripe-configured", (_req, res) => {
-    res.json({ configured: isStripeConfigured() });
+  app.get("/api/dues/stripe-configured", async (_req, res) => {
+    res.json({ configured: await isStripeConfigured() });
+  });
+
+  app.get("/api/admin/stripe-status", async (_req, res) => {
+    try {
+      const configured = await isStripeConfigured();
+      const pkResult = await pool.query(
+        "SELECT value FROM hoa_settings WHERE key='stripe_publishable_key' LIMIT 1"
+      );
+      const publishableKey = pkResult.rows[0]?.value ?? null;
+      const hasEnvKey = !!process.env.STRIPE_SECRET_KEY;
+      const skResult = await pool.query(
+        "SELECT value FROM hoa_settings WHERE key='stripe_secret_key' LIMIT 1"
+      );
+      const hasDbKey = !!skResult.rows[0]?.value;
+      res.json({ configured, publishableKey, hasEnvKey, hasDbKey });
+    } catch (err) {
+      console.error("Stripe status error:", err);
+      res.status(500).json({ error: "Failed to get Stripe status" });
+    }
+  });
+
+  app.post("/api/admin/stripe-setup", async (req, res) => {
+    try {
+      const { secretKey, publishableKey } = req.body;
+      if (!secretKey) return res.status(400).json({ error: "secretKey is required" });
+      if (!secretKey.startsWith("sk_")) {
+        return res.status(400).json({ error: "Invalid secret key. Must start with sk_test_ or sk_live_" });
+      }
+
+      const stripe = new (await import("stripe")).default(secretKey, { apiVersion: "2024-12-18.acacia" });
+      try {
+        await stripe.accounts.retrieve();
+      } catch (err: any) {
+        if (err?.type === "StripeAuthenticationError") {
+          return res.status(400).json({ error: "Invalid Stripe secret key — authentication failed" });
+        }
+      }
+
+      await pool.query(
+        `INSERT INTO hoa_settings (key, value, updated_at)
+         VALUES ('stripe_secret_key', $1, NOW())
+         ON CONFLICT (key) DO UPDATE SET value=$1, updated_at=NOW()`,
+        [secretKey]
+      );
+
+      if (publishableKey) {
+        await pool.query(
+          `INSERT INTO hoa_settings (key, value, updated_at)
+           VALUES ('stripe_publishable_key', $1, NOW())
+           ON CONFLICT (key) DO UPDATE SET value=$1, updated_at=NOW()`,
+          [publishableKey]
+        );
+      }
+
+      res.json({ success: true, live: secretKey.startsWith("sk_live_") });
+    } catch (err) {
+      console.error("Stripe setup error:", err);
+      res.status(500).json({ error: "Failed to save Stripe configuration" });
+    }
+  });
+
+  app.delete("/api/admin/stripe-setup", async (_req, res) => {
+    try {
+      await pool.query("DELETE FROM hoa_settings WHERE key IN ('stripe_secret_key','stripe_publishable_key')");
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to remove Stripe configuration" });
+    }
   });
 
   app.post("/api/dues/checkout", async (req, res) => {
