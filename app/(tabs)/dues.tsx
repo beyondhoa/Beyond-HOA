@@ -73,7 +73,10 @@ export default function DuesScreen() {
 
   const { data: stripeStatus } = useQuery<{ configured: boolean }>({
     queryKey: ["/api/dues/stripe-configured"],
-    refetchInterval: false,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: true,
+    refetchInterval: 30000,
   });
   const stripeConfigured = stripeStatus?.configured ?? false;
 
