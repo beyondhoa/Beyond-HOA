@@ -229,7 +229,7 @@ function setupErrorHandler(app: express.Application) {
 }
 
 async function initStripe() {
-  if (!isStripeConfigured()) {
+  if (!(await isStripeConfigured())) {
     console.log("Stripe not configured — skipping initialization");
     return;
   }
