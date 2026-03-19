@@ -164,47 +164,60 @@ function serveLandingPage({
 }
 
 function configureExpoAndLanding(app: express.Application) {
-  const templatePath = path.resolve(
-    process.cwd(),
-    "server",
-    "templates",
-    "landing-page.html",
+  const webDistPath = path.resolve(process.cwd(), "dist");
+  const hasWebBuild =
+    fs.existsSync(webDistPath) &&
+    fs.existsSync(path.join(webDistPath, "index.html"));
+
+  log(
+    hasWebBuild
+      ? "Serving Expo web build from dist/"
+      : "Serving Expo Go landing page (no web build found)"
   );
-  const landingPageTemplate = fs.readFileSync(templatePath, "utf-8");
-  const appName = getAppName();
 
-  log("Serving static Expo files with dynamic manifest routing");
-
+  // Handle Expo Go native manifest requests at / and /manifest
   app.use((req: Request, res: Response, next: NextFunction) => {
-    if (req.path.startsWith("/api")) {
-      return next();
-    }
-
-    if (req.path !== "/" && req.path !== "/manifest") {
-      return next();
-    }
-
+    if (req.path.startsWith("/api")) return next();
+    if (req.path !== "/" && req.path !== "/manifest") return next();
     const platform = req.header("expo-platform");
-    if (platform && (platform === "ios" || platform === "android")) {
+    if (platform === "ios" || platform === "android") {
       return serveExpoManifest(platform, res);
     }
-
-    if (req.path === "/") {
-      return serveLandingPage({
-        req,
-        res,
-        landingPageTemplate,
-        appName,
-      });
-    }
-
     next();
   });
 
+  // Serve local image/font assets for Expo Go bundles
   app.use("/assets", express.static(path.resolve(process.cwd(), "assets")));
+
+  // Serve native static-build directory (Expo Go bundles + manifests)
   app.use(express.static(path.resolve(process.cwd(), "static-build")));
 
-  log("Expo routing: Checking expo-platform header on / and /manifest");
+  if (hasWebBuild) {
+    // Serve the built Expo web SPA (produced by `npx expo export --platform web`)
+    app.use(express.static(webDistPath));
+
+    // SPA catch-all: all non-API routes render the web app
+    app.get("*", (req: Request, res: Response, next: NextFunction) => {
+      if (req.path.startsWith("/api")) return next();
+      res.sendFile(path.join(webDistPath, "index.html"));
+    });
+  } else {
+    // Fallback: Expo Go QR-code landing page for development / no-build scenarios
+    const templatePath = path.resolve(
+      process.cwd(),
+      "server",
+      "templates",
+      "landing-page.html"
+    );
+    const landingPageTemplate = fs.readFileSync(templatePath, "utf-8");
+    const appName = getAppName();
+
+    app.get("/", (req: Request, res: Response) => {
+      serveLandingPage({ req, res, landingPageTemplate, appName });
+    });
+  }
+
+  log("Static routing configured");
 }
 
 function setupErrorHandler(app: express.Application) {
