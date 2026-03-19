@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
 import OpenAI from "openai";
 import { pool } from "./db";
-import { createCheckoutSession, retrieveCheckoutSession, isStripeConfigured } from "./stripeClient";
+import { createCheckoutSession, retrieveCheckoutSession, isStripeConfigured, resetStripeSync } from "./stripeClient";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -479,6 +479,7 @@ Be specific, professional, and factual. Only return valid JSON.`;
         );
       }
 
+      resetStripeSync();
       res.json({ success: true, live: secretKey.startsWith("sk_live_") });
     } catch (err) {
       console.error("Stripe setup error:", err);
@@ -489,6 +490,7 @@ Be specific, professional, and factual. Only return valid JSON.`;
   app.delete("/api/admin/stripe-setup", async (_req, res) => {
     try {
       await pool.query("DELETE FROM hoa_settings WHERE key IN ('stripe_secret_key','stripe_publishable_key')");
+      resetStripeSync();
       res.json({ success: true });
     } catch (err) {
       res.status(500).json({ error: "Failed to remove Stripe configuration" });

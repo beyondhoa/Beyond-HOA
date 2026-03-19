@@ -58,15 +58,33 @@ export async function getUncachableStripeClient(): Promise<Stripe> {
 export async function getStripeSync(): Promise<StripeSync> {
   if (_stripeSync) return _stripeSync;
   const secretKey = await resolveSecretKey();
-  _stripeSync = new StripeSync({ secretKey });
+  _stripeSync = new StripeSync({ stripeSecretKey: secretKey });
   return _stripeSync;
+}
+
+export function resetStripeSync(): void {
+  _stripeSync = null;
 }
 
 export async function isStripeConfigured(): Promise<boolean> {
   if (process.env.STRIPE_SECRET_KEY) return true;
-  if (process.env.REPLIT_STRIPE_CONNECTIONS_URL) return true;
+
   const dbKey = await getStoredStripeKey();
-  return !!dbKey;
+  if (dbKey) return true;
+
+  const replitConnectionsUrl = process.env.REPLIT_STRIPE_CONNECTIONS_URL;
+  if (replitConnectionsUrl) {
+    try {
+      const resp = await fetch(replitConnectionsUrl);
+      if (resp.ok) {
+        const data = (await resp.json()) as any;
+        const conn = Array.isArray(data) ? data[0] : data;
+        if (conn?.settings?.secret_key) return true;
+      }
+    } catch {}
+  }
+
+  return false;
 }
 
 export async function createCheckoutSession(opts: {

@@ -122,8 +122,8 @@ export default function DuesScreen() {
     if (!stripeConfigured) {
       Alert.alert(
         "Payment Setup Required",
-        "Stripe payments are not yet configured for this HOA. Please contact your board administrator to set up the STRIPE_SECRET_KEY.\n\nIn test mode, you can still mark dues as reviewed.",
-        [{ text: "OK", style: "cancel" }]
+        "Stripe payments are not yet configured. A board member can connect Stripe in the Board tab under Payment Setup.",
+        [{ text: "OK" }]
       );
       return;
     }
@@ -254,9 +254,11 @@ export default function DuesScreen() {
               </View>
             ) : (
               <View style={[styles.stripeInfoBox, { borderColor: "rgba(201,168,76,0.3)", backgroundColor: "rgba(201,168,76,0.06)" }]}>
-                <Ionicons name="information-circle" size={14} color={Colors.gold} />
+                <Ionicons name="alert-circle" size={14} color={Colors.gold} />
                 <Text style={[styles.stripeInfoText, { color: Colors.textSecondary }]}>
-                  Payment processing is ready to be configured. Add your <Text style={{ fontFamily: "Inter_600SemiBold", color: Colors.text }}>STRIPE_SECRET_KEY</Text> environment variable to enable live payments.
+                  <Text style={{ fontFamily: "Inter_600SemiBold", color: Colors.text }}>Payments not yet enabled.</Text>
+                  {" "}A board member can connect Stripe under{" "}
+                  <Text style={{ fontFamily: "Inter_600SemiBold", color: Colors.navy }}>Board → Payment Setup</Text>.
                 </Text>
               </View>
             )}
