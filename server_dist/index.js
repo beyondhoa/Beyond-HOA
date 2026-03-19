@@ -56,14 +56,29 @@ async function getUncachableStripeClient() {
 async function getStripeSync() {
   if (_stripeSync) return _stripeSync;
   const secretKey = await resolveSecretKey();
-  _stripeSync = new StripeSync({ secretKey });
+  _stripeSync = new StripeSync({ stripeSecretKey: secretKey });
   return _stripeSync;
+}
+function resetStripeSync() {
+  _stripeSync = null;
 }
 async function isStripeConfigured() {
   if (process.env.STRIPE_SECRET_KEY) return true;
-  if (process.env.REPLIT_STRIPE_CONNECTIONS_URL) return true;
   const dbKey = await getStoredStripeKey();
-  return !!dbKey;
+  if (dbKey) return true;
+  const replitConnectionsUrl = process.env.REPLIT_STRIPE_CONNECTIONS_URL;
+  if (replitConnectionsUrl) {
+    try {
+      const resp = await fetch(replitConnectionsUrl);
+      if (resp.ok) {
+        const data = await resp.json();
+        const conn = Array.isArray(data) ? data[0] : data;
+        if (conn?.settings?.secret_key) return true;
+      }
+    } catch {
+    }
+  }
+  return false;
 }
 async function createCheckoutSession(opts) {
   const stripe = await getUncachableStripeClient();
@@ -559,6 +574,7 @@ Be specific, professional, and factual. Only return valid JSON.`;
           [publishableKey]
         );
       }
+      resetStripeSync();
       res.json({ success: true, live: secretKey.startsWith("sk_live_") });
     } catch (err) {
       console.error("Stripe setup error:", err);
@@ -568,6 +584,7 @@ Be specific, professional, and factual. Only return valid JSON.`;
   app2.delete("/api/admin/stripe-setup", async (_req, res) => {
     try {
       await pool.query("DELETE FROM hoa_settings WHERE key IN ('stripe_secret_key','stripe_publishable_key')");
+      resetStripeSync();
       res.json({ success: true });
     } catch (err) {
       res.status(500).json({ error: "Failed to remove Stripe configuration" });
@@ -863,39 +880,42 @@ function serveLandingPage({
   res.status(200).send(html);
 }
 function configureExpoAndLanding(app2) {
-  const templatePath2 = path.resolve(
-    process.cwd(),
-    "server",
-    "templates",
-    "landing-page.html"
+  const webDistPath = path.resolve(process.cwd(), "dist");
+  const hasWebBuild = fs.existsSync(webDistPath) && fs.existsSync(path.join(webDistPath, "index.html"));
+  log(
+    hasWebBuild ? "Serving Expo web build from dist/" : "Serving Expo Go landing page (no web build found)"
   );
-  const landingPageTemplate = fs.readFileSync(templatePath2, "utf-8");
-  const appName = getAppName();
-  log("Serving static Expo files with dynamic manifest routing");
   app2.use((req, res, next) => {
-    if (req.path.startsWith("/api")) {
-      return next();
-    }
-    if (req.path !== "/" && req.path !== "/manifest") {
-      return next();
-    }
+    if (req.path.startsWith("/api")) return next();
+    if (req.path !== "/" && req.path !== "/manifest") return next();
     const platform = req.header("expo-platform");
-    if (platform && (platform === "ios" || platform === "android")) {
+    if (platform === "ios" || platform === "android") {
       return serveExpoManifest(platform, res);
-    }
-    if (req.path === "/") {
-      return serveLandingPage({
-        req,
-        res,
-        landingPageTemplate,
-        appName
-      });
     }
     next();
   });
   app2.use("/assets", express.static(path.resolve(process.cwd(), "assets")));
   app2.use(express.static(path.resolve(process.cwd(), "static-build")));
-  log("Expo routing: Checking expo-platform header on / and /manifest");
+  if (hasWebBuild) {
+    app2.use(express.static(webDistPath));
+    app2.get("*", (req, res, next) => {
+      if (req.path.startsWith("/api")) return next();
+      res.sendFile(path.join(webDistPath, "index.html"));
+    });
+  } else {
+    const templatePath2 = path.resolve(
+      process.cwd(),
+      "server",
+      "templates",
+      "landing-page.html"
+    );
+    const landingPageTemplate = fs.readFileSync(templatePath2, "utf-8");
+    const appName = getAppName();
+    app2.get("/", (req, res) => {
+      serveLandingPage({ req, res, landingPageTemplate, appName });
+    });
+  }
+  log("Static routing configured");
 }
 function setupErrorHandler(app2) {
   app2.use((err, _req, res, next) => {
@@ -910,7 +930,7 @@ function setupErrorHandler(app2) {
   });
 }
 async function initStripe() {
-  if (!isStripeConfigured()) {
+  if (!await isStripeConfigured()) {
     console.log("Stripe not configured \u2014 skipping initialization");
     return;
   }

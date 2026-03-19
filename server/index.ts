@@ -196,8 +196,9 @@ function configureExpoAndLanding(app: express.Application) {
     // Serve the built Expo web SPA (produced by `npx expo export --platform web`)
     app.use(express.static(webDistPath));
 
-    // SPA catch-all: all non-API routes render the web app
-    app.get("*", (req: Request, res: Response, next: NextFunction) => {
+    // SPA catch-all: all non-API GET requests serve index.html (Express 5 compatible)
+    app.use((req: Request, res: Response, next: NextFunction) => {
+      if (req.method !== "GET") return next();
       if (req.path.startsWith("/api")) return next();
       res.sendFile(path.join(webDistPath, "index.html"));
     });
