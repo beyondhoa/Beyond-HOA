@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const { spawn } = require("child_process");
+const { spawn, execSync } = require("child_process");
 const { Readable } = require("stream");
 const { pipeline } = require("stream/promises");
 
@@ -44,6 +44,11 @@ function getDeploymentDomain() {
     return stripProtocol(process.env.REPLIT_INTERNAL_APP_DOMAIN);
   }
 
+  // REPLIT_DOMAINS is set to the production domain(s) during deployment builds
+  if (process.env.REPLIT_DOMAINS) {
+    return stripProtocol(process.env.REPLIT_DOMAINS.split(",")[0]);
+  }
+
   if (process.env.REPLIT_DEV_DOMAIN) {
     return stripProtocol(process.env.REPLIT_DEV_DOMAIN);
   }
@@ -53,7 +58,7 @@ function getDeploymentDomain() {
   }
 
   console.error(
-    "ERROR: No deployment domain found. Set REPLIT_INTERNAL_APP_DOMAIN, REPLIT_DEV_DOMAIN, or EXPO_PUBLIC_DOMAIN",
+    "ERROR: No deployment domain found. Set REPLIT_INTERNAL_APP_DOMAIN, REPLIT_DOMAINS, REPLIT_DEV_DOMAIN, or EXPO_PUBLIC_DOMAIN",
   );
   process.exit(1);
 }
@@ -496,6 +501,20 @@ function updateManifests(manifests, timestamp, baseUrl, assetsByHash) {
   console.log("Manifests updated");
 }
 
+function buildWebApp(domain) {
+  console.log("=== Building Expo web app (dist/) ===");
+  console.log(`Setting EXPO_PUBLIC_DOMAIN=${domain}`);
+  try {
+    execSync("npx expo export --platform web", {
+      stdio: "inherit",
+      env: { ...process.env, EXPO_PUBLIC_DOMAIN: domain },
+    });
+    console.log("Expo web build complete → dist/");
+  } catch (err) {
+    exitWithError(`Expo web build failed: ${err.message || err}`);
+  }
+}
+
 async function main() {
   console.log("Building static Expo Go deployment...");
 
@@ -505,6 +524,10 @@ async function main() {
   const baseUrl = `https://${domain}`;
   const timestamp = `${Date.now()}-${process.pid}`;
 
+  // Step 1: Build the Expo web SPA (served at / by Express in production)
+  buildWebApp(domain);
+
+  // Step 2: Build native Expo bundles for Expo Go scanning
   prepareDirectories(timestamp);
   clearMetroCache();
 
