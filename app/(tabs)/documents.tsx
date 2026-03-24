@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -13,46 +13,29 @@ import {
   Linking,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Colors } from "@/constants/colors";
 import * as Haptics from "expo-haptics";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getApiUrl } from "@/lib/query-client";
 
 interface HoaDocument {
-  id: string;
+  id: number;
   title: string;
   category: "bylaws" | "rules" | "minutes" | "financial" | "forms" | "legal";
-  date: string;
-  size: string;
-  description: string;
-  docPath?: string;
+  doc_date: string;
+  file_size: string | null;
+  description: string | null;
+  doc_path: string | null;
 }
 
-const SEED_DOCS: HoaDocument[] = [
-  { id: "1", title: "HOA Bylaws – 2024 Revision", category: "bylaws", date: "2024-01-15", size: "1.2 MB", description: "Governing bylaws for Beyond HOA, revised January 2024.", docPath: "/documents/bylaws-2024" },
-  { id: "2", title: "Community Rules & Regulations", category: "rules", date: "2024-03-01", size: "856 KB", description: "Complete rules covering landscaping, parking, noise, and pets.", docPath: "/documents/rules-regulations" },
-  { id: "3", title: "Architectural Review Guidelines", category: "rules", date: "2023-11-10", size: "432 KB", description: "Standards and approval process for exterior modifications.", docPath: "/documents/architectural-guidelines" },
-  { id: "4", title: "Q4 2025 Board Meeting Minutes", category: "minutes", date: "2025-12-20", size: "124 KB", description: "Official minutes from the December quarterly board meeting.", docPath: "/documents/minutes-q4-2025" },
-  { id: "5", title: "Q3 2025 Board Meeting Minutes", category: "minutes", date: "2025-09-18", size: "118 KB", description: "Official minutes from the September quarterly board meeting.", docPath: "/documents/minutes-q3-2025" },
-  { id: "6", title: "Annual Financial Report 2025", category: "financial", date: "2026-01-31", size: "2.1 MB", description: "Year-end financial statements and budget overview for 2025.", docPath: "/documents/financial-report-2025" },
-  { id: "7", title: "2026 Operating Budget", category: "financial", date: "2025-12-01", size: "445 KB", description: "Approved operating and reserve budget for fiscal year 2026.", docPath: "/documents/budget-2026" },
-  { id: "8", title: "Architectural Request Form", category: "forms", date: "2024-01-01", size: "88 KB", description: "Submit for any exterior changes requiring board approval.", docPath: "/documents/architectural-request-form" },
-  { id: "9", title: "Move-In/Out Request Form", category: "forms", date: "2024-01-01", size: "56 KB", description: "Required for scheduling elevator and loading dock access.", docPath: "/documents/move-in-out-form" },
-  { id: "10", title: "CC&Rs – Declaration of Covenants", category: "legal", date: "2015-06-10", size: "3.4 MB", description: "Original Declaration of Covenants, Conditions, and Restrictions.", docPath: "/documents/ccrs-declaration" },
-  { id: "11", title: "Reserve Study 2024–2034", category: "financial", date: "2024-07-01", size: "1.8 MB", description: "10-year reserve study and funding plan for major repairs.", docPath: "/documents/reserve-study-2024" },
-  { id: "12", title: "Pet Policy Addendum", category: "rules", date: "2023-05-15", size: "92 KB", description: "Updated pet registration requirements and breed restrictions.", docPath: "/documents/pet-policy" },
-];
-
-const STORAGE_KEY = "hoa_documents";
-
 const categoryConfig: Record<string, { label: string; color: string; icon: any }> = {
-  bylaws: { label: "Bylaws", color: Colors.navy, icon: "book" },
-  rules: { label: "Rules", color: "#7C3AED", icon: "shield-checkmark" },
-  minutes: { label: "Minutes", color: "#0891B2", icon: "people" },
+  bylaws:    { label: "Bylaws",    color: Colors.navy,    icon: "book" },
+  rules:     { label: "Rules",     color: "#7C3AED",      icon: "shield-checkmark" },
+  minutes:   { label: "Minutes",   color: "#0891B2",      icon: "people" },
   financial: { label: "Financial", color: Colors.success, icon: "bar-chart" },
-  forms: { label: "Forms", color: Colors.warning, icon: "document-text" },
-  legal: { label: "Legal", color: Colors.danger, icon: "briefcase" },
+  forms:     { label: "Forms",     color: Colors.warning, icon: "document-text" },
+  legal:     { label: "Legal",     color: Colors.danger,  icon: "briefcase" },
 };
 
 const CATEGORIES = ["all", "bylaws", "rules", "minutes", "financial", "forms", "legal"] as const;
@@ -68,48 +51,24 @@ function openDocUrl(docPath: string) {
 
 export default function DocumentsScreen() {
   const insets = useSafeAreaInsets();
-  const [docs, setDocs] = useState<HoaDocument[]>([]);
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
-  const [refreshing, setRefreshing] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState<HoaDocument | null>(null);
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
 
-  const seedMap = Object.fromEntries(SEED_DOCS.map((d) => [d.id, d]));
-  const mergePaths = (list: HoaDocument[]) =>
-    list.map((d) => ({ ...d, docPath: d.docPath ?? seedMap[d.id]?.docPath }));
-
-  const load = useCallback(async () => {
-    try {
-      const data = await AsyncStorage.getItem(STORAGE_KEY);
-      if (data) {
-        setDocs(mergePaths(JSON.parse(data)));
-      } else {
-        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_DOCS));
-        setDocs(SEED_DOCS);
-      }
-    } catch {
-      setDocs(SEED_DOCS);
-    }
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
-
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await load();
-    setRefreshing(false);
-  }, [load]);
-
-  const handleOpen = (doc: HoaDocument) => {
-    Haptics.selectionAsync();
-    setSelectedDoc(doc);
-  };
+  const { data: docs = [], isFetching, refetch } = useQuery<HoaDocument[]>({
+    queryKey: ["/api/documents"],
+    staleTime: 0,
+    refetchOnMount: true,
+  });
 
   const filtered = docs
     .filter((d) => filter === "all" || d.category === filter)
     .filter((d) =>
-      !search || d.title.toLowerCase().includes(search.toLowerCase()) || d.description.toLowerCase().includes(search.toLowerCase())
+      !search ||
+      d.title.toLowerCase().includes(search.toLowerCase()) ||
+      (d.description ?? "").toLowerCase().includes(search.toLowerCase())
     );
 
   const selectedConfig = selectedDoc ? categoryConfig[selectedDoc.category] : null;
@@ -142,7 +101,12 @@ export default function DocumentsScreen() {
         </View>
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={styles.filterRow}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.filterScroll}
+        contentContainerStyle={styles.filterRow}
+      >
         {CATEGORIES.map((cat) => (
           <TouchableOpacity
             key={cat}
@@ -167,14 +131,28 @@ export default function DocumentsScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentInsetAdjustmentBehavior="automatic"
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.gold} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={isFetching}
+            onRefresh={refetch}
+            tintColor={Colors.gold}
+          />
+        }
       >
         <View style={styles.list}>
           {filtered.map((doc) => {
             const config = categoryConfig[doc.category];
-            const dateStr = new Date(doc.date).toLocaleDateString("en-US", { month: "short", year: "numeric" });
+            const dateStr = new Date(doc.doc_date).toLocaleDateString("en-US", {
+              month: "short",
+              year: "numeric",
+            });
             return (
-              <TouchableOpacity key={doc.id} style={[styles.docCard, !!doc.docPath && styles.docCardLinked]} onPress={() => handleOpen(doc)} activeOpacity={0.75}>
+              <TouchableOpacity
+                key={doc.id}
+                style={[styles.docCard, !!doc.doc_path && styles.docCardLinked]}
+                onPress={() => { Haptics.selectionAsync(); setSelectedDoc(doc); }}
+                activeOpacity={0.75}
+              >
                 <View style={[styles.docIcon, { backgroundColor: config.color + "15" }]}>
                   <Ionicons name={config.icon} size={22} color={config.color} />
                 </View>
@@ -184,7 +162,7 @@ export default function DocumentsScreen() {
                       <View style={[styles.catBadge, { backgroundColor: config.color + "18" }]}>
                         <Text style={[styles.catBadgeText, { color: config.color }]}>{config.label}</Text>
                       </View>
-                      {!!doc.docPath && (
+                      {!!doc.doc_path && (
                         <View style={styles.availableBadge}>
                           <Ionicons name="open-outline" size={9} color={Colors.success} />
                           <Text style={styles.availableBadgeText}>Available</Text>
@@ -196,14 +174,20 @@ export default function DocumentsScreen() {
                   <Text style={styles.docTitle} numberOfLines={1}>{doc.title}</Text>
                   <Text style={styles.docDesc} numberOfLines={1}>{doc.description}</Text>
                 </View>
-                <Ionicons name={doc.docPath ? "open-outline" : "chevron-forward"} size={16} color={doc.docPath ? Colors.success : Colors.border} />
+                <Ionicons
+                  name={doc.doc_path ? "open-outline" : "chevron-forward"}
+                  size={16}
+                  color={doc.doc_path ? Colors.success : Colors.border}
+                />
               </TouchableOpacity>
             );
           })}
-          {filtered.length === 0 && (
+          {filtered.length === 0 && !isFetching && (
             <View style={styles.emptyState}>
               <MaterialCommunityIcons name="file-search-outline" size={48} color={Colors.slate} />
-              <Text style={styles.emptyText}>No documents found</Text>
+              <Text style={styles.emptyText}>
+                {docs.length === 0 ? "Loading documents…" : "No documents found"}
+              </Text>
             </View>
           )}
         </View>
@@ -241,26 +225,34 @@ export default function DocumentsScreen() {
                   <View style={styles.modalMetaItem}>
                     <Ionicons name="calendar-outline" size={14} color={Colors.textSecondary} />
                     <Text style={styles.modalMetaText}>
-                      {new Date(selectedDoc.date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                      {new Date(selectedDoc.doc_date).toLocaleDateString("en-US", {
+                        month: "long", day: "numeric", year: "numeric",
+                      })}
                     </Text>
                   </View>
-                  <View style={styles.modalMetaItem}>
-                    <Ionicons name="document-outline" size={14} color={Colors.textSecondary} />
-                    <Text style={styles.modalMetaText}>{selectedDoc.size}</Text>
-                  </View>
+                  {selectedDoc.file_size && (
+                    <View style={styles.modalMetaItem}>
+                      <Ionicons name="document-outline" size={14} color={Colors.textSecondary} />
+                      <Text style={styles.modalMetaText}>{selectedDoc.file_size}</Text>
+                    </View>
+                  )}
                 </View>
 
                 <View style={styles.modalActions}>
-                  <TouchableOpacity style={styles.closeBtn} onPress={() => setSelectedDoc(null)} activeOpacity={0.7}>
+                  <TouchableOpacity
+                    style={styles.closeBtn}
+                    onPress={() => setSelectedDoc(null)}
+                    activeOpacity={0.7}
+                  >
                     <Text style={styles.closeBtnText}>Close</Text>
                   </TouchableOpacity>
-                  {selectedDoc.docPath ? (
+                  {selectedDoc.doc_path ? (
                     <TouchableOpacity
                       style={styles.viewBtn}
                       activeOpacity={0.8}
                       onPress={() => {
                         setSelectedDoc(null);
-                        openDocUrl(selectedDoc.docPath!);
+                        openDocUrl(selectedDoc.doc_path!);
                       }}
                     >
                       <Ionicons name="open-outline" size={16} color="#fff" />
@@ -285,110 +277,56 @@ export default function DocumentsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   header: {
-    paddingHorizontal: 20,
-    paddingBottom: 12,
-    paddingTop: 8,
+    paddingHorizontal: 20, paddingBottom: 12, paddingTop: 8,
     backgroundColor: Colors.navy,
   },
   headerTitle: { fontFamily: "Inter_700Bold", fontSize: 22, color: "#fff" },
   headerSub: { fontFamily: "Inter_400Regular", fontSize: 13, color: Colors.slate, marginTop: 2 },
   searchWrapper: {
-    backgroundColor: Colors.background,
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 6,
+    backgroundColor: Colors.background, paddingHorizontal: 16,
+    paddingTop: 14, paddingBottom: 6,
   },
   searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: Colors.card,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    paddingHorizontal: 4,
-    paddingVertical: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    flexDirection: "row", alignItems: "center",
+    backgroundColor: Colors.card, borderRadius: 14,
+    borderWidth: 1, borderColor: Colors.border,
+    paddingHorizontal: 4, paddingVertical: 4,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
-  searchIconWrap: {
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  clearBtn: {
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  searchIconWrap: { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
+  clearBtn: { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
   searchInput: {
-    flex: 1,
-    fontFamily: "Inter_400Regular",
-    fontSize: 14,
-    color: Colors.text,
-    paddingVertical: 8,
+    flex: 1, fontFamily: "Inter_400Regular", fontSize: 14,
+    color: Colors.text, paddingVertical: 8,
   },
   filterScroll: { flexShrink: 0 },
   filterRow: {
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 10,
-    gap: 8,
-    flexDirection: "row",
-    alignItems: "center",
+    paddingHorizontal: 16, paddingTop: 10, paddingBottom: 10,
+    gap: 8, flexDirection: "row", alignItems: "center",
   },
   filterChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: Colors.card,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    flexDirection: "row", alignItems: "center", gap: 5,
+    paddingHorizontal: 14, paddingVertical: 8,
+    borderRadius: 20, backgroundColor: Colors.card,
+    borderWidth: 1, borderColor: Colors.border,
   },
-  filterChipActive: {
-    backgroundColor: Colors.gold,
-    borderColor: Colors.gold,
-  },
-  filterChipText: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 13,
-    color: Colors.textSecondary,
-  },
-  filterChipTextActive: {
-    color: Colors.navy,
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 13,
-  },
+  filterChipActive: { backgroundColor: Colors.gold, borderColor: Colors.gold },
+  filterChipText: { fontFamily: "Inter_500Medium", fontSize: 13, color: Colors.textSecondary },
+  filterChipTextActive: { color: Colors.navy, fontFamily: "Inter_600SemiBold", fontSize: 13 },
   list: { padding: 16, gap: 10 },
   docCard: {
-    backgroundColor: Colors.card,
-    borderRadius: 14,
-    padding: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
+    backgroundColor: Colors.card, borderRadius: 14, padding: 14,
+    flexDirection: "row", alignItems: "center", gap: 12,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05, shadowRadius: 4, elevation: 1,
   },
-  docIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  docIcon: { width: 48, height: 48, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   docContent: { flex: 1 },
-  docTopRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 },
+  docTopRow: {
+    flexDirection: "row", alignItems: "center",
+    justifyContent: "space-between", marginBottom: 4,
+  },
   catBadge: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6 },
   catBadgeText: { fontFamily: "Inter_600SemiBold", fontSize: 10 },
   docDate: { fontFamily: "Inter_400Regular", fontSize: 11, color: Colors.textSecondary },
@@ -406,100 +344,41 @@ const styles = StyleSheet.create({
   },
   emptyState: { alignItems: "center", paddingVertical: 60, gap: 12 },
   emptyText: { fontFamily: "Inter_400Regular", fontSize: 15, color: Colors.slate },
-
-  // Modal
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-end",
-  },
+  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
   modalSheet: {
-    backgroundColor: Colors.card,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    paddingBottom: Platform.OS === "web" ? 34 : 40,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
+    backgroundColor: Colors.card, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    padding: 24, paddingBottom: Platform.OS === "web" ? 34 : 40,
+    shadowColor: "#000", shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15, shadowRadius: 20,
   },
   modalHandle: {
-    width: 40,
-    height: 4,
-    backgroundColor: Colors.border,
-    borderRadius: 2,
-    alignSelf: "center",
-    marginBottom: 20,
+    width: 40, height: 4, backgroundColor: Colors.border,
+    borderRadius: 2, alignSelf: "center", marginBottom: 20,
   },
-  modalHeader: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 14,
-    marginBottom: 14,
-  },
-  modalDocIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
+  modalHeader: { flexDirection: "row", alignItems: "flex-start", gap: 14, marginBottom: 14 },
+  modalDocIcon: { width: 56, height: 56, borderRadius: 14, alignItems: "center", justifyContent: "center", flexShrink: 0 },
   modalHeaderText: { flex: 1 },
-  modalTitle: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 17,
-    color: Colors.text,
-    lineHeight: 24,
-  },
+  modalTitle: { fontFamily: "Inter_700Bold", fontSize: 17, color: Colors.text, lineHeight: 24 },
   modalDesc: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 14,
-    color: Colors.textSecondary,
-    lineHeight: 21,
-    marginBottom: 16,
+    fontFamily: "Inter_400Regular", fontSize: 14,
+    color: Colors.textSecondary, lineHeight: 21, marginBottom: 16,
   },
   modalMeta: {
-    flexDirection: "row",
-    gap: 20,
-    marginBottom: 24,
-    paddingTop: 14,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    flexDirection: "row", gap: 20, marginBottom: 24,
+    paddingTop: 14, borderTopWidth: 1, borderTopColor: Colors.border,
   },
   modalMetaItem: { flexDirection: "row", alignItems: "center", gap: 6 },
   modalMetaText: { fontFamily: "Inter_400Regular", fontSize: 13, color: Colors.textSecondary },
-  modalActions: {
-    flexDirection: "row",
-    gap: 12,
-  },
+  modalActions: { flexDirection: "row", gap: 12 },
   closeBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    alignItems: "center",
+    flex: 1, paddingVertical: 14, borderRadius: 14,
+    borderWidth: 1, borderColor: Colors.border, alignItems: "center",
   },
-  closeBtnText: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 15,
-    color: Colors.textSecondary,
-  },
+  closeBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 15, color: Colors.textSecondary },
   viewBtn: {
-    flex: 2,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 14,
-    borderRadius: 14,
-    backgroundColor: Colors.navy,
+    flex: 2, flexDirection: "row", alignItems: "center",
+    justifyContent: "center", gap: 8, paddingVertical: 14,
+    borderRadius: 14, backgroundColor: Colors.navy,
   },
-  viewBtnText: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 15,
-    color: "#fff",
-  },
+  viewBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 15, color: "#fff" },
 });

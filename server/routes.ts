@@ -349,6 +349,78 @@ Be specific, professional, and factual. Only return valid JSON.`;
     }
   });
 
+  // ── Documents ────────────────────────────────────────────────
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS documents (
+      id SERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      category TEXT NOT NULL CHECK (category IN ('bylaws','rules','minutes','financial','forms','legal')),
+      doc_date DATE NOT NULL,
+      file_size TEXT,
+      description TEXT,
+      doc_path TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+
+  app.get("/api/documents", async (_req, res) => {
+    try {
+      const result = await pool.query(
+        "SELECT id, title, category, doc_date, file_size, description, doc_path FROM documents ORDER BY doc_date DESC"
+      );
+      res.json(result.rows);
+    } catch (err) {
+      console.error("Documents fetch error:", err);
+      res.status(500).json({ error: "Failed to fetch documents" });
+    }
+  });
+
+  app.post("/api/documents", async (req, res) => {
+    try {
+      const { title, category, doc_date, file_size, description, doc_path } = req.body;
+      if (!title || !category || !doc_date) {
+        return res.status(400).json({ error: "title, category, and doc_date are required" });
+      }
+      const result = await pool.query(
+        `INSERT INTO documents (title, category, doc_date, file_size, description, doc_path)
+         VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
+        [title, category, doc_date, file_size || null, description || null, doc_path || null]
+      );
+      res.status(201).json(result.rows[0]);
+    } catch (err) {
+      console.error("Document create error:", err);
+      res.status(500).json({ error: "Failed to create document" });
+    }
+  });
+
+  app.put("/api/documents/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { title, category, doc_date, file_size, description, doc_path } = req.body;
+      const result = await pool.query(
+        `UPDATE documents SET title=$1, category=$2, doc_date=$3, file_size=$4, description=$5, doc_path=$6
+         WHERE id=$7 RETURNING *`,
+        [title, category, doc_date, file_size || null, description || null, doc_path || null, id]
+      );
+      if (result.rowCount === 0) return res.status(404).json({ error: "Document not found" });
+      res.json(result.rows[0]);
+    } catch (err) {
+      console.error("Document update error:", err);
+      res.status(500).json({ error: "Failed to update document" });
+    }
+  });
+
+  app.delete("/api/documents/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await pool.query("DELETE FROM documents WHERE id=$1", [id]);
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Document delete error:", err);
+      res.status(500).json({ error: "Failed to delete document" });
+    }
+  });
+
   app.get("/documents/budget-2026", (_req, res) => {
     const filePath = templatePath("budget-2026.html");
     res.setHeader("Content-Type", "text/html; charset=utf-8");
