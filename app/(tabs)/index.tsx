@@ -209,6 +209,10 @@ export default function HomeScreen() {
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: topPadding + 8 }]}>
         <View>
+          <View style={styles.appNameRow}>
+            <MaterialCommunityIcons name="home-city" size={22} color="#fff" />
+            <Text style={styles.appName}>Beyond HOA</Text>
+          </View>
           <Text style={styles.dashboardTitle}>Resident Dashboard</Text>
         </View>
         <TouchableOpacity style={styles.boardButton} onPress={handleBoardPress} activeOpacity={0.8}>
@@ -434,6 +438,8 @@ const styles = StyleSheet.create({
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
     paddingHorizontal: 20, paddingBottom: 16, backgroundColor: Colors.navy,
   },
+  appNameRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
+  appName: { fontFamily: "Inter_700Bold", fontSize: 26, color: "#fff", letterSpacing: 0.2 },
   dashboardTitle: { fontFamily: "Inter_400Regular", fontSize: 16, color: "rgba(255,255,255,0.75)" },
   boardButton: {
     flexDirection: "row", alignItems: "center", backgroundColor: "rgba(255,255,255,0.15)",
