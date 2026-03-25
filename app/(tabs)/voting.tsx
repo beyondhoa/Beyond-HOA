@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
   headerSub: {
     fontFamily: "Inter_400Regular",
     fontSize: 13,
-    color: Colors.slate,
+    color: Colors.c,
     marginTop: 2,
   },
   filterRow: {

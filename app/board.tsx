@@ -462,15 +462,23 @@ export default function BoardScreen() {
             <View>
               <Text style={styles.heroTitle}>Board Portal</Text>
             </View>
+            <TouchableOpacity
+              style={styles.backBtn}
+              onPress={() => router.back()}
+              activeOpacity={0.75}
+            >
+              <Ionicons name="arrow-back" size={16} color="#fff" />
+              <Text style={styles.backBtnText}>Dashboard</Text>
+            </TouchableOpacity>
           </View>
           <View style={styles.heroStats}>
             <View style={styles.heroStat}>
-              <Text style={styles.heroStatValue}>247</Text>
+              <Text style={styles.heroStatValue}>125</Text>
               <Text style={styles.heroStatLabel}>Units</Text>
             </View>
             <View style={styles.heroStatDivider} />
             <View style={styles.heroStat}>
-              <Text style={styles.heroStatValue}>94%</Text>
+              <Text style={styles.heroStatValue}>95%</Text>
               <Text style={styles.heroStatLabel}>Dues Collected</Text>
             </View>
             <View style={styles.heroStatDivider} />
@@ -1713,8 +1721,10 @@ const styles = StyleSheet.create({
   headerCenter: { flexDirection: "row", alignItems: "center", gap: 6 },
   headerTitle: { fontFamily: "Inter_700Bold", fontSize: 16, color: Colors.text },
 
-  heroCard: { margin: 16, backgroundColor: Colors.navy, borderRadius: 18, padding: 20 },
+  heroCard: { margin: 16, backgroundColor: Colors.navy, borderRadius: 22, padding: 20 },
   heroTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 },
+  backBtn: { flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: "rgba(255,255,255,0.15)", paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16, borderWidth: 1, borderColor: "rgba(255,255,255,0.25)" },
+  backBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#fff" },
   heroLabel: { fontFamily: "Inter_600SemiBold", fontSize: 10, color: Colors.gold, letterSpacing: 1.5, marginBottom: 4 },
   heroTitle: { fontFamily: "Inter_700Bold", fontSize: 22, color: "#fff" },
   heroBadge: { backgroundColor: "rgba(201,168,76,0.2)", paddingHorizontal: 12, paddingVertical: 5, borderRadius: 12, borderWidth: 1, borderColor: "rgba(201,168,76,0.3)" },
@@ -1722,7 +1732,7 @@ const styles = StyleSheet.create({
   heroStats: { flexDirection: "row", backgroundColor: "rgba(255,255,255,0.06)", borderRadius: 12, padding: 14 },
   heroStat: { flex: 1, alignItems: "center" },
   heroStatValue: { fontFamily: "Inter_700Bold", fontSize: 20, color: "#fff" },
-  heroStatLabel: { fontFamily: "Inter_400Regular", fontSize: 11, color: Colors.slate, marginTop: 2 },
+  heroStatLabel: { fontFamily: "Inter_400Regular", fontSize: 12, color: Colors.cream, marginTop: 2 },
   heroStatDivider: { width: 1, backgroundColor: "rgba(255,255,255,0.1)", marginVertical: 4 },
 
   section: { paddingHorizontal: 16, marginBottom: 8 },
