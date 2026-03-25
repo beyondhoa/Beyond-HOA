@@ -76,8 +76,8 @@ export default function DocumentsScreen() {
   const selectedConfig = selectedDoc ? categoryConfig[selectedDoc.category] : null;
 
   return (
-    <View style={[styles.container, { paddingTop: topPadding }]}>
-      <View style={styles.header}>
+    <View style={styles.container}>
+      <View style={[styles.header, { paddingTop: topPadding + 4 }]}>
         <Text style={styles.headerTitle}>Documents</Text>
         <Text style={styles.headerSub}>{docs.length} community documents</Text>
       </View>
@@ -279,7 +279,7 @@ export default function DocumentsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   header: {
-    paddingHorizontal: 20, paddingBottom: 12, paddingTop: 4,
+    paddingHorizontal: 20, paddingBottom: 12,
     backgroundColor: Colors.navy,
   },
   headerTitle: { fontFamily: "Inter_700Bold", fontSize: 24, color: "#fff" },

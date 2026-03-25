@@ -174,8 +174,8 @@ export default function DuesScreen() {
   const totalOwed = unpaid.reduce((s, d) => s + d.amount, 0);
 
   return (
-    <View style={[styles.container, { paddingTop: topPadding }]}>
-      <View style={styles.header}>
+    <View style={styles.container}>
+      <View style={[styles.header, { paddingTop: topPadding + 4 }]}>
         <View>
           <Text style={styles.headerTitle}>HOA Dues</Text>
           <Text style={styles.headerSub}>Beyond HOA Community</Text>
@@ -323,7 +323,6 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingBottom: 12,
-    paddingTop: 4,
     backgroundColor: Colors.navy,
     flexDirection: "row",
     alignItems: "center",
