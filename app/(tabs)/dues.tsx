@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   headerTitle: { fontFamily: "Inter_700Bold", fontSize: 22, color: "#fff" },
-  headerSub: { fontFamily: "Inter_400Regular", fontSize: 16, color: Colors.slate, marginTop: 2 },
+  headerSub: { fontFamily: "Inter_400Regular", fontSize: 18, color: Colors.cream, marginTop: 2 },
   stripeBadge: {
     flexDirection: "row",
     alignItems: "center",

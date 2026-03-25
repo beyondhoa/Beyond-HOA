@@ -243,10 +243,6 @@ export default function ResidentsScreen() {
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: topPadding + 8 }]}>
         <View>
-          <View style={styles.appNameRow}>
-            <MaterialCommunityIcons name="account-group" size={14} color="#fff" />
-            <Text style={styles.appName}>Beyond HOA</Text>
-          </View>
           <Text style={styles.headerTitle}>Residents</Text>
         </View>
         <TouchableOpacity style={styles.addButton} onPress={openAdd} activeOpacity={0.8} testID="add-resident-btn">
@@ -501,8 +497,6 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     backgroundColor: Colors.navy,
   },
-  appNameRow: { flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 3 },
-  appName: { fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#fff", letterSpacing: 0.5 },
   headerTitle: { fontFamily: "Inter_700Bold", fontSize: 24, color: "#fff" },
   addButton: {
     width: 38,
