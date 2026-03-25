@@ -460,11 +460,7 @@ export default function BoardScreen() {
         <View style={styles.heroCard}>
           <View style={styles.heroTop}>
             <View>
-              <Text style={styles.heroLabel}>BEYOND HOA</Text>
               <Text style={styles.heroTitle}>Board Portal</Text>
-            </View>
-            <View style={styles.heroBadge}>
-              <Text style={styles.heroBadgeText}>2026</Text>
             </View>
           </View>
           <View style={styles.heroStats}>
