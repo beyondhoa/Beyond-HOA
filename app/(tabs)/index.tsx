@@ -55,7 +55,7 @@ const STORAGE_KEY = "hoa_announcements";
 const PROFILE_KEY = "resident_profile";
 
 const categoryConfig = {
-  general: { color: Colors.navy, icon: "maintenance" as const },
+  general: { color: Colors.navy, icon: "megaphone-outline" as const },
   maintenance: { color: Colors.warning, icon: "construct" as const },
   event: { color: Colors.success, icon: "calendar" as const },
   urgent: { color: Colors.danger, icon: "alert-circle" as const },

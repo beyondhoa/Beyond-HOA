@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   headerTitle: { fontFamily: "Inter_700Bold", fontSize: 22, color: "#fff" },
-  headerSub: { fontFamily: "Inter_400Regular", fontSize: 13, color: Colors.slate, marginTop: 2 },
+  headerSub: { fontFamily: "Inter_400Regular", fontSize: 16, color: Colors.slate, marginTop: 2 },
   stripeBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(99,91,255,0.3)",
   },
-  stripeBadgeText: { fontFamily: "Inter_600SemiBold", fontSize: 11, color: "#9E97FF" },
+  stripeBadgeText: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#9E97FF" },
   summaryRow: { flexDirection: "row", paddingHorizontal: 16, paddingTop: 16, gap: 12 },
   summaryCard: {
     flex: 1, backgroundColor: Colors.card, borderRadius: 14, padding: 16, borderLeftWidth: 3, gap: 6,

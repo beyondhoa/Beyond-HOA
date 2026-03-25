@@ -218,18 +218,18 @@ export default function ResidentsScreen() {
         </View>
         <View style={styles.cardMeta}>
           <View style={styles.metaItem}>
-            <Ionicons name="business-outline" size={11} color={Colors.slate} />
+            <Ionicons name="business-outline" size={11} color={Colors.navy} />
             <Text style={styles.metaText}>Unit {item.unit}</Text>
           </View>
           {item.email && (
             <View style={styles.metaItem}>
-              <Ionicons name="mail-outline" size={11} color={Colors.slate} />
+              <Ionicons name="mail-outline" size={11} color={Colors.navy} />
               <Text style={styles.metaText} numberOfLines={1}>{item.email}</Text>
             </View>
           )}
           {item.phone && (
             <View style={styles.metaItem}>
-              <Ionicons name="call-outline" size={11} color={Colors.slate} />
+              <Ionicons name="call-outline" size={11} color={Colors.navy} />
               <Text style={styles.metaText}>{item.phone}</Text>
             </View>
           )}
@@ -255,7 +255,7 @@ export default function ResidentsScreen() {
       </View>
 
       <View style={styles.searchContainer}>
-        <Ionicons name="search-outline" size={16} color={Colors.slate} style={styles.searchIcon} />
+        <Ionicons name="search-outline" size={16} color={Colors.navy} style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
           placeholder="Search by name, unit, or contact..."

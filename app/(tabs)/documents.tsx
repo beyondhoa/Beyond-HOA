@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.navy,
   },
   headerTitle: { fontFamily: "Inter_700Bold", fontSize: 22, color: "#fff" },
-  headerSub: { fontFamily: "Inter_400Regular", fontSize: 13, color: Colors.slate, marginTop: 2 },
+  headerSub: { fontFamily: "Inter_400Regular", fontSize: 16, color: Colors.slate, marginTop: 2 },
   searchWrapper: {
     backgroundColor: Colors.background, paddingHorizontal: 16,
     paddingTop: 14, paddingBottom: 6,
