@@ -55,7 +55,7 @@ const STORAGE_KEY = "hoa_announcements";
 const PROFILE_KEY = "resident_profile";
 
 const categoryConfig = {
-  general: { color: Colors.navy, icon: "information-circle" as const },
+  general: { color: Colors.navy, icon: "maintenance" as const },
   maintenance: { color: Colors.warning, icon: "construct" as const },
   event: { color: Colors.success, icon: "calendar" as const },
   urgent: { color: Colors.danger, icon: "alert-circle" as const },
@@ -199,10 +199,8 @@ export default function HomeScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     createWorkOrder.mutate(form);
   };
-
-  const sortedAnnouncements = [...announcements].sort((a, b) => {
-    if (a.pinned && !b.pinned) return -1;
-    if (!a.pinned && b.pinned) return 1;
+. const sortedAnnouncements = [...announcements].sort((a, b) => {
+    if (a.pinned && !b.pinned) return return  if (!a.pinned && b.pinned) return 1;
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
 
@@ -211,7 +209,7 @@ export default function HomeScreen() {
       <View style={[styles.header, { paddingTop: topPadding + 8 }]}>
         <View>
           <View style={styles.appNameRow}>
-            <MaterialCommunityIcons name="home-city" size={14} color="#fff" />
+            <MaterialCommunityIcons name="home-city" size={22} color="#fff" />
             <Text style={styles.appName}>Beyond HOA</Text>
           </View>
           <Text style={styles.dashboardTitle}>Resident Dashboard</Text>
@@ -439,9 +437,9 @@ const styles = StyleSheet.create({
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
     paddingHorizontal: 20, paddingBottom: 16, backgroundColor: Colors.navy,
   },
-  appNameRow: { flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 3 },
-  appName: { fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#fff", letterSpacing: 0.5 },
-  dashboardTitle: { fontFamily: "Inter_700Bold", fontSize: 24, color: "#fff" },
+  appNameRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
+  appName: { fontFamily: "Inter_700Bold", fontSize: 26, color: "#fff", letterSpacing: 0.2 },
+  dashboardTitle: { fontFamily: "Inter_400Regular", fontSize: 13, color: "rgba(255,255,255,0.75)" },
   boardButton: {
     flexDirection: "row", alignItems: "center", backgroundColor: "rgba(255,255,255,0.15)",
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, gap: 6,
@@ -530,7 +528,7 @@ const styles = StyleSheet.create({
 
   modalScroll: { padding: 16, paddingBottom: 40 },
   formSection: { marginBottom: 20 },
-  formSectionLabel: { fontFamily: "Inter_700Bold", fontSize: 10, color: Colors.slate, letterSpacing: 1.2, marginBottom: 12, textTransform: "uppercase" },
+  formSectionLabel: { fontFamily: "Inter_700Bold", fontSize: 10, color: Colors.white, letterSpacing: 1.2, marginBottom: 12, textTransform: "uppercase" },
 
   fieldWrap: { marginBottom: 12 },
   fieldLabel: { fontFamily: "Inter_500Medium", fontSize: 12, color: Colors.textSecondary, marginBottom: 6 },
