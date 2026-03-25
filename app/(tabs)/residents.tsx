@@ -20,7 +20,6 @@ import * as Haptics from "expo-haptics";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Colors } from "@/constants/colors";
 import { getApiUrl } from "@/lib/query-client";
-import { cp } from "node:fs";
 
 interface Resident {
   id: number;
