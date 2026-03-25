@@ -244,6 +244,7 @@ export default function ResidentsScreen() {
       <View style={[styles.header, { paddingTop: topPadding + 8 }]}>
         <View>
           <Text style={styles.headerTitle}>Residents</Text>
+          <Text style={styles.headerSub}>Beyond HOA Community</Text>
         </View>
         <TouchableOpacity style={styles.addButton} onPress={openAdd} activeOpacity={0.8} testID="add-resident-btn">
           <Ionicons name="add" size={22} color="#fff" />
@@ -498,6 +499,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.navy,
   },
   headerTitle: { fontFamily: "Inter_700Bold", fontSize: 24, color: "#fff" },
+  headerSub: { fontFamily: "Inter_400Regular", fontSize: 13, color: "rgba(255,255,255,0.65)", marginTop: 2 },
   addButton: {
     width: 38,
     height: 38,
