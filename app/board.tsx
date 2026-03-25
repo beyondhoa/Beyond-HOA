@@ -451,8 +451,8 @@ export default function BoardScreen() {
   const openViolations = violations.filter((v) => v.status === "open").length;
 
   return (
-    <View style={[styles.container, { paddingTop: topPadding }]}>
-      <View style={styles.header}>
+    <View style={styles.container}>
+      <View style={[styles.header, { paddingTop: topPadding + 12 }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn} activeOpacity={0.7}>
           <Ionicons name="chevron-down" size={22} color={Colors.slate} />
         </TouchableOpacity>
@@ -1718,7 +1718,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   header: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: 16, paddingVertical: 12,
+    paddingHorizontal: 16, paddingBottom: 12,
     backgroundColor: Colors.card, borderBottomWidth: 1, borderBottomColor: Colors.border,
   },
   closeBtn: {

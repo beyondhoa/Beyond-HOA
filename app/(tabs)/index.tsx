@@ -207,17 +207,17 @@ export default function HomeScreen() {
   });
 
   return (
-    <View style={[styles.container, { paddingTop: topPadding }]}>
-      <View style={styles.header}>
+    <View style={styles.container}>
+      <View style={[styles.header, { paddingTop: topPadding + 8 }]}>
         <View>
           <View style={styles.appNameRow}>
-            <MaterialCommunityIcons name="home-city" size={14} color={Colors.gold} />
+            <MaterialCommunityIcons name="home-city" size={14} color="#fff" />
             <Text style={styles.appName}>Beyond HOA</Text>
           </View>
           <Text style={styles.dashboardTitle}>Resident Dashboard</Text>
         </View>
         <TouchableOpacity style={styles.boardButton} onPress={handleBoardPress} activeOpacity={0.8}>
-          <MaterialCommunityIcons name="shield-star" size={18} color={Colors.gold} />
+          <MaterialCommunityIcons name="shield-star" size={18} color="#fff" />
           <Text style={styles.boardButtonText}>Board</Text>
         </TouchableOpacity>
       </View>
@@ -437,17 +437,17 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   header: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: 20, paddingBottom: 16, paddingTop: 8, backgroundColor: Colors.navy,
+    paddingHorizontal: 20, paddingBottom: 16, backgroundColor: Colors.navy,
   },
   appNameRow: { flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 3 },
-  appName: { fontFamily: "Inter_600SemiBold", fontSize: 12, color: Colors.gold, letterSpacing: 0.5 },
+  appName: { fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#fff", letterSpacing: 0.5 },
   dashboardTitle: { fontFamily: "Inter_700Bold", fontSize: 24, color: "#fff" },
   boardButton: {
-    flexDirection: "row", alignItems: "center", backgroundColor: "rgba(201,168,76,0.15)",
+    flexDirection: "row", alignItems: "center", backgroundColor: "rgba(255,255,255,0.15)",
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, gap: 6,
-    borderWidth: 1, borderColor: "rgba(201,168,76,0.3)",
+    borderWidth: 1, borderColor: "rgba(255,255,255,0.3)",
   },
-  boardButtonText: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: Colors.gold },
+  boardButtonText: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#fff" },
 
   statsRow: { flexDirection: "row", paddingHorizontal: 16, paddingTop: 16, gap: 12 },
   statCard: {
