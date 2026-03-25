@@ -440,13 +440,13 @@ const styles = StyleSheet.create({
   },
   appNameRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
   appName: { fontFamily: "Inter_700Bold", fontSize: 26, color: "#fff", letterSpacing: 0.2 },
-  dashboardTitle: { fontFamily: "Inter_400Regular", fontSize: 13, color: "rgba(255,255,255,0.75)" },
+  dashboardTitle: { fontFamily: "Inter_400Regular", fontSize: 16, color: "rgba(255,255,255,0.75)" },
   boardButton: {
     flexDirection: "row", alignItems: "center", backgroundColor: "rgba(255,255,255,0.15)",
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, gap: 6,
     borderWidth: 1, borderColor: "rgba(255,255,255,0.3)",
   },
-  boardButtonText: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#fff" },
+  boardButtonText: { fontFamily: "Inter_600SemiBold", fontSize: 16, color: "#fff" },
 
   statsRow: { flexDirection: "row", paddingHorizontal: 16, paddingTop: 16, gap: 12 },
   statCard: {
