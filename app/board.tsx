@@ -452,20 +452,9 @@ export default function BoardScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: topPadding + 12 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn} activeOpacity={0.7}>
-          <Ionicons name="chevron-down" size={22} color={Colors.slate} />
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <MaterialCommunityIcons name="shield-star" size={16} color={Colors.gold} />
-          <Text style={styles.headerTitle}>Board Dashboard</Text>
-        </View>
-        <View style={{ width: 38 }} />
-      </View>
-
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={{ paddingTop: topPadding }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.gold} />}
       >
         <View style={styles.heroCard}>
