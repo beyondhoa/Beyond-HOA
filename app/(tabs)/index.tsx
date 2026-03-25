@@ -199,8 +199,9 @@ export default function HomeScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     createWorkOrder.mutate(form);
   };
-. const sortedAnnouncements = [...announcements].sort((a, b) => {
-    if (a.pinned && !b.pinned) return return  if (!a.pinned && b.pinned) return 1;
+  const sortedAnnouncements = [...announcements].sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
 
