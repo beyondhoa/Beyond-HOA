@@ -127,9 +127,10 @@ function VoteCard({ vote, onVote }: { vote: Vote; onVote: (voteId: string, optio
             {isActive ? "Active" : "Closed"}
           </Text>
         </View>
-        <Text style={styles.deadlineText}>
-          <Ionicons name="time-outline" size={11} color={Colors.textSecondary} /> {isActive ? "Ends" : "Ended"} {deadline}
-        </Text>
+        <View style={styles.deadlineRow}>
+          <Ionicons name="time-outline" size={11} color={Colors.textSecondary} />
+          <Text style={styles.deadlineText}> {isActive ? "Ends" : "Ended"} {deadline}</Text>
+        </View>
       </View>
 
       <Text style={styles.voteTitle}>{vote.title}</Text>
@@ -342,6 +343,7 @@ const styles = StyleSheet.create({
   },
   statusDot: { width: 6, height: 6, borderRadius: 3 },
   statusText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
+  deadlineRow: { flexDirection: "row", alignItems: "center", gap: 3 },
   deadlineText: { fontFamily: "Inter_400Regular", fontSize: 12, color: Colors.textSecondary },
   voteTitle: { fontFamily: "Inter_700Bold", fontSize: 16, color: Colors.text, marginBottom: 6 },
   voteDesc: { fontFamily: "Inter_400Regular", fontSize: 13, color: Colors.textSecondary, lineHeight: 19, marginBottom: 16 },
