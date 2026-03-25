@@ -363,6 +363,26 @@ Be specific, professional, and factual. Only return valid JSON.`;
     )
   `);
 
+  const { rowCount: docCount } = await pool.query("SELECT 1 FROM documents LIMIT 1");
+  if ((docCount ?? 0) === 0) {
+    await pool.query(`
+      INSERT INTO documents (title, category, doc_date, file_size, description, doc_path) VALUES
+        ('HOA Bylaws – 2024 Revision',       'bylaws',    '2024-01-15', '1.2 MB',  'Governing bylaws for Beyond HOA, revised January 2024.',                              '/documents/bylaws-2024'),
+        ('Community Rules & Regulations',    'rules',     '2024-03-01', '856 KB',  'Complete rules covering landscaping, parking, noise, and pets.',                      '/documents/rules-regulations'),
+        ('Architectural Review Guidelines',  'rules',     '2023-11-10', '432 KB',  'Standards and approval process for exterior modifications.',                          '/documents/architectural-guidelines'),
+        ('Q4 2025 Board Meeting Minutes',    'minutes',   '2025-12-20', '124 KB',  'Official minutes from the December quarterly board meeting.',                         '/documents/minutes-q4-2025'),
+        ('Q3 2025 Board Meeting Minutes',    'minutes',   '2025-09-18', '118 KB',  'Official minutes from the September quarterly board meeting.',                        '/documents/minutes-q3-2025'),
+        ('Annual Financial Report 2025',     'financial', '2026-01-31', '2.1 MB',  'Year-end financial statements and budget overview for 2025.',                         '/documents/financial-report-2025'),
+        ('2026 Operating Budget',            'financial', '2025-12-01', '445 KB',  'Approved operating and reserve budget for fiscal year 2026.',                         '/documents/budget-2026'),
+        ('Architectural Request Form',       'forms',     '2024-01-01', '88 KB',   'Submit for any exterior changes requiring board approval.',                           '/documents/architectural-request-form'),
+        ('Move-In/Out Request Form',         'forms',     '2024-01-01', '56 KB',   'Required for scheduling elevator and loading dock access.',                           '/documents/move-in-out-form'),
+        ('CC&Rs – Declaration of Covenants', 'legal',     '2015-06-10', '3.4 MB',  'Original Declaration of Covenants, Conditions, and Restrictions.',                   '/documents/ccrs-declaration'),
+        ('Reserve Study 2024–2034',          'financial', '2024-07-01', '1.8 MB',  '10-year reserve study and funding plan for major repairs.',                           '/documents/reserve-study-2024'),
+        ('Pet Policy Addendum',              'rules',     '2023-05-15', '92 KB',   'Updated pet registration requirements and breed restrictions.',                       '/documents/pet-policy')
+    `);
+    console.log("Documents seeded (12 rows)");
+  }
+
   app.get("/api/documents", async (_req, res) => {
     try {
       const result = await pool.query(
