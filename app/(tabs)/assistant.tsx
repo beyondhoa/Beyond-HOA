@@ -160,8 +160,8 @@ export default function AssistantScreen() {
   const showWelcome = messages.length === 0;
 
   return (
-    <View style={[styles.container, { paddingTop: topPadding }]}>
-      <View style={styles.header}>
+    <View style={styles.container}>
+      <View style={[styles.header, { paddingTop: topPadding + 8 }]}>
         <View style={styles.headerLeft}>
           <View style={styles.headerIcon}>
             <MaterialCommunityIcons name="shield-star" size={20} color={Colors.gold} />
@@ -255,7 +255,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingBottom: 16,
-    paddingTop: 8,
     backgroundColor: Colors.navy,
   },
   headerLeft: { flexDirection: "row", alignItems: "center", gap: 12 },

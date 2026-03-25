@@ -223,8 +223,8 @@ export default function VotingScreen() {
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
 
   return (
-    <View style={[styles.container, { paddingTop: topPadding }]}>
-      <View style={styles.header}>
+    <View style={styles.container}>
+      <View style={[styles.header, { paddingTop: topPadding + 8 }]}>
         <Text style={styles.headerTitle}>Community Voting</Text>
         <Text style={styles.headerSub}>{votes.filter(v => v.status === "active").length} active ballots</Text>
       </View>
@@ -271,7 +271,6 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingBottom: 16,
-    paddingTop: 8,
     backgroundColor: Colors.navy,
   },
   headerTitle: {
