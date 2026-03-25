@@ -270,6 +270,7 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingBottom: 16,
+    paddingTop: 8,
     backgroundColor: Colors.navy,
   },
   headerTitle: {
