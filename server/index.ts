@@ -200,6 +200,7 @@ function configureExpoAndLanding(app: express.Application) {
     app.use((req: Request, res: Response, next: NextFunction) => {
       if (req.method !== "GET") return next();
       if (req.path.startsWith("/api")) return next();
+      if (req.path.startsWith("/documents")) return next();
       res.sendFile(path.join(webDistPath, "index.html"));
     });
   } else {

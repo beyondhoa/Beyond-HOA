@@ -10,8 +10,8 @@ import {
   TextInput,
   Modal,
   Pressable,
-  Linking,
 } from "react-native";
+import * as WebBrowser from "expo-web-browser";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Colors } from "@/constants/colors";
@@ -40,12 +40,14 @@ const categoryConfig: Record<string, { label: string; color: string; icon: any }
 
 const CATEGORIES = ["all", "bylaws", "rules", "minutes", "financial", "forms", "legal"] as const;
 
-function openDocUrl(docPath: string) {
+async function openDocUrl(docPath: string) {
   const url = new URL(docPath, getApiUrl()).toString();
   if (Platform.OS === "web") {
     window.open(url, "_blank", "noopener,noreferrer");
   } else {
-    Linking.openURL(url).catch(() => {});
+    await WebBrowser.openBrowserAsync(url, {
+      presentationStyle: WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN,
+    });
   }
 }
 
