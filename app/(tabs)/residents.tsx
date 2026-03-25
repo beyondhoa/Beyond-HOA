@@ -500,7 +500,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.navy,
   },
   headerTitle: { fontFamily: "Inter_700Bold", fontSize: 24, color: "#fff" },
-  headerSub: { fontFamily: "Inter_400Regular", fontSize: 18, color: Colors.cream, marginTop: 2 },
+  headerSub: { fontFamily: "Inter_400Regular", fontSize: 13, color: "rgba(255,255,255,0.65)", marginTop: 2 },
   addButton: {
     width: 38,
     height: 38,

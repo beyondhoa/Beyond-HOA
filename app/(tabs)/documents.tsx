@@ -279,7 +279,7 @@ export default function DocumentsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   header: {
-    paddingHorizontal: 20, paddingBottom: 12, paddingTop: 8,
+    paddingHorizontal: 20, paddingBottom: 12, paddingTop: 4,
     backgroundColor: Colors.navy,
   },
   headerTitle: { fontFamily: "Inter_700Bold", fontSize: 24, color: "#fff" },

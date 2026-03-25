@@ -270,7 +270,6 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingBottom: 16,
-    paddingTop: 8,
     backgroundColor: Colors.navy,
   },
   headerTitle: {
@@ -280,8 +279,8 @@ const styles = StyleSheet.create({
   },
   headerSub: {
     fontFamily: "Inter_400Regular",
-    fontSize: 13,
-    color: Colors.c,
+    fontSize: 18,
+    color: Colors.cream,
     marginTop: 2,
   },
   filterRow: {
@@ -292,7 +291,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.navy,
   },
   filterBtn: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingVertical: 7,
     borderRadius: 20,
     backgroundColor: "rgba(255,255,255,0.08)",
@@ -302,8 +301,8 @@ const styles = StyleSheet.create({
   },
   filterText: {
     fontFamily: "Inter_500Medium",
-    fontSize: 13,
-    color: Colors.slate,
+    fontSize: 18,
+    color: Colors.cream,
   },
   filterTextActive: {
     color: Colors.navy,
