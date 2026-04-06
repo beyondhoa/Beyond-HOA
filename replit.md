@@ -7,6 +7,7 @@ A full-featured mobile HOA management app built with Expo Router (React Native) 
 
 ### Frontend (Expo / React Native)
 - **Framework**: Expo SDK 54 with Expo Router for file-based navigation
+- **Auth**: JWT-based, token stored in `expo-secure-store`, managed by `contexts/AuthContext.tsx`
 - **State**: AsyncStorage for local data persistence, React Query for API calls
 - **Fonts**: Inter (400, 500, 600, 700) via @expo-google-fonts/inter
 - **Icons**: @expo/vector-icons (Ionicons, MaterialCommunityIcons)
@@ -17,7 +18,12 @@ A full-featured mobile HOA management app built with Expo Router (React Native) 
 - **Server**: Express on port 5000
 - **Database**: PostgreSQL (Replit built-in) accessed via `pg` pool in `server/db.ts`
 - **AI**: OpenAI via Replit AI Integrations (no API key required)
+- **Auth**: JWT (jsonwebtoken), passwords hashed with bcryptjs, `SESSION_SECRET` env var as JWT signing key
 - **Routes**:
+  - POST /api/auth/login – email + password → JWT token (30-day expiry)
+  - GET /api/auth/me – verify JWT → resident profile
+  - POST /api/auth/change-password – change own password (requires JWT)
+  - POST /api/residents/:id/reset-password – board admin resets password (no auth required)
   - POST /api/bylaw-chat – streaming AI responses for bylaw questions
   - GET/POST /api/residents – list and create residents
   - PUT /api/residents/:id – update resident
@@ -79,7 +85,9 @@ app/
 - Announcements, votes, dues, and documents seeded on first launch via AsyncStorage
 - AI conversation history maintained in component state (not persisted)
 - **Residents**: PostgreSQL table `residents` — 12 seeded residents, full CRUD via REST API
-  - Fields: id, name, unit, email, phone, status (owner/tenant), move_in_date, notes, created_at
+  - Fields: id, name, unit, email, phone, status (owner/tenant), move_in_date, notes, created_at, password_hash
+  - All residents have default password `Welcome1!` set on first server start
+  - New residents created by board admin also get default password `Welcome1!`
 
 ## Running the App
 - Backend: `npm run server:dev` (port 5000)

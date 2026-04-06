@@ -21,6 +21,7 @@ import { Colors } from "@/constants/colors";
 import * as Haptics from "expo-haptics";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getApiUrl } from "@/lib/query-client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Announcement {
   id: string;
@@ -109,14 +110,28 @@ function AnnouncementCard({ item }: { item: Announcement }) {
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
+  const { resident, logout } = useAuth();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [duesStatus, setDuesStatus] = useState({ paid: false, amount: 450, dueDate: "2026-03-31" });
   const [activeVotes, setActiveVotes] = useState(0);
   const [woModal, setWoModal] = useState(false);
   const [form, setForm] = useState({ ...EMPTY_FORM });
-  const [savedUnit, setSavedUnit] = useState("");
+  const [savedUnit, setSavedUnit] = useState(resident?.unit || "");
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
+
+  const handleLogout = useCallback(async () => {
+    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Sign Out",
+        style: "destructive",
+        onPress: async () => {
+          await logout();
+        },
+      },
+    ]);
+  }, [logout]);
 
   const loadData = useCallback(async () => {
     try {
@@ -180,14 +195,18 @@ export default function HomeScreen() {
 
   const openWorkOrderModal = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    AsyncStorage.getItem(PROFILE_KEY).then((p) => {
-      if (p) {
-        const profile = JSON.parse(p);
-        setForm({ ...EMPTY_FORM, resident_name: profile.name || "", unit: profile.unit || "" });
-      } else {
-        setForm({ ...EMPTY_FORM });
-      }
-    });
+    if (resident) {
+      setForm({ ...EMPTY_FORM, resident_name: resident.name, unit: resident.unit });
+    } else {
+      AsyncStorage.getItem(PROFILE_KEY).then((p) => {
+        if (p) {
+          const profile = JSON.parse(p);
+          setForm({ ...EMPTY_FORM, resident_name: profile.name || "", unit: profile.unit || "" });
+        } else {
+          setForm({ ...EMPTY_FORM });
+        }
+      });
+    }
     setWoModal(true);
   };
 
@@ -208,17 +227,24 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: topPadding + 8 }]}>
-        <View>
+        <View style={{ flex: 1 }}>
           <View style={styles.appNameRow}>
             <MaterialCommunityIcons name="home-city" size={22} color="#fff" />
             <Text style={styles.appName}>Beyond HOA</Text>
           </View>
-          <Text style={styles.dashboardTitle}>Resident Dashboard</Text>
+          <Text style={styles.dashboardTitle}>
+            {resident ? `Hi, ${resident.name.split(" ")[0]}  ·  Unit ${resident.unit}` : "Resident Dashboard"}
+          </Text>
         </View>
-        <TouchableOpacity style={styles.boardButton} onPress={handleBoardPress} activeOpacity={0.8}>
-          <MaterialCommunityIcons name="shield-star" size={18} color="#fff" />
-          <Text style={styles.boardButtonText}>Board</Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.boardButton} onPress={handleBoardPress} activeOpacity={0.8}>
+            <MaterialCommunityIcons name="shield-star" size={18} color="#fff" />
+            <Text style={styles.boardButtonText}>Board</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleLogout} activeOpacity={0.7} style={styles.logoutBtn} testID="logout-btn">
+            <Ionicons name="log-out-outline" size={22} color="rgba(255,255,255,0.75)" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
@@ -447,6 +473,8 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: "rgba(255,255,255,0.3)",
   },
   boardButtonText: { fontFamily: "Inter_600SemiBold", fontSize: 16, color: "#fff" },
+  headerActions: { flexDirection: "row", alignItems: "center", gap: 8 },
+  logoutBtn: { padding: 6, borderRadius: 20, backgroundColor: "rgba(255,255,255,0.1)" },
 
   statsRow: { flexDirection: "row", paddingHorizontal: 16, paddingTop: 16, gap: 12 },
   statCard: {

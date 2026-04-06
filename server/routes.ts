@@ -1,10 +1,36 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "node:http";
 import { resolve as resolvePath } from "node:path";
 import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
 import OpenAI from "openai";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 import { pool } from "./db";
+
+const JWT_SECRET = process.env.SESSION_SECRET || "beyond-hoa-secret-key";
+const DEFAULT_PASSWORD = "Welcome1!";
+
+interface JwtPayload {
+  residentId: number;
+  email: string;
+}
+
+async function requireAuth(req: Request, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+  const token = authHeader.slice(7);
+  try {
+    const payload = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    (req as any).residentId = payload.residentId;
+    (req as any).email = payload.email;
+    next();
+  } catch {
+    return res.status(401).json({ error: "Invalid or expired token" });
+  }
+}
 import { createCheckoutSession, retrieveCheckoutSession, isStripeConfigured, resetStripeSync } from "./stripeClient";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -45,6 +71,127 @@ When answering questions:
 You represent a friendly, knowledgeable advisor helping community members navigate HOA life.`;
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // ── Auth migration ──────────────────────────────────────────
+  await pool.query(`
+    ALTER TABLE residents ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255)
+  `);
+  // Set default password for residents that don't have one yet
+  const noPassword = await pool.query(
+    "SELECT id FROM residents WHERE password_hash IS NULL"
+  );
+  if (noPassword.rowCount && noPassword.rowCount > 0) {
+    const defaultHash = await bcrypt.hash(DEFAULT_PASSWORD, 10);
+    await pool.query(
+      "UPDATE residents SET password_hash=$1 WHERE password_hash IS NULL",
+      [defaultHash]
+    );
+    console.log(`Set default password for ${noPassword.rowCount} resident(s)`);
+  }
+
+  // ── Auth routes ─────────────────────────────────────────────
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      if (!email || !password) {
+        return res.status(400).json({ error: "Email and password are required" });
+      }
+      const result = await pool.query(
+        "SELECT * FROM residents WHERE LOWER(email)=LOWER($1)",
+        [email.trim()]
+      );
+      if (result.rows.length === 0) {
+        return res.status(401).json({ error: "Invalid email or password" });
+      }
+      const resident = result.rows[0];
+      if (!resident.password_hash) {
+        return res.status(401).json({ error: "Account not set up. Contact your HOA admin." });
+      }
+      const valid = await bcrypt.compare(password, resident.password_hash);
+      if (!valid) {
+        return res.status(401).json({ error: "Invalid email or password" });
+      }
+      const token = jwt.sign(
+        { residentId: resident.id, email: resident.email } as JwtPayload,
+        JWT_SECRET,
+        { expiresIn: "30d" }
+      );
+      const { password_hash: _ph, ...safeResident } = resident;
+      res.json({ token, resident: safeResident });
+    } catch (err) {
+      console.error("Login error:", err);
+      res.status(500).json({ error: "Login failed" });
+    }
+  });
+
+  app.get("/api/auth/me", requireAuth, async (req, res) => {
+    try {
+      const residentId = (req as any).residentId;
+      const result = await pool.query(
+        "SELECT id, name, unit, email, phone, status, move_in_date, notes, created_at FROM residents WHERE id=$1",
+        [residentId]
+      );
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: "Resident not found" });
+      }
+      res.json({ resident: result.rows[0] });
+    } catch (err) {
+      console.error("Auth me error:", err);
+      res.status(500).json({ error: "Failed to fetch profile" });
+    }
+  });
+
+  app.post("/api/auth/change-password", requireAuth, async (req, res) => {
+    try {
+      const residentId = (req as any).residentId;
+      const { currentPassword, newPassword } = req.body;
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: "Both current and new password are required" });
+      }
+      if (newPassword.length < 6) {
+        return res.status(400).json({ error: "New password must be at least 6 characters" });
+      }
+      const result = await pool.query(
+        "SELECT password_hash FROM residents WHERE id=$1",
+        [residentId]
+      );
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: "Resident not found" });
+      }
+      const valid = await bcrypt.compare(currentPassword, result.rows[0].password_hash);
+      if (!valid) {
+        return res.status(401).json({ error: "Current password is incorrect" });
+      }
+      const newHash = await bcrypt.hash(newPassword, 10);
+      await pool.query(
+        "UPDATE residents SET password_hash=$1 WHERE id=$2",
+        [newHash, residentId]
+      );
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Change password error:", err);
+      res.status(500).json({ error: "Failed to change password" });
+    }
+  });
+
+  // ── Board: set/reset resident password ──────────────────────
+  app.post("/api/residents/:id/reset-password", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { newPassword } = req.body;
+      const pwd = newPassword || DEFAULT_PASSWORD;
+      const hash = await bcrypt.hash(pwd, 10);
+      const result = await pool.query(
+        "UPDATE residents SET password_hash=$1 WHERE id=$2 RETURNING id",
+        [hash, id]
+      );
+      if (result.rowCount === 0) return res.status(404).json({ error: "Not found" });
+      res.json({ success: true, password: pwd });
+    } catch (err) {
+      console.error("Reset password error:", err);
+      res.status(500).json({ error: "Failed to reset password" });
+    }
+  });
+
   app.post("/api/bylaw-chat", async (req, res) => {
     try {
       const { messages } = req.body;
@@ -105,12 +252,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!name || !unit || !status) {
         return res.status(400).json({ error: "name, unit, and status are required" });
       }
+      const defaultHash = await bcrypt.hash(DEFAULT_PASSWORD, 10);
       const result = await pool.query(
-        `INSERT INTO residents (name, unit, email, phone, status, move_in_date, notes)
-         VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-        [name, unit, email || null, phone || null, status, move_in_date || null, notes || null]
+        `INSERT INTO residents (name, unit, email, phone, status, move_in_date, notes, password_hash)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+        [name, unit, email || null, phone || null, status, move_in_date || null, notes || null, defaultHash]
       );
-      res.status(201).json(result.rows[0]);
+      const { password_hash: _ph, ...safeResident } = result.rows[0];
+      res.status(201).json(safeResident);
     } catch (err) {
       console.error("Resident create error:", err);
       res.status(500).json({ error: "Failed to create resident" });
