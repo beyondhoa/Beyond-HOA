@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import * as SecureStore from "expo-secure-store";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getApiUrl } from "@/lib/query-client";
 
 const TOKEN_KEY = "beyond_hoa_token";
@@ -45,13 +45,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const restoreSession = useCallback(async () => {
     try {
-      const stored = await SecureStore.getItemAsync(TOKEN_KEY);
+      const stored = await AsyncStorage.getItem(TOKEN_KEY);
       if (!stored) { setIsLoading(false); return; }
       const res = await fetch(apiUrl("/api/auth/me"), {
         headers: { Authorization: `Bearer ${stored}` },
       });
       if (!res.ok) {
-        await SecureStore.deleteItemAsync(TOKEN_KEY);
+        await AsyncStorage.removeItem(TOKEN_KEY);
         setIsLoading(false);
         return;
       }
@@ -77,13 +77,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Login failed");
-    await SecureStore.setItemAsync(TOKEN_KEY, data.token);
+    await AsyncStorage.setItem(TOKEN_KEY, data.token);
     setToken(data.token);
     setResident(data.resident);
   }, []);
 
   const logout = useCallback(async () => {
-    await SecureStore.deleteItemAsync(TOKEN_KEY);
+    await AsyncStorage.removeItem(TOKEN_KEY);
     setToken(null);
     setResident(null);
   }, []);
