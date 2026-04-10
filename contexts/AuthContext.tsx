@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Platform } from "react-native";
 import { getApiUrl } from "@/lib/query-client";
 
 const TOKEN_KEY = "beyond_hoa_token";
@@ -86,6 +87,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await AsyncStorage.removeItem(TOKEN_KEY);
     setToken(null);
     setResident(null);
+    if (Platform.OS === "web" && typeof window !== "undefined") {
+      window.location.href = "/login";
+    }
   }, []);
 
   const refreshResident = useCallback(async () => {
