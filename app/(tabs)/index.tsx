@@ -11,7 +11,6 @@ import {
   TextInput,
   KeyboardAvoidingView,
   ActivityIndicator,
-  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -46,8 +45,7 @@ interface WorkOrder {
 }
 
 const SEED_ANNOUNCEMENTS: Announcement[] = [
-  { id: "1", title: "Pool Closure – Scheduled Maintenance", body: "The community pool will be closed March 5–7 for annual maintenance. We apologize for the inconvenience.", date: "2026-03-01", pinned: true, category: "maintenance" },
-  { id: "2", title: "Spring Community Cleanup Day", body: "Join your neighbors on March 15 at 9 AM for our annual spring cleanup. Refreshments provided!", date: "2026-02-28", pinned: false, category: "event" },
+{ id: "2", title: "Spring Community Cleanup Day", body: "Join your neighbors on March 15 at 9 AM for our annual spring cleanup. Refreshments provided!", date: "2026-02-28", pinned: false, category: "event" },
   { id: "3", title: "Q1 Board Meeting – March 20", body: "The quarterly board meeting will be held in the community center at 7 PM. All residents welcome.", date: "2026-02-25", pinned: false, category: "general" },
   { id: "4", title: "Updated Parking Policy", body: "Effective April 1, all guest vehicles must display a visitor pass. Passes available at the management office.", date: "2026-02-20", pinned: false, category: "general" },
 ];
@@ -118,19 +116,11 @@ export default function HomeScreen() {
   const [woModal, setWoModal] = useState(false);
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [savedUnit, setSavedUnit] = useState(resident?.unit || "");
+  const [confirmLogout, setConfirmLogout] = useState(false);
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
 
   const handleLogout = useCallback(async () => {
-    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Sign Out",
-        style: "destructive",
-        onPress: async () => {
-          await logout();
-        },
-      },
-    ]);
+    await logout();
   }, [logout]);
 
   const loadData = useCallback(async () => {
@@ -241,7 +231,7 @@ export default function HomeScreen() {
             <MaterialCommunityIcons name="shield-star" size={18} color="#fff" />
             <Text style={styles.boardButtonText}>Board</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleLogout} activeOpacity={0.7} style={styles.logoutBtn} testID="logout-btn">
+          <TouchableOpacity onPress={() => setConfirmLogout(true)} activeOpacity={0.7} style={styles.logoutBtn} testID="logout-btn">
             <Ionicons name="log-out-outline" size={22} color="rgba(255,255,255,0.75)" />
           </TouchableOpacity>
         </View>
@@ -356,6 +346,34 @@ export default function HomeScreen() {
               <Ionicons name="megaphone-outline" size={40} color={Colors.slate} />
               <Text style={styles.emptyText}>No announcements yet</Text>
             </View>
+          )}
+        </View>
+
+        <View style={styles.signOutSection}>
+          <View style={styles.signOutInfo}>
+            <View style={styles.signOutAvatar}>
+              <Ionicons name="person" size={18} color={Colors.navy} />
+            </View>
+            <View>
+              <Text style={styles.signOutName}>{resident?.name ?? "Resident"}</Text>
+              <Text style={styles.signOutUnit}>Unit {resident?.unit ?? "—"}</Text>
+            </View>
+          </View>
+          {confirmLogout ? (
+            <View style={styles.signOutConfirm}>
+              <Text style={styles.signOutConfirmText}>Sign out?</Text>
+              <TouchableOpacity onPress={handleLogout} style={styles.signOutConfirmYes} testID="confirm-signout-btn">
+                <Text style={styles.signOutConfirmYesText}>Yes, sign out</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setConfirmLogout(false)} style={styles.signOutConfirmNo}>
+                <Text style={styles.signOutConfirmNoText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity onPress={() => setConfirmLogout(true)} style={styles.signOutBtn} activeOpacity={0.8} testID="signout-section-btn">
+              <Ionicons name="log-out-outline" size={16} color={Colors.danger} />
+              <Text style={styles.signOutBtnText}>Sign Out</Text>
+            </TouchableOpacity>
           )}
         </View>
 
@@ -579,4 +597,36 @@ const styles = StyleSheet.create({
 
   disclaimer: { flexDirection: "row", gap: 8, alignItems: "flex-start", backgroundColor: Colors.card, borderRadius: 10, padding: 12, borderWidth: 1, borderColor: Colors.border, marginTop: 4 },
   disclaimerText: { fontFamily: "Inter_400Regular", fontSize: 12, color: Colors.slate, lineHeight: 18, flex: 1 },
+
+  signOutSection: {
+    marginHorizontal: 16, marginTop: 24, backgroundColor: Colors.card,
+    borderRadius: 14, borderWidth: 1, borderColor: Colors.border,
+    padding: 16, gap: 12,
+  },
+  signOutInfo: { flexDirection: "row", alignItems: "center", gap: 12 },
+  signOutAvatar: {
+    width: 38, height: 38, borderRadius: 19,
+    backgroundColor: Colors.navy + "15", alignItems: "center", justifyContent: "center",
+  },
+  signOutName: { fontFamily: "Inter_600SemiBold", fontSize: 15, color: Colors.text },
+  signOutUnit: { fontFamily: "Inter_400Regular", fontSize: 13, color: Colors.textSecondary, marginTop: 1 },
+  signOutBtn: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    paddingVertical: 10, paddingHorizontal: 14,
+    borderRadius: 10, borderWidth: 1, borderColor: Colors.danger + "30",
+    backgroundColor: Colors.danger + "08", alignSelf: "flex-start",
+  },
+  signOutBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: Colors.danger },
+  signOutConfirm: { flexDirection: "row", alignItems: "center", gap: 10, flexWrap: "wrap" },
+  signOutConfirmText: { fontFamily: "Inter_500Medium", fontSize: 14, color: Colors.text },
+  signOutConfirmYes: {
+    paddingVertical: 8, paddingHorizontal: 14, borderRadius: 10,
+    backgroundColor: Colors.danger,
+  },
+  signOutConfirmYesText: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#fff" },
+  signOutConfirmNo: {
+    paddingVertical: 8, paddingHorizontal: 14, borderRadius: 10,
+    backgroundColor: Colors.card, borderWidth: 1, borderColor: Colors.border,
+  },
+  signOutConfirmNoText: { fontFamily: "Inter_500Medium", fontSize: 13, color: Colors.textSecondary },
 });
