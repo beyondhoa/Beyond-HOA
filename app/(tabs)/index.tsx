@@ -111,7 +111,7 @@ export default function HomeScreen() {
   const { resident, logout } = useAuth();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [duesStatus, setDuesStatus] = useState({ paid: false, amount: 450, dueDate: "2026-03-31" });
+  const [duesStatus, setDuesStatus] = useState({ paid: false, amount: 155, dueDate: "2026-03-31" });
   const [activeVotes, setActiveVotes] = useState(0);
   const [woModal, setWoModal] = useState(false);
   const [form, setForm] = useState({ ...EMPTY_FORM });
@@ -599,20 +599,20 @@ const styles = StyleSheet.create({
   disclaimerText: { fontFamily: "Inter_400Regular", fontSize: 12, color: Colors.slate, lineHeight: 18, flex: 1 },
 
   signOutSection: {
-    marginHorizontal: 16, marginTop: 24, backgroundColor: Colors.card,
+    marginHorizontal: 16, marginTop: 18, backgroundColor: Colors.card,
     borderRadius: 14, borderWidth: 1, borderColor: Colors.border,
-    padding: 16, gap: 12,
+    padding: 12, gap: 12,
   },
   signOutInfo: { flexDirection: "row", alignItems: "center", gap: 12 },
   signOutAvatar: {
-    width: 38, height: 38, borderRadius: 19,
-    backgroundColor: Colors.navy + "15", alignItems: "center", justifyContent: "center",
+    width: 40, height: 40, borderRadius: 19,
+    borderRadius: Colors.navy + "15", alignItems: "center", justifyContent: "center",
   },
   signOutName: { fontFamily: "Inter_600SemiBold", fontSize: 15, color: Colors.text },
   signOutUnit: { fontFamily: "Inter_400Regular", fontSize: 13, color: Colors.textSecondary, marginTop: 1 },
   signOutBtn: {
     flexDirection: "row", alignItems: "center", gap: 8,
-    paddingVertical: 10, paddingHorizontal: 14,
+    paddingVertical: 16, paddingHorizontal: 14,
     borderRadius: 10, borderWidth: 1, borderColor: Colors.danger + "30",
     backgroundColor: Colors.danger + "08", alignSelf: "flex-start",
   },
@@ -620,12 +620,12 @@ const styles = StyleSheet.create({
   signOutConfirm: { flexDirection: "row", alignItems: "center", gap: 10, flexWrap: "wrap" },
   signOutConfirmText: { fontFamily: "Inter_500Medium", fontSize: 14, color: Colors.text },
   signOutConfirmYes: {
-    paddingVertical: 8, paddingHorizontal: 14, borderRadius: 10,
+    paddingVertical: 14, paddingHorizontal: 14, borderRadius: 10,
     backgroundColor: Colors.danger,
   },
   signOutConfirmYesText: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#fff" },
   signOutConfirmNo: {
-    paddingVertical: 8, paddingHorizontal: 14, borderRadius: 10,
+    paddingVertical: 14, paddingHorizontal: 14, borderRadius: 10,
     backgroundColor: Colors.card, borderWidth: 1, borderColor: Colors.border,
   },
   signOutConfirmNoText: { fontFamily: "Inter_500Medium", fontSize: 13, color: Colors.textSecondary },
