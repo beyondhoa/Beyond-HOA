@@ -480,7 +480,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   header: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: 20, paddingBottom: 16, backgroundColor: Colors.navy,
+    paddingHorizontal: 20, paddingBottom: 12, backgroundColor: Colors.navy,
   },
   appNameRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
   appName: { fontFamily: "Inter_700Bold", fontSize: 26, color: "#fff", letterSpacing: 0.2 },
@@ -599,7 +599,7 @@ const styles = StyleSheet.create({
   disclaimerText: { fontFamily: "Inter_400Regular", fontSize: 12, color: Colors.slate, lineHeight: 18, flex: 1 },
 
   signOutSection: {
-    marginHorizontal: 16, marginTop: 18, backgroundColor: Colors.card,
+    marginHorizontal: 16, marginTop: 16, backgroundColor: Colors.card,
     borderRadius: 14, borderWidth: 1, borderColor: Colors.border,
     padding: 12, gap: 12,
   },
