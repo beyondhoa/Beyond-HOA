@@ -377,7 +377,7 @@ export default function HomeScreen() {
           )}
         </View>
 
-        <View style={{ height: Platform.OS === "web" ? 34 : 100 }} />
+        <View style={{ height: Platform.OS === "web" ? 120 : 100 }} />
       </ScrollView>
 
       <Modal visible={woModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setWoModal(false)}>
