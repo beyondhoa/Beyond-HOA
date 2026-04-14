@@ -377,7 +377,7 @@ export default function HomeScreen() {
           )}
         </View>
 
-        <View style={{ height: Platform.OS === "web" ? 120 : 100 }} />
+        <View style={{ height: Platform.OS === "web" ? 100 : 100 }} />
       </ScrollView>
 
       <Modal visible={woModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setWoModal(false)}>
@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
   },
   boardButtonText: { fontFamily: "Inter_600SemiBold", fontSize: 16, color: "#fff" },
   headerActions: { flexDirection: "row", alignItems: "center", gap: 8 },
-  logoutBtn: { padding: 6, borderRadius: 20, backgroundColor: "rgba(255,255,255,0.1)" },
+  logoutBtn: { padding: 10, borderRadius: 20, backgroundColor: "rgba(255,255,255,0.1)" },
 
   statsRow: { flexDirection: "row", paddingHorizontal: 16, paddingTop: 16, gap: 12 },
   statCard: {
