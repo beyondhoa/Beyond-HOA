@@ -279,10 +279,10 @@ export default function DocumentsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   header: {
-    paddingHorizontal: 20, paddingBottom: 12,
+    paddingHorizontal: 20, paddingBottom: 8,
     backgroundColor: Colors.navy,
   },
-  headerTitle: { fontFamily: "Inter_700Bold", fontSize: 32, color: "#fff" },
+  headerTitle: { fontFamily: "Inter_700Bold", fontSize: 26, color: "#fff" },
   headerSub: { fontFamily: "Inter_400Regular", fontSize: 18, color: Colors.cream, marginTop: 2 },
   searchWrapper: {
     backgroundColor: Colors.background, paddingHorizontal: 16,

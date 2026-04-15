@@ -322,13 +322,13 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   header: {
     paddingHorizontal: 20,
-    paddingBottom: 12,
+    paddingBottom: 8,
     backgroundColor: Colors.navy,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  headerTitle: { fontFamily: "Inter_700Bold", fontSize: 24, color: "#fff" },
+  headerTitle: { fontFamily: "Inter_700Bold", fontSize: 26, color: "#fff" },
   headerSub: { fontFamily: "Inter_400Regular", fontSize: 18, color: Colors.cream, marginTop: 2 },
   stripeBadge: {
     flexDirection: "row",

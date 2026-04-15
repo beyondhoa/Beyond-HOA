@@ -57,7 +57,7 @@ function ClassicTabLayout() {
           backgroundColor: isIOS ? "transparent" : Colors.navy,
           borderTopWidth: 0,
           elevation: 0,
-          ...(isWeb ? { height: 84 } : {}),
+          ...(isWeb ? { height: 60 } : {}),
         },
         tabBarBackground: () =>
           isIOS ? (
@@ -71,7 +71,7 @@ function ClassicTabLayout() {
           ),
         tabBarLabelStyle: {
           fontFamily: "Inter_500Medium",
-          fontSize: 10,
+          fontSize: 12,
         },
       }}
     >

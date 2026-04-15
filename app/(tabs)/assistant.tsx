@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingBottom: 8,
     backgroundColor: Colors.navy,
   },
   headerLeft: { flexDirection: "row", alignItems: "center", gap: 12 },
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(201,168,76,0.3)",
   },
-  headerTitle: { fontFamily: "Inter_700Bold", fontSize: 22, color: "#fff" },
+  headerTitle: { fontFamily: "Inter_700Bold", fontSize: 26, color: "#fff" },
   headerSub: { fontFamily: "Inter_400Regular", fontSize: 16, color: Colors.cream },
   clearBtn: {
     padding: 8,

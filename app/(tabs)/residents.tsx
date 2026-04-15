@@ -495,10 +495,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingBottom: 8,
     backgroundColor: Colors.navy,
   },
-  headerTitle: { fontFamily: "Inter_700Bold", fontSize: 24, color: "#fff" },
+  headerTitle: { fontFamily: "Inter_700Bold", fontSize: 26, color: "#fff" },
   headerSub: { fontFamily: "Inter_400Regular", fontSize: 18, color: Colors.cream, marginTop: 2 },
   addButton: {
     width: 38,

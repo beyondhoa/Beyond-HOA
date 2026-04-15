@@ -270,12 +270,12 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   header: {
     paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingBottom: 8,
     backgroundColor: Colors.navy,
   },
   headerTitle: {
     fontFamily: "Inter_700Bold",
-    fontSize: 22,
+    fontSize: 26,
     color: "#fff",
   },
   headerSub: {
