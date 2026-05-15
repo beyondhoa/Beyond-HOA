@@ -70,7 +70,7 @@ export default function ResidentsScreen() {
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState<"all" | "owner" | "tenant">("all");
+  const [filterStatus, setFilterStatus] = useState<"all" | "owner">("all");
   const [modalVisible, setModalVisible] = useState(false);
   const [detailResident, setDetailResident] = useState<Resident | null>(null);
   const [editMode, setEditMode] = useState(false);
@@ -117,8 +117,7 @@ export default function ResidentsScreen() {
   }, [queryClient]);
 
   const filtered = useMemo(() => {
-    let list = residents;
-    if (filterStatus !== "all") list = list.filter((r) => r.status === filterStatus);
+    let list = residents.filter((r) => r.status === "owner");
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
@@ -130,10 +129,9 @@ export default function ResidentsScreen() {
       );
     }
     return list;
-  }, [residents, search, filterStatus]);
+  }, [residents, search]);
 
   const ownerCount = residents.filter((r) => r.status === "owner").length;
-  const tenantCount = residents.filter((r) => r.status === "tenant").length;
 
   function openAdd() {
     setForm({ ...EMPTY_FORM });
@@ -270,32 +268,12 @@ export default function ResidentsScreen() {
       </View>
 
       <View style={styles.statsRow}>
-        <TouchableOpacity
-          style={[styles.statChip, filterStatus === "all" && styles.statChipActive]}
-          onPress={() => { setFilterStatus("all"); Haptics.selectionAsync(); }}
-        >
-          <Text style={[styles.statChipText, filterStatus === "all" && styles.statChipTextActive]}>
-            All {residents.length}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.statChip, filterStatus === "owner" && styles.statChipOwner]}
-          onPress={() => { setFilterStatus("owner"); Haptics.selectionAsync(); }}
-        >
+        <View style={[styles.statChip, styles.statChipOwner]}>
           <View style={styles.statChipDot} />
-          <Text style={[styles.statChipText, filterStatus === "owner" && styles.statChipTextActive]}>
-            Owners {ownerCount}
+          <Text style={[styles.statChipText, styles.statChipTextActive]}>
+            {ownerCount} Owner{ownerCount !== 1 ? "s" : ""}
           </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.statChip, filterStatus === "tenant" && styles.statChipTenant]}
-          onPress={() => { setFilterStatus("tenant"); Haptics.selectionAsync(); }}
-        >
-          <View style={[styles.statChipDot, styles.tenantDot]} />
-          <Text style={[styles.statChipText, filterStatus === "tenant" && styles.statChipTextActive]}>
-            Tenants {tenantCount}
-          </Text>
-        </TouchableOpacity>
+        </View>
       </View>
 
       {isLoading ? (
