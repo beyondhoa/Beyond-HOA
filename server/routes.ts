@@ -88,6 +88,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log(`Set default password for ${noPassword.rowCount} resident(s)`);
   }
 
+  // ── One-time resident reseed migration ──────────────────────
+  {
+    const flag = await pool.query(
+      "SELECT value FROM hoa_settings WHERE key='residents_seed_v2' LIMIT 1"
+    );
+    if (flag.rowCount === 0) {
+      const defaultHash = await bcrypt.hash(DEFAULT_PASSWORD, 10);
+      await pool.query("DELETE FROM residents");
+      await pool.query("ALTER SEQUENCE residents_id_seq RESTART WITH 1");
+      const seedResidents = [
+        ["Sarah Mitchell",  "101", "sarah.mitchell@email.com",  "(555) 210-4821", "owner", "2019-03-15", "HOA Board President"],
+        ["James Thornton",  "102", "j.thornton@email.com",      "(555) 341-7703", "owner", "2020-07-01", null],
+        ["Maria Gonzalez",  "103", "maria.g@email.com",         "(555) 482-9210", "owner", "2022-01-10", "Leasing unit from Patel family"],
+        ["David Okafor",    "104", "d.okafor@email.com",        "(555) 593-0044", "owner", "2018-11-20", "HOA Treasurer"],
+        ["Priya Patel",     "201", "priya.patel@email.com",     "(555) 614-2299", "owner", "2021-04-05", null],
+        ["Tom & Lisa Chen", "202", "chenfamily@email.com",      "(555) 725-8811", "owner", "2017-08-12", "HOA Secretary"],
+        ["Rachel Kim",      "203", "rachel.kim@email.com",      "(555) 836-4450", "owner", "2023-06-01", null],
+        ["Marcus Webb",     "204", "m.webb@email.com",          "(555) 947-5533", "owner", "2016-02-28", "HOA Board Member"],
+        ["Emily Sanders",   "301", "e.sanders@email.com",       "(555) 058-6677", "owner", "2022-09-14", null],
+        ["Carlos Rivera",   "302", "carlos.r@email.com",        "(555) 169-7724", "owner", "2023-11-01", null],
+        ["Natasha Brown",   "303", "n.brown@email.com",         "(555) 270-8891", "owner", "2020-12-07", null],
+        ["Kevin Park",      "304", "kevin.park@email.com",      "(555) 381-9912", "owner", "2019-05-22", "Board Member at Large"],
+      ];
+      for (const [name, unit, email, phone, status, move_in_date, notes] of seedResidents) {
+        await pool.query(
+          `INSERT INTO residents (name, unit, email, phone, status, move_in_date, notes, password_hash)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+          [name, unit, email, phone, status, move_in_date, notes, defaultHash]
+        );
+      }
+      await pool.query(
+        `INSERT INTO hoa_settings (key, value, updated_at) VALUES ('residents_seed_v2','done',NOW())`
+      );
+      console.log("Resident reseed v2 applied: 12 owners inserted");
+    }
+  }
+
   // ── Auth routes ─────────────────────────────────────────────
   app.post("/api/auth/login", async (req, res) => {
     try {
