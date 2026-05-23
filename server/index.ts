@@ -175,6 +175,12 @@ function configureExpoAndLanding(app: express.Application) {
       : "Serving Expo Go landing page (no web build found)"
   );
 
+  // Serve robots.txt
+  app.get("/robots.txt", (_req: Request, res: Response) => {
+    res.type("text/plain");
+    res.send("User-agent: *\nAllow: /\n");
+  });
+
   // Handle Expo Go native manifest requests at / and /manifest
   app.use((req: Request, res: Response, next: NextFunction) => {
     if (req.path.startsWith("/api")) return next();
