@@ -57,7 +57,7 @@ function ClassicTabLayout() {
           backgroundColor: isIOS ? "transparent" : Colors.navy,
           borderTopWidth: 0,
           elevation: 0,
-          ...(isWeb ? { height: 60 } : {}),
+          ...(isWeb ? { height: 84 } : {}),
         },
         tabBarBackground: () =>
           isIOS ? (
