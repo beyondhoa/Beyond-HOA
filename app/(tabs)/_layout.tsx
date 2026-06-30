@@ -71,7 +71,7 @@ function ClassicTabLayout() {
           ),
         tabBarLabelStyle: {
           fontFamily: "Inter_500Medium",
-          fontSize: 12,
+          fontSize: 10,
         },
       }}
     >
