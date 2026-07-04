@@ -172,7 +172,7 @@ function configureExpoAndLanding(app: express.Application) {
   log(
     hasWebBuild
       ? "Serving Expo web build from dist/"
-      : "Serving Expo Go landing page (no web build found)"
+      : "Serving Expo Go landing page (no web build found)",
   );
 
   // Serve robots.txt
@@ -215,7 +215,7 @@ function configureExpoAndLanding(app: express.Application) {
       process.cwd(),
       "server",
       "templates",
-      "landing-page.html"
+      "landing-page.html",
     );
     const landingPageTemplate = fs.readFileSync(templatePath, "utf-8");
     const appName = getAppName();
@@ -266,11 +266,14 @@ async function initStripe() {
 
     const webhookBaseUrl = `https://${(process.env.REPLIT_DOMAINS ?? "").split(",")[0]}`;
     if (webhookBaseUrl !== "https://") {
-      const wh = await stripeSync.findOrCreateManagedWebhook(`${webhookBaseUrl}/api/stripe/webhook`);
+      const wh = await stripeSync.findOrCreateManagedWebhook(
+        `${webhookBaseUrl}/api/stripe/webhook`,
+      );
       console.log("Stripe webhook configured:", wh.url);
     }
 
-    stripeSync.syncBackfill()
+    stripeSync
+      .syncBackfill()
       .then(() => console.log("Stripe data synced"))
       .catch((err: unknown) => console.error("Stripe backfill error:", err));
   } catch (err) {
@@ -286,7 +289,8 @@ async function initStripe() {
     express.raw({ type: "application/json" }),
     async (req: Request, res: Response) => {
       const signature = req.headers["stripe-signature"];
-      if (!signature) return res.status(400).json({ error: "Missing stripe-signature" });
+      if (!signature)
+        return res.status(400).json({ error: "Missing stripe-signature" });
       try {
         const sig = Array.isArray(signature) ? signature[0] : signature;
         await WebhookHandlers.processWebhook(req.body as Buffer, sig);
@@ -296,7 +300,7 @@ async function initStripe() {
         console.error("Stripe webhook error:", msg);
         res.status(400).json({ error: "Webhook processing error" });
       }
-    }
+    },
   );
 
   setupBodyParsing(app);
