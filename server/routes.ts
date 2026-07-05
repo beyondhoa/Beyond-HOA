@@ -41,8 +41,8 @@ function templatePath(name: string): string {
 }
 
 const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
+  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || undefined,
 });
 
 const BYLAW_SYSTEM_PROMPT = `You are an expert HOA (Homeowners Association) Bylaw Assistant. You help residents and board members understand their HOA rules, regulations, and bylaws.
