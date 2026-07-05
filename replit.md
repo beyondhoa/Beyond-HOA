@@ -113,3 +113,4 @@ The Express server and Expo web build can be deployed together on Vercel as a fu
 ### Notes
 - CORS is configured to allow Replit domains, localhost, and any `*.vercel.app` origin (plus `VERCEL_URL`/`VERCEL_PROJECT_PRODUCTION_URL`) automatically — no extra config needed for Vercel preview or production deployments.
 - The Stripe webhook URL is auto-registered against whichever deployed domain is detected (Replit or Vercel) on server startup.
+- `.npmrc` sets `legacy-peer-deps=true` at the repo root. This is required for `npm install` to succeed on Vercel (peer dependency conflicts among Expo/React Native packages otherwise cause `npm install` to fail with exit code 1). Replit's own environment applies the same flag via `scripts/post-merge.sh`.
