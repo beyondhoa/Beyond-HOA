@@ -1,0 +1,272 @@
+import { useState, useRef } from "react";
+import {
+  useListViolations, getListViolationsQueryKey, useCreateViolation, useUpdateViolationStatus, useDeleteViolation, useAnalyzeViolationImage,
+  useListVendors, getListVendorsQueryKey, useCreateVendor,
+  useListWorkOrders, getListWorkOrdersQueryKey, useUpdateWorkOrder, useDeleteWorkOrder,
+} from "@workspace/api-client-react";
+import type { Violation, WorkOrder } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { PageHeader, PageContent } from "@/components/Layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Plus, Trash2, Pencil, Upload, Loader2, ShieldAlert, Store, Wrench } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+function statusColor(s: string) {
+  const m: Record<string, string> = { open: "bg-yellow-100 text-yellow-800", resolved: "bg-green-100 text-green-800", appealed: "bg-blue-100 text-blue-800", in_progress: "bg-blue-100 text-blue-800", completed: "bg-green-100 text-green-800" };
+  return m[s] ?? "bg-gray-100 text-gray-800";
+}
+
+export default function BoardPage() {
+  return (
+    <>
+      <PageHeader title="Board Dashboard" subtitle="Manage violations, vendors, and work orders" />
+      <PageContent>
+        <Tabs defaultValue="violations">
+          <TabsList className="mb-6">
+            <TabsTrigger value="violations" data-testid="tab-violations"><ShieldAlert className="w-4 h-4 mr-2" />Violations</TabsTrigger>
+            <TabsTrigger value="vendors" data-testid="tab-vendors"><Store className="w-4 h-4 mr-2" />Vendors</TabsTrigger>
+            <TabsTrigger value="workorders" data-testid="tab-workorders"><Wrench className="w-4 h-4 mr-2" />Work Orders</TabsTrigger>
+          </TabsList>
+          <TabsContent value="violations"><ViolationsTab /></TabsContent>
+          <TabsContent value="vendors"><VendorsTab /></TabsContent>
+          <TabsContent value="workorders"><WorkOrdersTab /></TabsContent>
+        </Tabs>
+      </PageContent>
+    </>
+  );
+}
+
+function ViolationsTab() {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const [addOpen, setAddOpen] = useState(false);
+  const [deleteViolation, setDeleteViolation] = useState<Violation | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [form, setForm] = useState({ resident_name: "", unit: "", violation_type: "", incident_date: "", description: "", required_action: "", compliance_deadline: "", fine_amount: "", notes: "", issued_by: "" });
+  const [analyzing, setAnalyzing] = useState(false);
+
+  const { data: violations, isLoading } = useListViolations({ query: { queryKey: getListViolationsQueryKey() } });
+  const invalidate = () => qc.invalidateQueries({ queryKey: getListViolationsQueryKey() });
+
+  const createV = useCreateViolation({ mutation: { onSuccess: () => { invalidate(); setAddOpen(false); setForm({ resident_name: "", unit: "", violation_type: "", incident_date: "", description: "", required_action: "", compliance_deadline: "", fine_amount: "", notes: "", issued_by: "" }); toast({ title: "Violation created" }); } } });
+  const updateStatus = useUpdateViolationStatus({ mutation: { onSuccess: () => { invalidate(); toast({ title: "Status updated" }); } } });
+  const deleteV = useDeleteViolation({ mutation: { onSuccess: () => { invalidate(); setDeleteViolation(null); toast({ title: "Violation deleted" }); } } });
+  const analyzeImage = useAnalyzeViolationImage({ mutation: {} });
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAnalyzing(true);
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = (reader.result as string).split(",")[1];
+      try {
+        const result = await analyzeImage.mutateAsync({ data: { imageBase64: base64, mimeType: file.type } });
+        setForm((f) => ({ ...f, violation_type: result.violation_type, description: result.description, required_action: result.required_action, fine_amount: result.fine_suggestion?.toString() ?? "", compliance_deadline: new Date(Date.now() + result.compliance_days * 86400000).toISOString().split("T")[0] }));
+        toast({ title: "Photo analyzed", description: result.summary });
+      } catch {
+        toast({ title: "Analysis failed", variant: "destructive" });
+      } finally {
+        setAnalyzing(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <>
+      <div className="flex justify-end mb-4">
+        <Button onClick={() => setAddOpen(true)} data-testid="button-add-violation"><Plus className="w-4 h-4 mr-2" />Add Violation</Button>
+      </div>
+      {isLoading ? <div className="h-32 bg-muted rounded animate-pulse" /> : (violations ?? []).length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground"><ShieldAlert className="w-8 h-8 mx-auto mb-2 opacity-40" /><p className="text-sm">No violations on record.</p></div>
+      ) : (
+        <Card><CardContent className="p-0">
+          <div className="divide-y divide-border">
+            {(violations ?? []).map((v) => (
+              <div key={v.id} className="px-5 py-4 flex items-start gap-4" data-testid={`row-violation-${v.id}`}>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-medium">{v.violation_type}</p>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${statusColor(v.status)}`}>{v.status}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{v.resident_name} · Unit {v.unit} · Notice #{v.notice_number}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{v.description}</p>
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <Select value={v.status} onValueChange={(val) => updateStatus.mutate({ id: v.id, data: { status: val as "open" | "resolved" | "appealed" } })}>
+                    <SelectTrigger className="h-7 text-xs w-28" data-testid={`select-violation-status-${v.id}`}><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="open">Open</SelectItem>
+                      <SelectItem value="resolved">Resolved</SelectItem>
+                      <SelectItem value="appealed">Appealed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button size="icon" variant="ghost" className="w-8 h-8 text-destructive hover:text-destructive" onClick={() => setDeleteViolation(v)} data-testid={`button-delete-violation-${v.id}`}><Trash2 className="w-3.5 h-3.5" /></Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent></Card>
+      )}
+
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Add Violation</DialogTitle></DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div className="border-2 border-dashed border-border rounded-lg p-4 text-center">
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} data-testid="input-violation-photo" />
+              <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={analyzing} data-testid="button-analyze-photo">
+                {analyzing ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Analyzing...</> : <><Upload className="w-4 h-4 mr-2" />Analyze Photo with AI</>}
+              </Button>
+              <p className="text-xs text-muted-foreground mt-1">Upload a photo to auto-fill violation details</p>
+            </div>
+            <form onSubmit={(e) => { e.preventDefault(); createV.mutate({ data: { ...form, fine_amount: form.fine_amount || null, notes: form.notes || null, issued_by: form.issued_by || null } }); }} className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5"><Label>Resident Name</Label><Input value={form.resident_name} onChange={(e) => setForm((f) => ({ ...f, resident_name: e.target.value }))} required data-testid="input-violation-resident" /></div>
+                <div className="space-y-1.5"><Label>Unit</Label><Input value={form.unit} onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value }))} required data-testid="input-violation-unit" /></div>
+              </div>
+              <div className="space-y-1.5"><Label>Violation Type</Label><Input value={form.violation_type} onChange={(e) => setForm((f) => ({ ...f, violation_type: e.target.value }))} required data-testid="input-violation-type" /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5"><Label>Incident Date</Label><Input type="date" value={form.incident_date} onChange={(e) => setForm((f) => ({ ...f, incident_date: e.target.value }))} required data-testid="input-violation-date" /></div>
+                <div className="space-y-1.5"><Label>Compliance Deadline</Label><Input type="date" value={form.compliance_deadline} onChange={(e) => setForm((f) => ({ ...f, compliance_deadline: e.target.value }))} required data-testid="input-violation-deadline" /></div>
+              </div>
+              <div className="space-y-1.5"><Label>Description</Label><Textarea value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} rows={2} required data-testid="input-violation-description" /></div>
+              <div className="space-y-1.5"><Label>Required Action</Label><Textarea value={form.required_action} onChange={(e) => setForm((f) => ({ ...f, required_action: e.target.value }))} rows={2} required data-testid="input-violation-action" /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5"><Label>Fine Amount</Label><Input value={form.fine_amount} onChange={(e) => setForm((f) => ({ ...f, fine_amount: e.target.value }))} placeholder="e.g. 150.00" data-testid="input-violation-fine" /></div>
+                <div className="space-y-1.5"><Label>Issued By</Label><Input value={form.issued_by} onChange={(e) => setForm((f) => ({ ...f, issued_by: e.target.value }))} data-testid="input-violation-issuer" /></div>
+              </div>
+              <Button type="submit" className="w-full" disabled={createV.isPending} data-testid="button-submit-violation">{createV.isPending ? "Saving..." : "Create Violation"}</Button>
+            </form>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!deleteViolation} onOpenChange={(o) => { if (!o) setDeleteViolation(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader><AlertDialogTitle>Delete Violation</AlertDialogTitle><AlertDialogDescription>Delete violation for {deleteViolation?.resident_name}? This cannot be undone.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground" onClick={() => deleteViolation && deleteV.mutate({ id: deleteViolation.id })} data-testid="button-confirm-delete-violation">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+
+function VendorsTab() {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const [addOpen, setAddOpen] = useState(false);
+  const [form, setForm] = useState({ name: "", specialty: "", phone: "", email: "" });
+  const { data: vendors, isLoading } = useListVendors({ query: { queryKey: getListVendorsQueryKey() } });
+  const createVendor = useCreateVendor({ mutation: { onSuccess: () => { qc.invalidateQueries({ queryKey: getListVendorsQueryKey() }); setAddOpen(false); setForm({ name: "", specialty: "", phone: "", email: "" }); toast({ title: "Vendor added" }); } } });
+
+  return (
+    <>
+      <div className="flex justify-end mb-4">
+        <Button onClick={() => setAddOpen(true)} data-testid="button-add-vendor"><Plus className="w-4 h-4 mr-2" />Add Vendor</Button>
+      </div>
+      {isLoading ? <div className="h-32 bg-muted rounded animate-pulse" /> : (vendors ?? []).length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground"><Store className="w-8 h-8 mx-auto mb-2 opacity-40" /><p className="text-sm">No vendors yet.</p></div>
+      ) : (
+        <Card><CardContent className="p-0">
+          <div className="divide-y divide-border">
+            {(vendors ?? []).map((v) => (
+              <div key={v.id} className="px-5 py-4 flex items-center gap-4" data-testid={`row-vendor-${v.id}`}>
+                <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+                  <Store className="w-4 h-4 text-amber-700" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium">{v.name}</p>
+                  <p className="text-xs text-muted-foreground">{v.specialty}{v.phone ? ` · ${v.phone}` : ""}{v.email ? ` · ${v.email}` : ""}</p>
+                </div>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${v.active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>{v.active ? "Active" : "Inactive"}</span>
+              </div>
+            ))}
+          </div>
+        </CardContent></Card>
+      )}
+
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Add Vendor</DialogTitle></DialogHeader>
+          <form onSubmit={(e) => { e.preventDefault(); createVendor.mutate({ data: { ...form, phone: form.phone || null, email: form.email || null } }); }} className="space-y-3 mt-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5"><Label>Company Name</Label><Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} required data-testid="input-vendor-name" /></div>
+              <div className="space-y-1.5"><Label>Specialty</Label><Input value={form.specialty} onChange={(e) => setForm((f) => ({ ...f, specialty: e.target.value }))} required placeholder="e.g. Plumbing" data-testid="input-vendor-specialty" /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5"><Label>Phone</Label><Input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} data-testid="input-vendor-phone" /></div>
+              <div className="space-y-1.5"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} data-testid="input-vendor-email" /></div>
+            </div>
+            <Button type="submit" className="w-full" disabled={createVendor.isPending} data-testid="button-submit-vendor">{createVendor.isPending ? "Adding..." : "Add Vendor"}</Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+function WorkOrdersTab() {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const [deleteWO, setDeleteWO] = useState<WorkOrder | null>(null);
+  const { data: workOrders, isLoading } = useListWorkOrders({ query: { queryKey: getListWorkOrdersQueryKey() } });
+  const updateWO = useUpdateWorkOrder({ mutation: { onSuccess: () => { qc.invalidateQueries({ queryKey: getListWorkOrdersQueryKey() }); toast({ title: "Work order updated" }); } } });
+  const deleteWOmut = useDeleteWorkOrder({ mutation: { onSuccess: () => { qc.invalidateQueries({ queryKey: getListWorkOrdersQueryKey() }); setDeleteWO(null); toast({ title: "Work order deleted" }); } } });
+
+  return (
+    <>
+      {isLoading ? <div className="h-32 bg-muted rounded animate-pulse" /> : (workOrders ?? []).length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground"><Wrench className="w-8 h-8 mx-auto mb-2 opacity-40" /><p className="text-sm">No work orders.</p></div>
+      ) : (
+        <Card><CardContent className="p-0">
+          <div className="divide-y divide-border">
+            {(workOrders ?? []).map((wo) => (
+              <div key={wo.id} className="px-5 py-4 flex items-start gap-4" data-testid={`row-work-order-board-${wo.id}`}>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium">{wo.title}</p>
+                  <p className="text-xs text-muted-foreground">{wo.resident_name} · Unit {wo.unit} · {wo.category} · {wo.priority} priority</p>
+                  {wo.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{wo.description}</p>}
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <Select value={wo.status} onValueChange={(val) => updateWO.mutate({ id: wo.id, data: { status: val as "submitted" | "in-progress" | "completed" | "cancelled" } })}>
+                    <SelectTrigger className="h-7 text-xs w-32" data-testid={`select-wo-status-${wo.id}`}><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="submitted">Submitted</SelectItem>
+                      <SelectItem value="in-progress">In Progress</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button size="icon" variant="ghost" className="w-8 h-8 text-destructive hover:text-destructive" onClick={() => setDeleteWO(wo)} data-testid={`button-delete-wo-${wo.id}`}><Trash2 className="w-3.5 h-3.5" /></Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent></Card>
+      )}
+
+      <AlertDialog open={!!deleteWO} onOpenChange={(o) => { if (!o) setDeleteWO(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader><AlertDialogTitle>Delete Work Order</AlertDialogTitle><AlertDialogDescription>Delete "{deleteWO?.title}"? This cannot be undone.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground" onClick={() => deleteWO && deleteWOmut.mutate({ id: deleteWO.id })} data-testid="button-confirm-delete-wo">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}

@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/beyond-hoa-web/"
+title = "Beyond HOA Web"
+version = "1.0.0"
+id = "artifacts/beyond-hoa-web"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/beyond-hoa-web/" ]
+localPort = 18663
+
+[services.development]
+run = "pnpm --filter @workspace/beyond-hoa-web run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/beyond-hoa-web", "run", "build" ]
+publicDir = "artifacts/beyond-hoa-web/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18663"
+BASE_PATH = "/beyond-hoa-web/"
