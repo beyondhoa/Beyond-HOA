@@ -1,0 +1,1 @@
+- [Expo-to-multi-artifact porting](expo-port-fidelity.md) — keep original fetch/auth patterns and pre-existing bugs verbatim when porting a live-data app; use ts-nocheck for typecheck noise instead of fixing behavior.

@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2026 Operating Budget — Beyond HOA</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background: #f5f6fa;
+      color: #1a1a2e;
+      line-height: 1.5;
+      padding: 24px 16px 60px;
+    }
+
+    .page { max-width: 720px; margin: 0 auto; }
+
+    /* ── HEADER ── */
+    .header {
+      background: linear-gradient(135deg, #0F2340 0%, #1a3a60 100%);
+      border-radius: 16px;
+      padding: 28px 28px 24px;
+      margin-bottom: 24px;
+      color: #fff;
+    }
+    .header-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+    .hoa-name { font-size: 13px; font-weight: 600; letter-spacing: 1.2px; color: #C9A84C; margin-bottom: 4px; text-transform: uppercase; }
+    .doc-title { font-size: 26px; font-weight: 700; color: #fff; }
+    .doc-subtitle { font-size: 14px; color: rgba(255,255,255,0.65); margin-top: 4px; }
+    .badge { background: #C9A84C; color: #0F2340; font-size: 13px; font-weight: 700; padding: 6px 14px; border-radius: 20px; white-space: nowrap; height: fit-content; }
+    .header-meta { display: flex; gap: 24px; margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.12); }
+    .meta-item { }
+    .meta-label { font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.8px; }
+    .meta-value { font-size: 15px; font-weight: 600; color: #fff; margin-top: 2px; }
+
+    /* ── NOTICE BANNER ── */
+    .notice {
+      background: #fffbeb;
+      border: 1px solid #fcd34d;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #78350f;
+      margin-bottom: 24px;
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+    .notice-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+    /* ── SECTIONS ── */
+    .section { background: #fff; border-radius: 14px; margin-bottom: 20px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .section-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 20px;
+      border-bottom: 1px solid #f0f1f5;
+    }
+    .section-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+    .section-title { font-size: 14px; font-weight: 700; letter-spacing: 0.4px; }
+    .section-total { margin-left: auto; font-size: 15px; font-weight: 700; }
+
+    /* ── TABLE ── */
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { background: #f8f9fc; }
+    thead th { padding: 10px 20px; text-align: left; font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.7px; }
+    thead th:last-child { text-align: right; }
+    tbody tr { border-top: 1px solid #f0f1f5; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody td { padding: 11px 20px; font-size: 14px; color: #374151; }
+    tbody td:last-child { text-align: right; font-weight: 500; }
+    tbody tr:hover { background: #fafbfd; }
+    .sub-item td { color: #6b7280; font-size: 13px; padding-left: 36px; }
+    .subtotal-row td { background: #f8f9fc; font-weight: 600; font-size: 13px; color: #374151; }
+    .subtotal-row td:last-child { color: #0F2340; }
+
+    /* ── SUMMARY CARD ── */
+    .summary {
+      background: linear-gradient(135deg, #0F2340, #1a3a60);
+      border-radius: 14px;
+      padding: 24px 20px;
+      margin-bottom: 20px;
+      color: #fff;
+    }
+    .summary-title { font-size: 13px; font-weight: 700; letter-spacing: 0.8px; color: #C9A84C; text-transform: uppercase; margin-bottom: 16px; }
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .summary-stat { background: rgba(255,255,255,0.08); border-radius: 10px; padding: 14px; text-align: center; }
+    .summary-stat-value { font-size: 20px; font-weight: 700; color: #fff; }
+    .summary-stat-label { font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .surplus { color: #34d399 !important; }
+    .deficit { color: #f87171 !important; }
+
+    /* ── RESERVE SECTION ── */
+    .reserve-bar-wrapper { padding: 16px 20px; }
+    .reserve-bar-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+    .reserve-bar-track { height: 10px; background: #f0f1f5; border-radius: 99px; overflow: hidden; margin-bottom: 12px; }
+    .reserve-bar-fill { height: 10px; border-radius: 99px; }
+
+    /* ── APPROVAL FOOTER ── */
+    .approval {
+      background: #fff;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+    }
+    .approval-title { font-size: 12px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 14px; }
+    .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .sig-item { }
+    .sig-line { border-top: 1px solid #d1d5db; margin-bottom: 6px; }
+    .sig-name { font-size: 13px; font-weight: 600; color: #374151; }
+    .sig-role { font-size: 12px; color: #9ca3af; }
+    .sig-date { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+
+    .footer { text-align: center; font-size: 12px; color: #9ca3af; padding-top: 8px; }
+
+    @media (max-width: 480px) {
+      .header-meta { flex-wrap: wrap; gap: 14px; }
+      .summary-grid { grid-template-columns: 1fr 1fr; }
+      .sig-grid { grid-template-columns: 1fr; }
+    }
+    @media print {
+      body { background: #fff; padding: 0; }
+      .section, .summary, .approval { box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="hoa-name">Beyond HOA</div>
+        <div class="doc-title">2026 Operating Budget</div>
+        <div class="doc-subtitle">Fiscal Year January 1 – December 31, 2026</div>
+      </div>
+      <div class="badge">APPROVED</div>
+    </div>
+    <div class="header-meta">
+      <div class="meta-item">
+        <div class="meta-label">Total Units</div>
+        <div class="meta-value">247</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Monthly Assessment</div>
+        <div class="meta-value">$385 / unit</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Board Approved</div>
+        <div class="meta-value">Dec 5, 2025</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Document No.</div>
+        <div class="meta-value">FIN-2026-01</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTICE -->
+  <div class="notice">
+    <span class="notice-icon">ℹ️</span>
+    <span>This budget was adopted by the Board of Directors on December 5, 2025. Monthly assessments are due on the 1st of each month. Assessments not received by the 15th are subject to a $45 late fee.</span>
+  </div>
+
+  <!-- SUMMARY CARD -->
+  <div class="summary">
+    <div class="summary-title">Budget Summary</div>
+    <div class="summary-grid">
+      <div class="summary-stat">
+        <div class="summary-stat-value">$1,139,580</div>
+        <div class="summary-stat-label">Total Revenue</div>
+      </div>
+      <div class="summary-stat">
+        <div class="summary-stat-value">$1,108,200</div>
+        <div class="summary-stat-label">Total Expenses</div>
+      </div>
+      <div class="summary-stat">
+        <div class="summary-stat-value surplus">+$31,380</div>
+        <div class="summary-stat-label">Projected Surplus</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REVENUE -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background:#e0f2fe;">💰</div>
+      <div class="section-title" style="color:#0891b2;">REVENUE</div>
+      <div class="section-total" style="color:#0891b2;">$1,139,580</div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Line Item</th>
+          <th style="text-align:right;">Annual Budget</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Monthly HOA Assessments (247 units × $385 × 12)</td>
+          <td>$1,141,260</td>
+        </tr>
+        <tr class="sub-item">
+          <td>Less: Estimated Delinquencies (0.4%)</td>
+          <td style="color:#ef4444;">−$18,060</td>
+        </tr>
+        <tr>
+          <td>Late Fees &amp; Interest</td>
+          <td>$8,640</td>
+        </tr>
+        <tr>
+          <td>Move-In / Move-Out Fees</td>
+          <td>$4,200</td>
+        </tr>
+        <tr>
+          <td>Pool &amp; Amenity Guest Passes</td>
+          <td>$1,800</td>
+        </tr>
+        <tr>
+          <td>Interest on Reserve Accounts</td>
+          <td>$1,740</td>
+        </tr>
+        <tr class="subtotal-row">
+          <td>Total Revenue</td>
+          <td>$1,139,580</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- OPERATING EXPENSES -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background:#fef3c7;">⚙️</div>
+      <div class="section-title" style="color:#d97706;">OPERATING EXPENSES</div>
+      <div class="section-total" style="color:#d97706;">$799,200</div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Line Item</th>
+          <th style="text-align:right;">Annual Budget</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>🏢 Management Company Fee</td>
+          <td>$84,000</td>
+        </tr>
+        <tr class="sub-item">
+          <td>On-site management staff (1 FTE)</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>🔧 General Maintenance &amp; Repairs</td>
+          <td>$72,000</td>
+        </tr>
+        <tr class="sub-item">
+          <td>Includes HVAC, plumbing, electrical call-outs</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>🌿 Landscaping &amp; Grounds</td>
+          <td>$64,800</td>
+        </tr>
+        <tr class="sub-item">
+          <td>Weekly service, seasonal plantings, irrigation</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>🔒 Security &amp; Access Control</td>
+          <td>$48,000</td>
+        </tr>
+        <tr class="sub-item">
+          <td>Gate system, camera monitoring, entry fobs</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>💡 Common Area Utilities</td>
+          <td>$96,000</td>
+        </tr>
+        <tr class="sub-item">
+          <td>Electric, water/sewer, gas, trash</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>🛡️ Insurance (Property &amp; Liability)</td>
+          <td>$118,800</td>
+        </tr>
+        <tr class="sub-item">
+          <td>Commercial property, D&amp;O, umbrella policies</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>🏊 Pool &amp; Amenity Operations</td>
+          <td>$36,000</td>
+        </tr>
+        <tr class="sub-item">
+          <td>Chemicals, pool service, fitness equipment</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>📋 Administrative &amp; Professional</td>
+          <td>$45,600</td>
+        </tr>
+        <tr class="sub-item">
+          <td>Legal, accounting, software, printing, postage</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>🚨 Emergency / Contingency Fund (5%)</td>
+          <td>$34,000</td>
+        </tr>
+        <tr class="subtotal-row">
+          <td>Total Operating Expenses</td>
+          <td>$799,200</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- RESERVE CONTRIBUTIONS -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background:#d1fae5;">🏦</div>
+      <div class="section-title" style="color:#059669;">RESERVE FUND CONTRIBUTIONS</div>
+      <div class="section-total" style="color:#059669;">$309,000</div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Reserve Category</th>
+          <th style="text-align:right;">Annual Contribution</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>🏗️ Building Exterior &amp; Roof</td>
+          <td>$96,000</td>
+        </tr>
+        <tr>
+          <td>🛣️ Paving, Driveways &amp; Walkways</td>
+          <td>$48,000</td>
+        </tr>
+        <tr>
+          <td>🏊 Pool &amp; Recreation Facilities</td>
+          <td>$30,000</td>
+        </tr>
+        <tr>
+          <td>🚿 Plumbing Infrastructure</td>
+          <td>$42,000</td>
+        </tr>
+        <tr>
+          <td>⚡ Electrical Systems</td>
+          <td>$36,000</td>
+        </tr>
+        <tr>
+          <td>🌳 Landscaping Capital</td>
+          <td>$24,000</td>
+        </tr>
+        <tr>
+          <td>🔄 General Capital Reserve</td>
+          <td>$33,000</td>
+        </tr>
+        <tr class="subtotal-row">
+          <td>Total Reserve Contributions</td>
+          <td>$309,000</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Reserve funding level bar charts -->
+    <div class="reserve-bar-wrapper">
+      <div style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:14px;">Reserve Funding Levels</div>
+      <div class="reserve-bar-label"><span>Building Exterior &amp; Roof</span><span style="font-weight:600;">72%</span></div>
+      <div class="reserve-bar-track"><div class="reserve-bar-fill" style="width:72%;background:#0891b2;"></div></div>
+      <div class="reserve-bar-label"><span>Paving &amp; Walkways</span><span style="font-weight:600;">85%</span></div>
+      <div class="reserve-bar-track"><div class="reserve-bar-fill" style="width:85%;background:#059669;"></div></div>
+      <div class="reserve-bar-label"><span>Pool &amp; Recreation</span><span style="font-weight:600;">91%</span></div>
+      <div class="reserve-bar-track"><div class="reserve-bar-fill" style="width:91%;background:#059669;"></div></div>
+      <div class="reserve-bar-label"><span>Plumbing Infrastructure</span><span style="font-weight:600;">58%</span></div>
+      <div class="reserve-bar-track"><div class="reserve-bar-fill" style="width:58%;background:#d97706;"></div></div>
+      <div class="reserve-bar-label"><span>Electrical Systems</span><span style="font-weight:600;">63%</span></div>
+      <div class="reserve-bar-track"><div class="reserve-bar-fill" style="width:63%;background:#d97706;"></div></div>
+      <div class="reserve-bar-label"><span>Landscaping Capital</span><span style="font-weight:600;">94%</span></div>
+      <div class="reserve-bar-track" style="margin-bottom:0;"><div class="reserve-bar-fill" style="width:94%;background:#059669;"></div></div>
+    </div>
+  </div>
+
+  <!-- MONTHLY ASSESSMENT BREAKDOWN -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background:#ede9fe;">📊</div>
+      <div class="section-title" style="color:#7c3aed;">MONTHLY ASSESSMENT BREAKDOWN — $385 / UNIT</div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th style="text-align:right;">Per Unit / Mo.</th>
+          <th style="text-align:right;">% of Assessment</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Operating Expenses</td><td>$270</td><td>70.1%</td></tr>
+        <tr><td>Reserve Fund Contributions</td><td>$104</td><td>27.0%</td></tr>
+        <tr><td>Contingency &amp; Surplus Buffer</td><td>$11</td><td>2.9%</td></tr>
+        <tr class="subtotal-row"><td>Total Monthly Assessment</td><td>$385</td><td>100%</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- BOARD APPROVAL -->
+  <div class="approval">
+    <div class="approval-title">Board of Directors — Approval Signatures</div>
+    <div class="sig-grid">
+      <div class="sig-item">
+        <div class="sig-line"></div>
+        <div class="sig-name">Patricia Chen</div>
+        <div class="sig-role">President</div>
+        <div class="sig-date">December 5, 2025</div>
+      </div>
+      <div class="sig-item">
+        <div class="sig-line"></div>
+        <div class="sig-name">Sandra Torres</div>
+        <div class="sig-role">Treasurer</div>
+        <div class="sig-date">December 5, 2025</div>
+      </div>
+      <div class="sig-item">
+        <div class="sig-line"></div>
+        <div class="sig-name">Marcus Williams</div>
+        <div class="sig-role">Vice President</div>
+        <div class="sig-date">December 5, 2025</div>
+      </div>
+      <div class="sig-item">
+        <div class="sig-line"></div>
+        <div class="sig-name">David Kim</div>
+        <div class="sig-role">Secretary</div>
+        <div class="sig-date">December 5, 2025</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">Beyond HOA · FIN-2026-01 · Approved December 5, 2025 · Confidential — For Resident Use Only</div>
+
+</div>
+</body>
+</html>

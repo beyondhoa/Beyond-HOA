@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pet Policy Addendum — Beyond HOA</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; background: #f5f6fa; color: #1a1a2e; line-height: 1.6; padding: 24px 16px 60px; }
+    .page { max-width: 720px; margin: 0 auto; }
+    .header { background: linear-gradient(135deg, #0F2340 0%, #1a3a60 100%); border-radius: 16px; padding: 28px 28px 24px; margin-bottom: 24px; color: #fff; }
+    .header-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+    .hoa-name { font-size: 13px; font-weight: 600; letter-spacing: 1.2px; color: #C9A84C; margin-bottom: 4px; text-transform: uppercase; }
+    .doc-title { font-size: 26px; font-weight: 700; color: #fff; }
+    .doc-subtitle { font-size: 14px; color: rgba(255,255,255,0.65); margin-top: 4px; }
+    .badge { background: #7C3AED; color: #fff; font-size: 13px; font-weight: 700; padding: 6px 14px; border-radius: 20px; white-space: nowrap; height: fit-content; }
+    .header-meta { display: flex; gap: 24px; margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.12); flex-wrap: wrap; }
+    .meta-label { font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.8px; }
+    .meta-value { font-size: 15px; font-weight: 600; color: #fff; margin-top: 2px; }
+    .section { background: #fff; border-radius: 14px; margin-bottom: 20px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .section-header { display: flex; align-items: center; gap: 10px; padding: 14px 20px; border-bottom: 1px solid #f0f1f5; background: #fafbff; }
+    .section-icon { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+    .section-title { font-size: 15px; font-weight: 700; color: #0F2340; }
+    .section-body { padding: 16px 20px; }
+    .rule { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #f0f1f5; }
+    .rule:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+    .rule-num { font-size: 11px; font-weight: 700; color: #C9A84C; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .rule-title { font-size: 14px; font-weight: 700; color: #0F2340; margin-bottom: 6px; }
+    .rule-text { font-size: 14px; color: #374151; line-height: 1.7; }
+    .rule-list { margin-top: 8px; padding-left: 20px; }
+    .rule-list li { font-size: 14px; color: #374151; margin-bottom: 5px; line-height: 1.6; }
+    .breed-table { width: 100%; border-collapse: collapse; }
+    .breed-table th { font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; padding: 10px 16px; background: #f9fafb; border-bottom: 1px solid #f0f1f5; text-align: left; }
+    .breed-table td { padding: 10px 16px; font-size: 14px; color: #374151; border-bottom: 1px solid #f5f6fa; }
+    .breed-table tr:last-child td { border-bottom: none; }
+    .chip { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 12px; }
+    .chip-restricted { background: #fef2f2; color: #dc2626; }
+    .chip-allowed { background: #f0fdf4; color: #16a34a; }
+    .notice { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #78350f; margin-bottom: 24px; display: flex; gap: 8px; }
+    .notice-icon { font-size: 16px; flex-shrink: 0; }
+    .fine-card { background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 14px 16px; margin-top: 10px; }
+    .fine-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #fee2e2; font-size: 14px; }
+    .fine-row:last-child { border-bottom: none; }
+    .fine-label { color: #374151; }
+    .fine-amount { color: #dc2626; font-weight: 700; }
+    .sig-block { background: #fff; border-radius: 14px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .sig-title { font-size: 13px; font-weight: 700; color: #0F2340; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.4px; }
+    .sig-row { display: flex; gap: 32px; flex-wrap: wrap; }
+    .sig-item { flex: 1; min-width: 180px; }
+    .sig-line { border-bottom: 1px solid #d1d5db; margin-bottom: 4px; height: 32px; }
+    .sig-name { font-size: 13px; font-weight: 600; color: #1f2937; }
+    .sig-role { font-size: 12px; color: #6b7280; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="hoa-name">Beyond HOA — Lakeview Commons</div>
+        <div class="doc-title">Pet Policy Addendum</div>
+        <div class="doc-subtitle">Updated Registration Requirements &amp; Breed Restrictions — May 15, 2023</div>
+      </div>
+      <div class="badge">RULES</div>
+    </div>
+    <div class="header-meta">
+      <div class="meta-item"><div class="meta-label">Adopted</div><div class="meta-value">May 15, 2023</div></div>
+      <div class="meta-item"><div class="meta-label">Prior Version</div><div class="meta-value">February 2020</div></div>
+      <div class="meta-item"><div class="meta-label">Vote Result</div><div class="meta-value">4–0 (Board)</div></div>
+    </div>
+  </div>
+
+  <div class="notice">
+    <span class="notice-icon">🐾</span>
+    <span>This Pet Policy Addendum supplements the Community Rules &amp; Regulations. All pet owners must complete the Pet Registration Form and receive written approval before their pet takes up residence in Lakeview Commons. This policy applies to all owners, tenants, and long-term guests.</span>
+  </div>
+
+  <!-- REGISTRATION -->
+  <div class="section">
+    <div class="section-header"><div class="section-icon" style="background:#fdf4ff;">📝</div><span class="section-title">Pet Registration Requirements</span></div>
+    <div class="section-body">
+      <div class="rule">
+        <div class="rule-num">Section 1</div>
+        <div class="rule-title">Mandatory Registration</div>
+        <div class="rule-text">All pets residing in Lakeview Commons must be registered with the management office within fourteen (14) calendar days of either (a) the Owner's or tenant's move-in date, or (b) the pet's acquisition date, whichever is applicable. Unregistered pets are a violation subject to fine.</div>
+      </div>
+      <div class="rule">
+        <div class="rule-num">Section 2</div>
+        <div class="rule-title">Registration Documentation Required</div>
+        <div class="rule-text">The following documents must be submitted with every pet registration:</div>
+        <ul class="rule-list">
+          <li>Completed Pet Registration Form (available in the app or management office)</li>
+          <li>Current rabies vaccination certificate (dogs and cats)</li>
+          <li>Current DHPP or FVRCP vaccination documentation</li>
+          <li>Proof of spay or neuter (if applicable; intact animals require Board approval)</li>
+          <li>Current county pet license (dogs)</li>
+          <li>Color photograph of the pet</li>
+          <li>For restricted breeds: minimum $100,000 liability insurance policy showing Association as additional insured</li>
+        </ul>
+      </div>
+      <div class="rule">
+        <div class="rule-num">Section 3</div>
+        <div class="rule-title">Annual Renewal</div>
+        <div class="rule-text">Pet registrations must be renewed annually by January 31st. Renewal requires updated vaccination documentation. An annual pet registration fee of $50 per pet is due at time of renewal. Late renewals (after February 28th) incur an additional $25 administrative fee.</div>
+      </div>
+      <div class="rule">
+        <div class="rule-num">Section 4</div>
+        <div class="rule-title">Maximum Number of Pets</div>
+        <div class="rule-text">Each unit may house a maximum of two (2) pets (dogs and cats combined). Reptiles, rodents, birds, and fish kept in tanks under 30 gallons do not count toward this limit but must still be disclosed. Exceptions to the two-pet limit require a written variance request and Board approval.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BREED RESTRICTIONS -->
+  <div class="section">
+    <div class="section-header"><div class="section-icon" style="background:#fef2f2;">🐕</div><span class="section-title">Breed Restrictions</span></div>
+    <div class="section-body">
+      <div style="font-size: 14px; color: #374151; margin-bottom: 14px; line-height: 1.7;">The following dog breeds or breed mixes require prior Board approval and proof of a minimum $100,000 per-occurrence liability insurance policy before taking up residence. Approval is subject to the individual animal's temperament history and bite record, not solely breed.</div>
+      <table class="breed-table">
+        <thead><tr><th>Breed</th><th>Weight Class</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Pit Bull Terrier (APBT)</td><td>30–80 lbs</td><td><span class="chip chip-restricted">Restricted</span></td></tr>
+          <tr><td>Staffordshire Bull Terrier</td><td>24–38 lbs</td><td><span class="chip chip-restricted">Restricted</span></td></tr>
+          <tr><td>American Staffordshire Terrier</td><td>40–70 lbs</td><td><span class="chip chip-restricted">Restricted</span></td></tr>
+          <tr><td>Rottweiler</td><td>80–135 lbs</td><td><span class="chip chip-restricted">Restricted</span></td></tr>
+          <tr><td>Doberman Pinscher</td><td>60–100 lbs</td><td><span class="chip chip-restricted">Restricted</span></td></tr>
+          <tr><td>Chow Chow</td><td>45–70 lbs</td><td><span class="chip chip-restricted">Restricted</span></td></tr>
+          <tr><td>Akita</td><td>70–130 lbs</td><td><span class="chip chip-restricted">Restricted</span></td></tr>
+          <tr><td>Wolf Hybrid</td><td>Varies</td><td><span class="chip chip-restricted">Prohibited</span></td></tr>
+          <tr><td>All other registered breeds</td><td>Any</td><td><span class="chip chip-allowed">Allowed</span></td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top: 14px; font-size: 13px; color: #6b7280; line-height: 1.6;"><strong>Note:</strong> Mixed-breed dogs showing primary characteristics of any restricted breed are subject to this policy at the management's discretion. DNA testing may be required to resolve breed determination disputes. Service animals and emotional support animals are governed by Fair Housing Act requirements and are exempt from breed restrictions with proper documentation.</div>
+    </div>
+  </div>
+
+  <!-- CONDUCT RULES -->
+  <div class="section">
+    <div class="section-header"><div class="section-icon" style="background:#fef3c7;">📋</div><span class="section-title">Pet Conduct Rules</span></div>
+    <div class="section-body">
+      <div class="rule">
+        <div class="rule-num">Section 5</div>
+        <div class="rule-title">Leash Requirement</div>
+        <div class="rule-text">All dogs must be kept on a leash not exceeding six (6) feet in length whenever outside the unit, including all common areas, parking areas, walkways, and grass areas. Retractable leashes longer than six feet in the extended position are prohibited. Owners must maintain physical control of the dog at all times.</div>
+      </div>
+      <div class="rule">
+        <div class="rule-num">Section 6</div>
+        <div class="rule-title">Waste Cleanup</div>
+        <div class="rule-text">Pet owners are required to immediately pick up and properly dispose of all pet waste in the designated pet waste stations located at each parking lot entrance and at six locations along the community walking path. Failure to clean up pet waste is subject to an immediate $50 fine. Repeat violations escalate as follows:</div>
+        <div class="fine-card">
+          <div class="fine-row"><span class="fine-label">First offense</span><span class="fine-amount">$50</span></div>
+          <div class="fine-row"><span class="fine-label">Second offense (same 12 months)</span><span class="fine-amount">$100</span></div>
+          <div class="fine-row"><span class="fine-label">Third offense (same 12 months)</span><span class="fine-amount">$200 + warning letter</span></div>
+          <div class="fine-row"><span class="fine-label">Fourth offense</span><span class="fine-amount">$300 + pet privilege review</span></div>
+        </div>
+      </div>
+      <div class="rule">
+        <div class="rule-num">Section 7</div>
+        <div class="rule-title">Prohibited Areas</div>
+        <div class="rule-text">Pets are not permitted in the following areas under any circumstances:</div>
+        <ul class="rule-list">
+          <li>The pool area and within the pool barrier fence</li>
+          <li>The fitness center</li>
+          <li>Building lobbies and common indoor areas (except for transit through hallways on leash)</li>
+          <li>The playground and tot lot area</li>
+          <li>Designated no-pet landscaping zones (marked with signage)</li>
+        </ul>
+        <div style="margin-top: 8px; font-size: 13px; color: #6b7280;">Exception: Certified service animals are permitted in all areas in accordance with ADA and Fair Housing Act requirements.</div>
+      </div>
+      <div class="rule">
+        <div class="rule-num">Section 8</div>
+        <div class="rule-title">Noise and Nuisance</div>
+        <div class="rule-text">Owners are responsible for preventing their pets from creating persistent or unreasonable noise. Barking or other persistent animal vocalizations lasting more than fifteen (15) continuous minutes, or occurring intermittently for more than thirty (30) minutes within any one-hour period, constitute a noise violation. Owners who receive three (3) verified noise complaints within a twelve-month period may have their pet privileges reviewed by the Board.</div>
+      </div>
+      <div class="rule">
+        <div class="rule-num">Section 9</div>
+        <div class="rule-title">Bites and Aggressive Behavior</div>
+        <div class="rule-text">Any pet bite or aggressive incident resulting in injury to a person or another animal must be reported to the management office within 24 hours. The Board may require the pet to be permanently removed from the community following a bite incident or documented aggression, regardless of prior behavior history. All quarantine requirements under local law apply.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sig-block">
+    <div class="sig-title">Board Adoption</div>
+    <div style="font-size: 14px; color: #374151; margin-bottom: 16px;">This Pet Policy Addendum was adopted by the Board of Directors of Beyond HOA at Lakeview Commons at a regular Board meeting on May 15, 2023, by unanimous vote of 4–0. It supersedes the Pet Policy adopted February 2020 in its entirety.</div>
+    <div class="sig-row">
+      <div class="sig-item"><div class="sig-line"></div><div class="sig-name">Patricia Chen</div><div class="sig-role">President</div></div>
+      <div class="sig-item"><div class="sig-line"></div><div class="sig-name">Marcus Williams</div><div class="sig-role">Secretary</div></div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,4 +1,4 @@
 #!/bin/bash
 set -e
-
-npm install --legacy-peer-deps
+pnpm install --frozen-lockfile
+pnpm --filter db push
