@@ -28,6 +28,13 @@ app.use(
 );
 app.use(cors());
 
+app.get("/", (req, res) => {
+  res.status(200).json({ 
+    status: "ok", 
+    message: "🚀 Beyond HOA API Server is live and ready!",
+    timestamp: new Date().toISOString()
+  });
+});
 // Stripe webhook must receive the raw body (for signature verification),
 // so it is registered BEFORE the JSON body parser.
 app.post(
