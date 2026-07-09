@@ -18,6 +18,8 @@ if (Number.isNaN(port) || port <= 0) {
 }
 
 async function initStripe() {
+  logger.info("Railway Environment Detected: Skipping Replit Stripe Initialization");
+  return;
   if (!(await isStripeConfigured())) {
     logger.info("Stripe not configured — skipping initialization");
     return;
