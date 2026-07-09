@@ -20,6 +20,7 @@ function setupCors(app: express.Application) {
   app.use((req, res, next) => {
     const origins = new Set<string>();
 
+    origins.add("https://beyond-hoa-web-production.up.railway.app");    
     if (process.env.REPLIT_DEV_DOMAIN) {
       origins.add(`https://${process.env.REPLIT_DEV_DOMAIN}`);
     }
@@ -250,6 +251,8 @@ function setupErrorHandler(app: express.Application) {
 }
 
 async function initStripe() {
+  console.log("Railway Environment Detected: Skipping Replit Stripe Initialization");
+  return;
   if (!(await isStripeConfigured())) {
     console.log("Stripe not configured — skipping initialization");
     return;
