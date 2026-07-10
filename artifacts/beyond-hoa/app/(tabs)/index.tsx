@@ -12,6 +12,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   ActivityIndicator,
+  Alert, // Fixed missing import
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -29,7 +30,7 @@ interface Announcement {
   body: string;
   date: string;
   pinned: boolean;
-  category: "general" | "maintenance" | "event" | "urgent";
+  category: "general" | "maintenance" | "event" | "urgent" | "governance";
 }
 
 interface WorkOrder {
@@ -45,20 +46,44 @@ interface WorkOrder {
   created_at: string;
 }
 
+// 1. Fully Mirrored Seed Announcements with Web Platform
 const SEED_ANNOUNCEMENTS: Announcement[] = [
-{ id: "2", title: "Spring Community Cleanup Day", body: "Join your neighbors on March 15 at 9 AM for our annual spring cleanup. Refreshments provided!", date: "2026-02-28", pinned: false, category: "event" },
-  { id: "3", title: "Q1 Board Meeting – March 20", body: "The quarterly board meeting will be held in the community center at 7 PM. All residents welcome.", date: "2026-02-25", pinned: false, category: "general" },
-  { id: "4", title: "Updated Parking Policy", body: "Effective April 1, all guest vehicles must display a visitor pass. Passes available at the management office.", date: "2026-02-20", pinned: false, category: "general" },
+  {
+    id: "1",
+    title: "Annual Pool Maintenance",
+    body: "The community pool will be closed for seasonal maintenance from Monday through Wednesday next week.",
+    category: "maintenance",
+    pinned: true,
+    date: "2026-10-12"
+  },
+  {
+    id: "2",
+    title: "Budget Vote Approaching",
+    body: "Please review the proposed 2027 budget documents ahead of the upcoming community vote.",
+    category: "governance",
+    pinned: true,
+    date: "2026-10-10"
+  },
+  { 
+    id: "3", 
+    title: "Trash Collection Delay", 
+    body: "Due to the holiday, trash and recycling pickup will be delayed by one day this week.", 
+    date: "2026-10-09", 
+    pinned: false, 
+    category: "general" 
+  }
 ];
 
 const STORAGE_KEY = "hoa_announcements";
 const PROFILE_KEY = "resident_profile";
 
+// 2. Synchronized Visual Color Token Map
 const categoryConfig = {
-  general: { color: Colors.navy, icon: "megaphone-outline" as const },
-  maintenance: { color: Colors.warning, icon: "construct" as const },
-  event: { color: Colors.success, icon: "calendar" as const },
-  urgent: { color: Colors.danger, icon: "alert-circle" as const },
+  governance: { color: "#2563EB", icon: "checkmark-circle-outline" as const }, // Blue
+  general: { color: Colors.success, icon: "megaphone-outline" as const },      // Green
+  maintenance: { color: Colors.warning, icon: "construct" as const },          // Amber
+  event: { color: Colors.navy, icon: "calendar" as const },
+  urgent: { color: Colors.danger, icon: "alert-circle" as const },             // Red
 };
 
 const WO_CATEGORIES = ["Plumbing", "Electrical", "HVAC", "Appliance", "Landscaping", "Common Area", "Structural", "Other"];
@@ -84,7 +109,7 @@ function apiRequest(method: string, path: string, body?: object) {
 }
 
 function AnnouncementCard({ item }: { item: Announcement }) {
-  const config = categoryConfig[item.category];
+  const config = categoryConfig[item.category] || categoryConfig.general;
   const dateStr = new Date(item.date).toLocaleDateString("en-US", { month: "short", day: "numeric" });
   return (
     <View style={[styles.announcementCard, item.pinned && styles.pinnedCard]}>
@@ -114,6 +139,7 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [duesStatus, setDuesStatus] = useState({ paid: false, amount: 155, dueDate: "2026-03-31" });
   const [activeVotes, setActiveVotes] = useState(0);
+  const [openViolations, setOpenViolations] = useState(0);
   const [woModal, setWoModal] = useState(false);
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [savedUnit, setSavedUnit] = useState(resident?.unit || "");
@@ -141,7 +167,13 @@ export default function HomeScreen() {
       if (votesData) {
         const votes = JSON.parse(votesData);
         setActiveVotes(votes.filter((v: any) => v.status === "active").length);
-      } else { setActiveVotes(2); }
+      } else { setActiveVotes(1); }
+
+      const violationsData = await AsyncStorage.getItem("hoa_violations");
+      if (violationsData) {
+        const violations = JSON.parse(violationsData);
+        setOpenViolations(violations.filter((v: any) => v.status === "open").length);
+      } else { setOpenViolations(0); }
 
       const profile = await AsyncStorage.getItem(PROFILE_KEY);
       if (profile) {
@@ -209,6 +241,7 @@ export default function HomeScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     createWorkOrder.mutate(form);
   };
+  
   const sortedAnnouncements = [...announcements].sort((a, b) => {
     if (a.pinned && !b.pinned) return -1;
     if (!a.pinned && b.pinned) return 1;
@@ -240,30 +273,43 @@ export default function HomeScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={{ paddingBottom: 32 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.gold} />}
       >
+        {/* 4. Extended Layout Stat Rows to include all 4 indicators */}
         <View style={styles.statsRow}>
           <View style={[styles.statCard, { borderLeftColor: duesStatus.paid ? Colors.success : Colors.danger }]}>
             <View style={styles.statIconWrap}>
-              <Ionicons name={duesStatus.paid ? "checkmark-circle" : "alert-circle"} size={22} color={duesStatus.paid ? Colors.success : Colors.danger} />
+              <Ionicons name={duesStatus.paid ? "checkmark-circle" : "alert-circle"} size={20} color={duesStatus.paid ? Colors.success : Colors.danger} />
             </View>
-            <Text style={styles.statLabel}>Q1 Dues</Text>
-            <Text style={styles.statValue}>${duesStatus.amount}</Text>
-            <Text style={[styles.statSub, { color: duesStatus.paid ? Colors.success : Colors.danger }]}>
-              {duesStatus.paid ? "Paid" : `Due ${new Date(duesStatus.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`}
-            </Text>
+            <Text style={styles.statLabel}>Dues</Text>
+            <Text style={styles.statValue}>{duesStatus.paid ? "Paid" : `$${duesStatus.amount}`}</Text>
           </View>
 
-          <View style={[styles.statCard, { borderLeftColor: activeVotes > 0 ? Colors.gold : Colors.slate }]}>
+          <View style={[styles.statCard, { borderLeftColor: activeVotes > 0 ? "#2563EB" : Colors.slate }]}>
             <View style={styles.statIconWrap}>
-              <Ionicons name="checkmark-circle" size={22} color={activeVotes > 0 ? Colors.gold : Colors.slate} />
+              <Ionicons name="mail" size={20} color={activeVotes > 0 ? "#2563EB" : Colors.slate} />
             </View>
-            <Text style={styles.statLabel}>Active Votes</Text>
+            <Text style={styles.statLabel}>Votes</Text>
             <Text style={styles.statValue}>{activeVotes}</Text>
-            <Text style={[styles.statSub, { color: activeVotes > 0 ? Colors.gold : Colors.slate }]}>
-              {activeVotes > 0 ? "Needs attention" : "All caught up"}
-            </Text>
+          </View>
+        </View>
+
+        <View style={styles.statsRow}>
+          <View style={[styles.statCard, { borderLeftColor: myWorkOrders.length > 0 ? Colors.warning : Colors.slate }]}>
+            <View style={styles.statIconWrap}>
+              <Ionicons name="construct" size={20} color={myWorkOrders.length > 0 ? Colors.warning : Colors.slate} />
+            </View>
+            <Text style={styles.statLabel}>Work Orders</Text>
+            <Text style={styles.statValue}>{myWorkOrders.length}</Text>
+          </View>
+
+          <View style={[styles.statCard, { borderLeftColor: openViolations > 0 ? Colors.danger : Colors.success }]}>
+            <View style={styles.statIconWrap}>
+              <Ionicons name="alert-triangle" size={20} color={openViolations > 0 ? Colors.danger : Colors.success} />
+            </View>
+            <Text style={styles.statLabel}>Violations</Text>
+            <Text style={styles.statValue}>{openViolations}</Text>
           </View>
         </View>
 
@@ -377,8 +423,6 @@ export default function HomeScreen() {
             </TouchableOpacity>
           )}
         </View>
-
-        <View style={{ height: Platform.OS === "web" ? 100 : 100 }} />
       </ScrollView>
 
       <Modal visible={woModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setWoModal(false)}>
@@ -495,15 +539,15 @@ const styles = StyleSheet.create({
   headerActions: { flexDirection: "row", alignItems: "center", gap: 8 },
   logoutBtn: { padding: 10, borderRadius: 20, backgroundColor: "rgba(255,255,255,0.1)" },
 
-  statsRow: { flexDirection: "row", paddingHorizontal: 16, paddingTop: 16, gap: 12 },
+  statsRow: { flexDirection: "row", paddingHorizontal: 16, paddingTop: 12, gap: 12 },
   statCard: {
-    flex: 1, backgroundColor: Colors.card, borderRadius: 14, padding: 16, borderLeftWidth: 3,
+    flex: 1, backgroundColor: Colors.card, borderRadius: 14, padding: 14, borderLeftWidth: 3,
     shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
+    flexDirection: "row", alignItems: "center", gap: 12
   },
-  statIconWrap: { marginBottom: 8 },
-  statLabel: { fontFamily: "Inter_400Regular", fontSize: 11, color: Colors.textSecondary, textTransform: "uppercase", letterSpacing: 0.5 },
-  statValue: { fontFamily: "Inter_700Bold", fontSize: 24, color: Colors.text, marginTop: 4 },
-  statSub: { fontFamily: "Inter_500Medium", fontSize: 12, marginTop: 4 },
+  statIconWrap: { justifyContent: "center", alignItems: "center" },
+  statLabel: { fontFamily: "Inter_500Medium", fontSize: 12, color: Colors.textSecondary },
+  statValue: { fontFamily: "Inter_700Bold", fontSize: 18, color: Colors.text, marginLeft: "auto" },
 
   quickActions: { flexDirection: "row", paddingHorizontal: 16, paddingTop: 16, gap: 10 },
   actionBtn: {
@@ -606,7 +650,7 @@ const styles = StyleSheet.create({
   },
   signOutInfo: { flexDirection: "row", alignItems: "center", gap: 12 },
   signOutAvatar: {
-    width: 40, height: 40, borderRadius: 19,
+    width: 40, height: 40,
     borderRadius: Colors.navy + "15", alignItems: "center", justifyContent: "center",
   },
   signOutName: { fontFamily: "Inter_600SemiBold", fontSize: 15, color: Colors.text },
