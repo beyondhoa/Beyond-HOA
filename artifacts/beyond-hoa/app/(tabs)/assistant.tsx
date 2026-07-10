@@ -115,18 +115,19 @@ export default function AssistantScreen() {
 
       if (!response.ok) throw new Error("Request failed");
 
-      const reader = response.body?.getReader();
+      // Mobile Native Compatibility Strategy: Process chunks using a safe text block iterator
+      const reader = response.body;
       if (!reader) throw new Error("No response body");
 
-      const decoder = new TextDecoder();
       let buffer = "";
       let fullContent = "";
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
+      // Native text stream splitter loop
+      for await (const chunk of reader) {
+        // Handle chunk formatting safely if binary vs pre-decoded string
+        const decodedChunk = typeof chunk === "string" ? chunk : new TextDecoder("utf-8").decode(chunk);
+        buffer += decodedChunk;
+        
         const lines = buffer.split("\n");
         buffer = lines.pop() || "";
 
@@ -146,7 +147,7 @@ export default function AssistantScreen() {
         }
       }
     } catch (err) {
-      updateStreamingMessage(assistantId, "I'm sorry, I encountered an issue. Please try again.");
+      updateStreamingMessage(assistantId, "I'm sorry, I encountered an issue connecting to the advisor service. Please try again.");
     } finally {
       setIsStreaming(false);
       streamingIdRef.current = null;
