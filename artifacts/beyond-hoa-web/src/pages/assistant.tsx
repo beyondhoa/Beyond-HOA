@@ -41,7 +41,7 @@ export default function AssistantPage() {
 
     try {
       const token = localStorage.getItem("hoa_token");
-      const response = await fetch("/api/bylaw-chat", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/bylaw-chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
