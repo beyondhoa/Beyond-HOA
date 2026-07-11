@@ -48,3 +48,9 @@ Thumbs.db
 .cache/
 .local/
 *.sql
+
+.env
+.env.local
+login-test.json
+*~
+pnpm~
