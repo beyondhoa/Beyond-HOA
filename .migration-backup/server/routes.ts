@@ -242,7 +242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.setHeader("Connection", "keep-alive");
 
       const stream = await openai.chat.completions.create({
-        model: "gpt-5.1",
+        model: "gpt-4o-mini",
         messages: [
           { role: "system", content: BYLAW_SYSTEM_PROMPT },
           ...messages,
