@@ -108,15 +108,6 @@ function ClassicTabLayout() {
         }}
       />
       <Tabs.Screen
-        name="assistant"
-        options={{
-          title: "AI Advisor",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="chatbubbles-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="voting"
         options={{
           title: "Voting",
