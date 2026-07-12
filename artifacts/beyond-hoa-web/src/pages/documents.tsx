@@ -41,7 +41,7 @@ export default function DocumentsPage() {
           />
         </div>
 
-       {isLoading ? (
+        {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="h-16 bg-muted rounded-lg animate-pulse" />
@@ -53,44 +53,42 @@ export default function DocumentsPage() {
             <p className="text-sm">No documents found.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filtered.map((doc) => (
-              <Card key={doc.id} data-testid={`card-document-${doc.id}`}>
-                <CardContent className="pt-6">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 bg-blue-50 rounded-lg shrink-0">
-                        <FileText className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-sm text-foreground leading-snug">
-                          {doc.title}
-                        </h3>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {doc.description || "No description provided."}
-                        </p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium uppercase ${categoryBadge(doc.category || "general")}`}>
-                            {doc.category || "General"}
-                          </span>
-                        </div>
-                      </div>
+          <Card>
+            <CardContent className="p-0">
+              <div className="divide-y divide-border">
+                {filtered.map((doc) => (
+                  <a
+                    key={doc.id}
+                    href={`/api/documents/view/${doc.doc_path?.split("/").pop() ?? doc.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-4 px-5 py-4 hover:bg-muted/50 transition-colors group"
+                    data-testid={`link-document-${doc.id}`}
+                  >
+                    <div className="bg-primary/10 rounded-lg p-2 flex-shrink-0">
+                      <FileText className="w-5 h-5 text-primary" />
                     </div>
-                    {doc.url && (
-                      <a
-                        href={doc.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors shrink-0"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate">
+                        {doc.title}
+                      </p>
+                      {doc.description && (
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">{doc.description}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      {doc.category && (
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${categoryBadge(doc.category)}`}>
+                          {doc.category}
+                        </span>
+                      )}
+                      <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         )}
       </PageContent>
     </>
