@@ -326,10 +326,12 @@ export default function HomeScreen() {
             <Ionicons name="document-text" size={20} color={Colors.navy} />
             <Text style={styles.actionLabel}>Docs</Text>
           </TouchableOpacity>
+         {/*
           <TouchableOpacity style={styles.actionBtn} onPress={() => { Haptics.selectionAsync(); router.push("/(tabs)/assistant"); }} activeOpacity={0.8}>
             <Ionicons name="chatbubbles" size={20} color={Colors.navy} />
             <Text style={styles.actionLabel}>AI Help</Text>
           </TouchableOpacity>
+          */}
         </View>
 
         <View style={styles.section}>
