@@ -19,7 +19,6 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
   { href: "/documents", label: "Documents", icon: FileText },
   { href: "/dues", label: "Dues & Payments", icon: CreditCard },
-  { href: "/assistant", label: "AI Assistant", icon: MessageSquare },
   { href: "/voting", label: "Voting", icon: Vote },
   { href: "/residents", label: "Residents", icon: Users },
   { href: "/board", label: "Board", icon: ShieldAlert },
