@@ -9,7 +9,6 @@ import LoginPage from "@/pages/login";
 import DashboardPage from "@/pages/dashboard";
 import DocumentsPage from "@/pages/documents";
 import DuesPage from "@/pages/dues";
-import AssistantPage from "@/pages/assistant";
 import VotingPage from "@/pages/voting";
 import ResidentsPage from "@/pages/residents";
 import BoardPage from "@/pages/board";
@@ -52,9 +51,6 @@ function Router() {
       </Route>
       <Route path="/dues">
         <ProtectedRoute component={DuesPage} />
-      </Route>
-      <Route path="/assistant">
-        <ProtectedRoute component={AssistantPage} />
       </Route>
       <Route path="/voting">
         <ProtectedRoute component={VotingPage} />
