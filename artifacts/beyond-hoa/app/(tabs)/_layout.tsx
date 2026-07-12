@@ -27,10 +27,6 @@ function NativeTabLayout() {
         <Icon sf={{ default: "folder", selected: "folder.fill" }} />
         <Label>Documents</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="assistant">
-        <Icon sf={{ default: "bubble.left.and.bubble.right", selected: "bubble.left.and.bubble.right.fill" }} />
-        <Label>AI Advisor</Label>
-      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="voting">
         <Icon sf={{ default: "checkmark.circle", selected: "checkmark.circle.fill" }} />
         <Label>Voting</Label>
