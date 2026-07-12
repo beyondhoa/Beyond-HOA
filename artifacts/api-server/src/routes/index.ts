@@ -1,7 +1,6 @@
 import { Router, type IRouter } from "express";
 import healthRouter from "./health";
 import authRouter from "./auth";
-import bylawChatRouter from "./bylaw-chat";
 import residentsRouter from "./residents";
 import violationsRouter from "./violations";
 import vendorsRouter from "./vendors";
@@ -13,7 +12,6 @@ const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use(authRouter);
-router.use(bylawChatRouter);
 router.use(residentsRouter);
 router.use(violationsRouter);
 router.use(vendorsRouter);
