@@ -287,9 +287,6 @@ export default function DashboardPage() {
           <a href="/documents" className="flex items-center justify-center p-4 bg-card border rounded-xl hover:bg-accent transition-colors font-medium text-sm space-x-2">
             <FileText className="h-4 w-4" /> <span>Documents</span>
           </a>
-          <a href="/assistant" className="flex items-center justify-center p-4 bg-card border rounded-xl hover:bg-accent transition-colors font-medium text-sm space-x-2">
-            <MessageSquare className="h-4 w-4" /> <span>AI Advisor</span>
-          </a>
         </div>
 
         {/* Bottom Split Layout */}
