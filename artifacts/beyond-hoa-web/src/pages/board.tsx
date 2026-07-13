@@ -12,11 +12,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Pencil, Upload, Loader2, ShieldAlert, Store, Wrench } from "lucide-react";
+import { Plus, Trash2, Pencil, Upload, Loader2, ShieldAlert, Store, Wrench, MessageSquarePlus, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 function statusColor(s: string) {
@@ -48,10 +48,16 @@ function ViolationsTab() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const [addOpen, setAddOpen] = useState(false);
+  const [commentOpen, setCommentOpen] = useState(false);
+  const [activeViolation, setActiveViolation] = useState<Violation | null>(null);
   const [deleteViolation, setDeleteViolation] = useState<Violation | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({ resident_name: "", unit: "", violation_type: "", incident_date: "", description: "", required_action: "", compliance_deadline: "", fine_amount: "", notes: "", issued_by: "" });
+  const [newComment, setNewComment] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
+
+  // Local state directory map to hold real-time appended comments for testing UI seamlessly
+  const [commentLogs, setCommentLogs] = useState<Record<string, string[]>>({});
 
   const { data: violations, isLoading } = useListViolations({ query: { queryKey: getListViolationsQueryKey() } });
   const invalidate = () => qc.invalidateQueries({ queryKey: getListViolationsQueryKey() });
@@ -81,6 +87,27 @@ function ViolationsTab() {
     reader.readAsDataURL(file);
   };
 
+  const openCommentModal = (v: Violation) => {
+    setActiveViolation(v);
+    setNewComment("");
+    setCommentOpen(true);
+  };
+
+  const handleSaveComment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeViolation || !newComment.trim()) return;
+
+    // Append comments to your local runtime log state
+    setCommentLogs((prev) => ({
+      ...prev,
+      [activeViolation.id]: [...(prev[activeViolation.id] ?? []), newComment.trim()],
+    }));
+
+    toast({ title: "Comment appended to logs" });
+    setCommentOpen(false);
+    setActiveViolation(null);
+  };
+
   return (
     <>
       <div className="flex justify-end mb-4">
@@ -92,31 +119,81 @@ function ViolationsTab() {
         <Card><CardContent className="p-0">
           <div className="divide-y divide-border">
             {(violations ?? []).map((v) => (
-              <div key={v.id} className="px-5 py-4 flex items-start gap-4" data-testid={`row-violation-${v.id}`}>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm font-medium">{v.violation_type}</p>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${statusColor(v.status)}`}>{v.status}</span>
+              <div key={v.id} className="px-5 py-4 flex flex-col gap-2" data-testid={`row-violation-${v.id}`}>
+                <div className="flex items-start gap-4 w-full">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-medium">{v.violation_type}</p>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${statusColor(v.status)}`}>{v.status}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{v.resident_name} · Unit {v.unit} · Notice #{v.notice_number}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{v.description}</p>
                   </div>
-                  <p className="text-xs text-muted-foreground">{v.resident_name} · Unit {v.unit} · Notice #{v.notice_number}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{v.description}</p>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <Select value={v.status} onValueChange={(val) => updateStatus.mutate({ id: v.id, data: { status: val as "open" | "resolved" | "appealed" } })}>
+                      <SelectTrigger className="h-7 text-xs w-28" data-testid={`select-violation-status-${v.id}`}><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="open">Open</SelectItem>
+                        <SelectItem value="resolved">Resolved</SelectItem>
+                        <SelectItem value="appealed">Appealed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    {/* 📝 COMMENT/EDIT ENTRYPOINT */}
+                    <Button size="icon" variant="ghost" className="w-8 h-8 text-muted-foreground hover:text-foreground" onClick={() => openCommentModal(v)} data-testid={`button-comment-violation-${v.id}`}>
+                      <MessageSquarePlus className="w-3.5 h-3.5" />
+                    </Button>
+
+                    <Button size="icon" variant="ghost" className="w-8 h-8 text-destructive hover:text-destructive" onClick={() => setDeleteViolation(v)} data-testid={`button-delete-violation-${v.id}`}><Trash2 className="w-3.5 h-3.5" /></Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <Select value={v.status} onValueChange={(val) => updateStatus.mutate({ id: v.id, data: { status: val as "open" | "resolved" | "appealed" } })}>
-                    <SelectTrigger className="h-7 text-xs w-28" data-testid={`select-violation-status-${v.id}`}><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="open">Open</SelectItem>
-                      <SelectItem value="resolved">Resolved</SelectItem>
-                      <SelectItem value="appealed">Appealed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button size="icon" variant="ghost" className="w-8 h-8 text-destructive hover:text-destructive" onClick={() => setDeleteViolation(v)} data-testid={`button-delete-violation-${v.id}`}><Trash2 className="w-3.5 h-3.5" /></Button>
-                </div>
+
+                {/* Rendered History Timeline of Internal Comments */}
+                {((commentLogs[v.id] ?? []).length > 0 || v.notes) && (
+                  <div className="mt-1 bg-muted/40 rounded-lg p-3 space-y-2 border border-dashed">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                      <MessageSquare className="w-3 h-3" /> Board Internal Log Notes:
+                    </p>
+                    {v.notes && <p className="text-xs text-foreground bg-background p-2 rounded shadow-sm border">{v.notes}</p>}
+                    {(commentLogs[v.id] ?? []).map((log, index) => (
+                      <p key={index} className="text-xs text-foreground bg-background p-2 rounded shadow-sm border">
+                        {log}
+                      </p>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
         </CardContent></Card>
       )}
+
+      {/* 🛠️ Safe Comment-only Modal */}
+      <Dialog open={commentOpen} onOpenChange={(o) => { if (!o) setCommentOpen(false); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Add Board Comment</DialogTitle></DialogHeader>
+          <form onSubmit={handleSaveComment} className="space-y-4 mt-2">
+            <div className="space-y-1.5">
+              <p className="text-xs text-muted-foreground">
+                Appending dynamic timeline remarks for <strong>Unit {activeViolation?.unit}</strong>. Core ticket values remain locked.
+              </p>
+              <Label>Internal Comment</Label>
+              <Textarea 
+                value={newComment} 
+                onChange={(e) => setNewComment(e.target.value)} 
+                placeholder="Type warning progress, board log, or configuration updates..." 
+                className="min-h-[100px]"
+                required 
+                data-testid="input-violation-comment"
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setCommentOpen(false)}>Cancel</Button>
+              <Button type="submit">Save Comment</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
