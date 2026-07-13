@@ -1,1 +1,252 @@
+import { useState } from "react";
+import {
+  useListResidents,
+  getListResidentsQueryKey,
+  useCreateResident,
+  useUpdateResident,
+  useDeleteResident,
+  useResetResidentPassword,
+} from "@workspace/api-client-react";
+import type { Resident } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { PageHeader, PageContent } from "@/components/Layout";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Search, Plus, Pencil, Trash2, KeyRound, Users, Phone, Mail } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
+interface ResidentForm {
+  name: string;
+  unit: string;
+  email: string;
+  phone: string;
+  status: "owner" | "tenant";
+  move_in_date: string;
+  notes: string;
+}
+
+const emptyForm: ResidentForm = {
+  name: "", unit: "", email: "", phone: "", status: "owner", move_in_date: "", notes: "",
+};
+
+export default function BoardResidentsPage() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [search, setSearch] = useState("");
+  const [addOpen, setAddOpen] = useState(false);
+  const [editResident, setEditResident] = useState<Resident | null>(null);
+  const [deleteResident, setDeleteResident] = useState<Resident | null>(null);
+  const [form, setForm] = useState<ResidentForm>(emptyForm);
+  const [resetResult, setResetResult] = useState<{ name: string; password: string } | null>(null);
+
+  const { data: residents, isLoading } = useListResidents({ query: { queryKey: getListResidentsQueryKey() } });
+
+  const filtered = residents?.filter(
+    (r) =>
+      r.name.toLowerCase().includes(search.toLowerCase()) ||
+      r.unit.toLowerCase().includes(search.toLowerCase())
+  ) ?? [];
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: getListResidentsQueryKey() });
+
+  const createResident = useCreateResident({ mutation: { onSuccess: () => { invalidate(); setAddOpen(false); setForm(emptyForm); toast({ title: "Resident added" }); } } });
+  const updateResident = useUpdateResident({ mutation: { onSuccess: () => { invalidate(); setEditResident(null); toast({ title: "Resident updated" }); } } });
+  const deleteRes = useDeleteResident({ mutation: { onSuccess: () => { invalidate(); setDeleteResident(null); toast({ title: "Resident deleted" }); } } });
+  const resetPassword = useResetResidentPassword({ mutation: { onSuccess: (data, vars) => {
+    const r = residents?.find((x) => x.id === vars.id);
+    setResetResult({ name: r?.name ?? "Resident", password: data.password });
+  } } });
+
+  const openEdit = (r: Resident) => {
+    setEditResident(r);
+    setForm({
+      name: r.name, unit: r.unit, email: r.email ?? "", phone: r.phone ?? "",
+      status: r.status as "owner" | "tenant", move_in_date: r.move_in_date ?? "", notes: r.notes ?? "",
+    });
+  };
+
+  const handleAddSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    createResident.mutate({ data: { ...form, email: form.email || null, phone: form.phone || null, move_in_date: form.move_in_date || null, notes: form.notes || null } });
+  };
+
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editResident) return;
+    updateResident.mutate({ id: editResident.id, data: { ...form, email: form.email || null, phone: form.phone || null, move_in_date: form.move_in_date || null, notes: form.notes || null } });
+  };
+
+  const ResidentFormFields = () => (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label>Full Name</Label>
+          <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} required data-testid="input-resident-name" />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Unit</Label>
+          <Input value={form.unit} onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value }))} required data-testid="input-resident-unit" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label>Email</Label>
+          <Input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} data-testid="input-resident-email" />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Phone</Label>
+          <Input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} data-testid="input-resident-phone" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label>Status</Label>
+          <Select value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v as "owner" | "tenant" }))}>
+            <SelectTrigger data-testid="select-resident-status"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="owner">Owner</SelectItem>
+              <SelectItem value="tenant">Tenant</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label>Move-in Date</Label>
+          <Input type="date" value={form.move_in_date} onChange={(e) => setForm((f) => ({ ...f, move_in_date: e.target.value }))} data-testid="input-resident-move-in" />
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      <PageHeader
+        title="Board Portal: Residents"
+        subtitle="Manage community resident listings and profiles"
+        action={
+          <Dialog open={addOpen} onOpenChange={(o) => { setAddOpen(o); if (!o) setForm(emptyForm); }}>
+            <DialogTrigger asChild>
+              <Button data-testid="button-add-resident"><Plus className="w-4 h-4 mr-2" />Add Resident</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Add Resident</DialogTitle></DialogHeader>
+              <form onSubmit={handleAddSubmit} className="space-y-4 mt-2">
+                <ResidentFormFields />
+                <Button type="submit" className="w-full" disabled={createResident.isPending} data-testid="button-submit-add-resident">
+                  {createResident.isPending ? "Adding..." : "Add Resident"}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        }
+      />
+      <PageContent>
+        <div className="mb-4 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name or unit..." className="pl-9" data-testid="input-search-residents" />
+        </div>
+
+        {isLoading ? (
+          <div className="space-y-3">{[1,2,3,4].map((i) => <div key={i} className="h-16 bg-muted rounded-lg animate-pulse" />)}</div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-16 text-muted-foreground">
+            <Users className="w-10 h-10 mx-auto mb-3 opacity-40" />
+            <p className="text-sm">No residents found.</p>
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="p-0">
+              <div className="divide-y divide-border">
+                {filtered.map((r) => (
+                  <div key={r.id} className="px-5 py-4 flex items-center gap-4" data-testid={`row-resident-${r.id}`}>
+                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <span className="text-primary text-sm font-semibold">{r.name.charAt(0)}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-foreground">{r.name}</p>
+                        <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium capitalize ${r.status === "owner" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"}`}>{r.status}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Unit {r.unit}</p>
+                      <div className="flex items-center gap-3 mt-0.5">
+                        {r.email && <span className="flex items-center gap-1 text-xs text-muted-foreground"><Mail className="w-3 h-3" />{r.email}</span>}
+                        {r.phone && <span className="flex items-center gap-1 text-xs text-muted-foreground"><Phone className="w-3 h-3" />{r.phone}</span>}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <Button size="icon" variant="ghost" className="w-8 h-8" onClick={() => openEdit(r)} data-testid={`button-edit-resident-${r.id}`}><Pencil className="w-3.5 h-3.5" /></Button>
+                      <Button size="icon" variant="ghost" className="w-8 h-8" onClick={() => resetPassword.mutate({ id: r.id })} data-testid={`button-reset-password-${r.id}`}><KeyRound className="w-3.5 h-3.5" /></Button>
+                      <Button size="icon" variant="ghost" className="w-8 h-8 text-destructive hover:text-destructive" onClick={() => setDeleteResident(r)} data-testid={`button-delete-resident-${r.id}`}><Trash2 className="w-3.5 h-3.5" /></Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </PageContent>
+
+      <Dialog open={!!editResident} onOpenChange={(o) => { if (!o) setEditResident(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Edit Resident</DialogTitle></DialogHeader>
+          <form onSubmit={handleEditSubmit} className="space-y-4 mt-2">
+            <ResidentFormFields />
+            <Button type="submit" className="w-full" disabled={updateResident.isPending} data-testid="button-submit-edit-resident">
+              {updateResident.isPending ? "Saving..." : "Save Changes"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!deleteResident} onOpenChange={(o) => { if (!o) setDeleteResident(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Resident</AlertDialogTitle>
+            <AlertDialogDescription>Are you sure you want to delete {deleteResident?.name}? This cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => deleteResident && deleteRes.mutate({ id: deleteResident.id })} data-testid="button-confirm-delete-resident">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={!!resetResult} onOpenChange={(o) => { if (!o) setResetResult(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Password Reset</DialogTitle></DialogHeader>
+          <div className="space-y-3 mt-2">
+            <p className="text-sm text-muted-foreground">New temporary password for <strong>{resetResult?.name}</strong>:</p>
+            <div className="bg-muted rounded-lg px-4 py-3 font-mono text-lg tracking-widest text-foreground text-center" data-testid="text-reset-password">{resetResult?.password}</div>
+            <p className="text-xs text-muted-foreground">Share this securely with the resident. They should change it on next login.</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
