@@ -59,7 +59,7 @@ export default function DocumentsPage() {
                 {filtered.map((doc) => (
                   <a
                     key={doc.id}
-                    href={`/api/documents/view/${doc.doc_path?.split("/").pop() ?? doc.id}`}
+                    href={`${import.meta.env.VITE_API_URL}/api/documents/view/${doc.doc_path?.split("/").pop() ?? doc.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-4 px-5 py-4 hover:bg-muted/50 transition-colors group"
