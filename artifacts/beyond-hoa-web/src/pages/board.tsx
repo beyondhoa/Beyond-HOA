@@ -1,10 +1,10 @@
 import { useState, useRef } from "react";
 import {
   useListViolations, getListViolationsQueryKey, useCreateViolation, useUpdateViolationStatus, useDeleteViolation, useAnalyzeViolationImage,
-  useListVendors, getListVendorsQueryKey, useCreateVendor,
+  useListVendors, getListVendorsQueryKey, useCreateVendor, useUpdateVendor,
   useListWorkOrders, getListWorkOrdersQueryKey, useUpdateWorkOrder, useDeleteWorkOrder,
 } from "@workspace/api-client-react";
-import type { Violation, WorkOrder } from "@workspace/api-client-react";
+import type { Violation, WorkOrder, Vendor } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { PageHeader, PageContent } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -56,7 +56,6 @@ function ViolationsTab() {
   const [newComment, setNewComment] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
 
-  // Local state directory map to hold real-time appended comments for testing UI seamlessly
   const [commentLogs, setCommentLogs] = useState<Record<string, string[]>>({});
 
   const { data: violations, isLoading } = useListViolations({ query: { queryKey: getListViolationsQueryKey() } });
@@ -97,7 +96,6 @@ function ViolationsTab() {
     e.preventDefault();
     if (!activeViolation || !newComment.trim()) return;
 
-    // Append comments to your local runtime log state
     setCommentLogs((prev) => ({
       ...prev,
       [activeViolation.id]: [...(prev[activeViolation.id] ?? []), newComment.trim()],
@@ -139,7 +137,6 @@ function ViolationsTab() {
                       </SelectContent>
                     </Select>
                     
-                    {/* 📝 COMMENT/EDIT ENTRYPOINT */}
                     <Button size="icon" variant="ghost" className="w-8 h-8 text-muted-foreground hover:text-foreground" onClick={() => openCommentModal(v)} data-testid={`button-comment-violation-${v.id}`}>
                       <MessageSquarePlus className="w-3.5 h-3.5" />
                     </Button>
@@ -148,7 +145,6 @@ function ViolationsTab() {
                   </div>
                 </div>
 
-                {/* Rendered History Timeline of Internal Comments */}
                 {((commentLogs[v.id] ?? []).length > 0 || v.notes) && (
                   <div className="mt-1 bg-muted/40 rounded-lg p-3 space-y-2 border border-dashed">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
@@ -168,7 +164,6 @@ function ViolationsTab() {
         </CardContent></Card>
       )}
 
-      {/* 🛠️ Safe Comment-only Modal */}
       <Dialog open={commentOpen} onOpenChange={(o) => { if (!o) setCommentOpen(false); }}>
         <DialogContent>
           <DialogHeader><DialogTitle>Add Board Comment</DialogTitle></DialogHeader>
@@ -245,14 +240,62 @@ function VendorsTab() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const [addOpen, setAddOpen] = useState(false);
+  const [editVendor, setEditVendor] = useState<Vendor | null>(null);
   const [form, setForm] = useState({ name: "", specialty: "", phone: "", email: "" });
+  
   const { data: vendors, isLoading } = useListVendors({ query: { queryKey: getListVendorsQueryKey() } });
-  const createVendor = useCreateVendor({ mutation: { onSuccess: () => { qc.invalidateQueries({ queryKey: getListVendorsQueryKey() }); setAddOpen(false); setForm({ name: "", specialty: "", phone: "", email: "" }); toast({ title: "Vendor added" }); } } });
+  
+  const invalidate = () => qc.invalidateQueries({ queryKey: getListVendorsQueryKey() });
+
+  const createVendor = useCreateVendor({ 
+    mutation: { 
+      onSuccess: () => { 
+        invalidate(); 
+        setAddOpen(false); 
+        setForm({ name: "", specialty: "", phone: "", email: "" }); 
+        toast({ title: "Vendor added" }); 
+      } 
+    } 
+  });
+
+  const updateVendor = useUpdateVendor({
+    mutation: {
+      onSuccess: () => {
+        invalidate();
+        setEditVendor(null);
+        setForm({ name: "", specialty: "", phone: "", email: "" });
+        toast({ title: "Vendor updated" });
+      }
+    }
+  });
+
+  const handleOpenEdit = (v: Vendor) => {
+    setEditVendor(v);
+    setForm({
+      name: v.name,
+      specialty: v.specialty,
+      phone: v.phone ?? "",
+      email: v.email ?? ""
+    });
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const payload = { ...form, phone: form.phone || null, email: form.email || null };
+    
+    if (editVendor) {
+      updateVendor.mutate({ id: editVendor.id, data: payload });
+    } else {
+      createVendor.mutate({ data: payload });
+    }
+  };
 
   return (
     <>
       <div className="flex justify-end mb-4">
-        <Button onClick={() => setAddOpen(true)} data-testid="button-add-vendor"><Plus className="w-4 h-4 mr-2" />Add Vendor</Button>
+        <Button onClick={() => { setEditVendor(null); setForm({ name: "", specialty: "", phone: "", email: "" }); setAddOpen(true); }} data-testid="button-add-vendor">
+          <Plus className="w-4 h-4 mr-2" />Add Vendor
+        </Button>
       </div>
       {isLoading ? <div className="h-32 bg-muted rounded animate-pulse" /> : (vendors ?? []).length === 0 ? (
         <div className="text-center py-12 text-muted-foreground"><Store className="w-8 h-8 mx-auto mb-2 opacity-40" /><p className="text-sm">No vendors yet.</p></div>
@@ -268,17 +311,25 @@ function VendorsTab() {
                   <p className="text-sm font-medium">{v.name}</p>
                   <p className="text-xs text-muted-foreground">{v.specialty}{v.phone ? ` · ${v.phone}` : ""}{v.email ? ` · ${v.email}` : ""}</p>
                 </div>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${v.active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>{v.active ? "Active" : "Inactive"}</span>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${v.active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>{v.active ? "Active" : "Inactive"}</span>
+                  
+                  {/* 📝 VENDOR EDIT BUTTON */}
+                  <Button size="icon" variant="ghost" className="w-8 h-8" onClick={() => handleOpenEdit(v)} data-testid={`button-edit-vendor-${v.id}`}>
+                    <Pencil className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
         </CardContent></Card>
       )}
 
-      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+      {/* Reusable Dialog for Add & Edit */}
+      <Dialog open={addOpen || !!editVendor} onOpenChange={(o) => { if (!o) { setAddOpen(false); setEditVendor(null); } }}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Add Vendor</DialogTitle></DialogHeader>
-          <form onSubmit={(e) => { e.preventDefault(); createVendor.mutate({ data: { ...form, phone: form.phone || null, email: form.email || null } }); }} className="space-y-3 mt-2">
+          <DialogHeader><DialogTitle>{editVendor ? "Edit Vendor" : "Add Vendor"}</DialogTitle></DialogHeader>
+          <form onSubmit={handleFormSubmit} className="space-y-3 mt-2">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5"><Label>Company Name</Label><Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} required data-testid="input-vendor-name" /></div>
               <div className="space-y-1.5"><Label>Specialty</Label><Input value={form.specialty} onChange={(e) => setForm((f) => ({ ...f, specialty: e.target.value }))} required placeholder="e.g. Plumbing" data-testid="input-vendor-specialty" /></div>
@@ -287,7 +338,12 @@ function VendorsTab() {
               <div className="space-y-1.5"><Label>Phone</Label><Input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} data-testid="input-vendor-phone" /></div>
               <div className="space-y-1.5"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} data-testid="input-vendor-email" /></div>
             </div>
-            <Button type="submit" className="w-full" disabled={createVendor.isPending} data-testid="button-submit-vendor">{createVendor.isPending ? "Adding..." : "Add Vendor"}</Button>
+            <Button type="submit" className="w-full" disabled={createVendor.isPending || updateVendor.isPending} data-testid="button-submit-vendor">
+              {editVendor 
+                ? (updateVendor.isPending ? "Saving..." : "Save Changes") 
+                : (createVendor.isPending ? "Adding..." : "Add Vendor")
+              }
+            </Button>
           </form>
         </DialogContent>
       </Dialog>
