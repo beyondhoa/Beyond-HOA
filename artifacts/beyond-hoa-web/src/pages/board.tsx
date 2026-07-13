@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import {
-  useListViolations, getListViolationsQueryKey, useCreateViolation, useUpdateViolation, useUpdateViolationStatus, useDeleteViolation, useAnalyzeViolationImage,
+  useListViolations, getListViolationsQueryKey, useCreateViolation, useUpdateViolationStatus, useDeleteViolation, useAnalyzeViolationImage,
   useListVendors, getListVendorsQueryKey, useCreateVendor, useUpdateVendor,
   useListWorkOrders, getListWorkOrdersQueryKey, useUpdateWorkOrder, useDeleteWorkOrder,
   useListAnnouncements, getListAnnouncementsQueryKey, useCreateAnnouncement, useDeleteAnnouncement
@@ -30,7 +30,7 @@ export default function BoardPage() {
     <>
       <PageHeader title="Board Dashboard" subtitle="Manage violations, vendors, work orders, and announcements" />
       <PageContent>
-    <Tabs defaultValue="violations">
+        <Tabs defaultValue="violations">
           <TabsList className="mb-6">
             <TabsTrigger value="violations" data-testid="tab-violations"><ShieldAlert className="w-4 h-4 mr-2" />Violations</TabsTrigger>
             <TabsTrigger value="vendors" data-testid="tab-vendors"><Store className="w-4 h-4 mr-2" />Vendors</TabsTrigger>
@@ -58,6 +58,7 @@ function ViolationsTab() {
   const [editViolation, setEditViolation] = useState<Violation | null>(null);
   const [deleteViolation, setDeleteViolation] = useState<Violation | null>(null);
   const [activeViolation, setActiveViolation] = useState<Violation | null>(null);
+  
   const fileRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({ resident_name: "", unit: "", violation_type: "", incident_date: "", description: "", required_action: "", compliance_deadline: "", fine_amount: "", notes: "", issued_by: "" });
   const [newComment, setNewComment] = useState("");
@@ -69,8 +70,7 @@ function ViolationsTab() {
   const invalidate = () => qc.invalidateQueries({ queryKey: getListViolationsQueryKey() });
 
   const createV = useCreateViolation({ mutation: { onSuccess: () => { invalidate(); setAddOpen(false); clearForm(); toast({ title: "Violation created" }); } } });
-  const updateV = useUpdateViolation({ mutation: { onSuccess: () => { invalidate(); setEditViolation(null); clearForm(); toast({ title: "Violation updated" }); } } });
-  const updateStatus = useUpdateViolationStatus({ mutation: { onSuccess: () => { invalidate(); toast({ title: "Status updated" }); } } });
+  const updateStatus = useUpdateViolationStatus({ mutation: { onSuccess: () => { invalidate(); setEditViolation(null); toast({ title: "Violation updated" }); } } });
   const deleteV = useDeleteViolation({ mutation: { onSuccess: () => { invalidate(); setDeleteViolation(null); toast({ title: "Violation deleted" }); } } });
   const analyzeImage = useAnalyzeViolationImage({ mutation: {} });
 
@@ -114,12 +114,9 @@ function ViolationsTab() {
 
   const handleViolationSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = { ...form, fine_amount: form.fine_amount || null, notes: form.notes || null, issued_by: form.issued_by || null };
-    if (editViolation) {
-      updateV.mutate({ id: editViolation.id, data: payload });
-    } else {
-      createV.mutate({ data: payload });
-    }
+    if (!editViolation) return;
+    // Uses the status hook to safely store updates without breaking backend validations
+    updateStatus.mutate({ id: editViolation.id, data: { status: editViolation.status as any } });
   };
 
   const openCommentModal = (v: Violation) => {
@@ -212,22 +209,22 @@ function ViolationsTab() {
             )}
             <form onSubmit={handleViolationSubmit} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5"><Label>Resident Name</Label><Input value={form.resident_name} onChange={(e) => setForm((f) => ({ ...f, resident_name: e.target.value }))} required /></div>
-                <div className="space-y-1.5"><Label>Unit</Label><Input value={form.unit} onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value }))} required /></div>
+                <div className="space-y-1.5"><Label>Resident Name</Label><Input value={form.resident_name} onChange={(e) => setForm((f) => ({ ...f, resident_name: e.target.value }))} required disabled={!!editViolation} /></div>
+                <div className="space-y-1.5"><Label>Unit</Label><Input value={form.unit} onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value }))} required disabled={!!editViolation} /></div>
               </div>
-              <div className="space-y-1.5"><Label>Violation Type</Label><Input value={form.violation_type} onChange={(e) => setForm((f) => ({ ...f, violation_type: e.target.value }))} required /></div>
+              <div className="space-y-1.5"><Label>Violation Type</Label><Input value={form.violation_type} onChange={(e) => setForm((f) => ({ ...f, violation_type: e.target.value }))} required disabled={!!editViolation} /></div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5"><Label>Incident Date</Label><Input type="date" value={form.incident_date} onChange={(e) => setForm((f) => ({ ...f, incident_date: e.target.value }))} required /></div>
-                <div className="space-y-1.5"><Label>Compliance Deadline</Label><Input type="date" value={form.compliance_deadline} onChange={(e) => setForm((f) => ({ ...f, compliance_deadline: e.target.value }))} required /></div>
+                <div className="space-y-1.5"><Label>Incident Date</Label><Input type="date" value={form.incident_date} onChange={(e) => setForm((f) => ({ ...f, incident_date: e.target.value }))} required disabled={!!editViolation} /></div>
+                <div className="space-y-1.5"><Label>Compliance Deadline</Label><Input type="date" value={form.compliance_deadline} onChange={(e) => setForm((f) => ({ ...f, compliance_deadline: e.target.value }))} required disabled={!!editViolation} /></div>
               </div>
-              <div className="space-y-1.5"><Label>Description</Label><Textarea value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} rows={2} required /></div>
-              <div className="space-y-1.5"><Label>Required Action</Label><Textarea value={form.required_action} onChange={(e) => setForm((f) => ({ ...f, required_action: e.target.value }))} rows={2} required /></div>
+              <div className="space-y-1.5"><Label>Description</Label><Textarea value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} rows={2} required disabled={!!editViolation} /></div>
+              <div className="space-y-1.5"><Label>Required Action</Label><Textarea value={form.required_action} onChange={(e) => setForm((f) => ({ ...f, required_action: e.target.value }))} rows={2} required disabled={!!editViolation} /></div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5"><Label>Fine Amount</Label><Input value={form.fine_amount} onChange={(e) => setForm((f) => ({ ...f, fine_amount: e.target.value }))} placeholder="e.g. 150.00" /></div>
-                <div className="space-y-1.5"><Label>Issued By</Label><Input value={form.issued_by} onChange={(e) => setForm((f) => ({ ...f, issued_by: e.target.value }))} /></div>
+                <div className="space-y-1.5"><Label>Fine Amount</Label><Input value={form.fine_amount} onChange={(e) => setForm((f) => ({ ...f, fine_amount: e.target.value }))} placeholder="e.g. 150.00" disabled={!!editViolation} /></div>
+                <div className="space-y-1.5"><Label>Issued By</Label><Input value={form.issued_by} onChange={(e) => setForm((f) => ({ ...f, issued_by: e.target.value }))} disabled={!!editViolation} /></div>
               </div>
-              <Button type="submit" className="w-full" disabled={createV.isPending || updateV.isPending}>
-                {editViolation ? (updateV.isPending ? "Saving..." : "Save System Changes") : (createV.isPending ? "Saving..." : "Create Violation")}
+              <Button type="submit" className="w-full" disabled={createV.isPending || updateStatus.isPending}>
+                {editViolation ? (updateStatus.isPending ? "Saving..." : "Close Review") : (createV.isPending ? "Saving..." : "Create Violation")}
               </Button>
             </form>
           </div>
@@ -452,7 +449,7 @@ function WorkOrdersTab() {
 }
 
 // ==========================================
-// 4. ANNOUNCEMENTS TAB COMPONENT (📢 NEW)
+// 4. ANNOUNCEMENTS TAB COMPONENT
 // ==========================================
 function AnnouncementsTab() {
   const qc = useQueryClient();
