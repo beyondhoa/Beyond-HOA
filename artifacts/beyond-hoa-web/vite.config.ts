@@ -26,6 +26,9 @@ if (!basePath) {
   );
 }
 
+console.log("DEBUG VITE_API_URL:", process.env.VITE_API_URL);
+console.log("DEBUG all VITE_ vars:", Object.keys(process.env).filter(k => k.startsWith("VITE_")));
+
 export default defineConfig({
   base: basePath,
   plugins: [
