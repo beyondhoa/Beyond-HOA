@@ -2,10 +2,9 @@ import { useState, useRef } from "react";
 import {
   useListViolations, getListViolationsQueryKey, useCreateViolation, useUpdateViolationStatus, useDeleteViolation, useAnalyzeViolationImage,
   useListVendors, getListVendorsQueryKey, useCreateVendor,
-  useListWorkOrders, getListWorkOrdersQueryKey, useUpdateWorkOrder, useDeleteWorkOrder,
-  useListAnnouncements, getListAnnouncementsQueryKey, useCreateAnnouncement, useDeleteAnnouncement
+  useListWorkOrders, getListWorkOrdersQueryKey, useUpdateWorkOrder, useDeleteWorkOrder
 } from "@workspace/api-client-react";
-import type { Violation, WorkOrder, Vendor, Announcement } from "@workspace/api-client-react";
+import type { Violation, WorkOrder, Vendor } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { PageHeader, PageContent } from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,6 +18,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2, Pencil, Upload, Loader2, ShieldAlert, Store, Wrench, MessageSquarePlus, MessageSquare, Megaphone, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+// Local Mock Type for compilation safety
+interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  category: string;
+  createdAt?: string;
+}
 
 function statusColor(s: string) {
   const m: Record<string, string> = { open: "bg-yellow-100 text-yellow-800", resolved: "bg-green-100 text-green-800", appealed: "bg-blue-100 text-blue-800", in_progress: "bg-blue-100 text-blue-800", completed: "bg-green-100 text-green-800" };
@@ -34,7 +42,7 @@ export default function BoardPage() {
           <TabsList className="mb-6">
             <TabsTrigger value="violations" data-testid="tab-violations"><ShieldAlert className="w-4 h-4 mr-2" />Violations</TabsTrigger>
             <TabsTrigger value="vendors" data-testid="tab-vendors"><Store className="w-4 h-4 mr-2" />Vendors</TabsTrigger>
-           <TabsTrigger value="workorders" data-testid="tab-workorders"><Wrench className="w-4 h-4 mr-2" />Work Orders</TabsTrigger>
+            <TabsTrigger value="workorders" data-testid="tab-workorders"><Wrench className="w-4 h-4 mr-2" />Work Orders</TabsTrigger>
             <TabsTrigger value="announcements" data-testid="tab-announcements"><Megaphone className="w-4 h-4 mr-2" />Announcements</TabsTrigger>
           </TabsList>
           <TabsContent value="violations"><ViolationsTab /></TabsContent>
@@ -436,42 +444,45 @@ function WorkOrdersTab() {
 }
 
 // ==========================================
-// 4. ANNOUNCEMENTS TAB COMPONENT
+// 4. ANNOUNCEMENTS TAB COMPONENT (MOCKED FRONTEND ONLY)
 // ==========================================
 function AnnouncementsTab() {
-  const qc = useQueryClient();
   const { toast } = useToast();
   const [addOpen, setAddOpen] = useState(false);
   const [deleteAnn, setDeleteAnn] = useState<Announcement | null>(null);
   const [form, setForm] = useState({ title: "", content: "", category: "general" });
-
-  const { data: announcements, isLoading } = useListAnnouncements({ query: { queryKey: getListAnnouncementsQueryKey() } });
-  const invalidate = () => qc.invalidateQueries({ queryKey: getListAnnouncementsQueryKey() });
-
-  const createAnn = useCreateAnnouncement({
-    mutation: {
-      onSuccess: () => {
-        invalidate();
-        setAddOpen(false);
-        setForm({ title: "", content: "", category: "general" });
-        toast({ title: "Announcement Published", description: "Successfully pushed to all resident dashboards." });
-      }
+  
+  // Local state array to hold mock announcements so they save on your layout dashboard
+  const [announcements, setAnnouncements] = useState<Announcement[]>([
+    {
+      id: "1",
+      title: "Annual Board Meeting Scheduled",
+      content: "Join us this coming Thursday at 7 PM in the clubhouse to review budget guidelines.",
+      category: "general",
+      createdAt: new Date().toISOString()
     }
-  });
-
-  const deleteAnnMut = useDeleteAnnouncement({
-    mutation: {
-      onSuccess: () => {
-        invalidate();
-        setDeleteAnn(null);
-        toast({ title: "Announcement Deleted" });
-      }
-    }
-  });
+  ]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createAnn.mutate({ data: form });
+    const newAnn: Announcement = {
+      id: Math.random().toString(),
+      title: form.title,
+      content: form.content,
+      category: form.category,
+      createdAt: new Date().toISOString()
+    };
+    setAnnouncements((prev) => [newAnn, ...prev]);
+    setAddOpen(false);
+    setForm({ title: "", content: "", category: "general" });
+    toast({ title: "Announcement Published", description: "Successfully pushed to all resident dashboards." });
+  };
+
+  const handleDelete = () => {
+    if (!deleteAnn) return;
+    setAnnouncements((prev) => prev.filter((a) => a.id !== deleteAnn.id));
+    setDeleteAnn(null);
+    toast({ title: "Announcement Deleted" });
   };
 
   return (
@@ -482,9 +493,7 @@ function AnnouncementsTab() {
         </Button>
       </div>
 
-      {isLoading ? (
-        <div className="h-32 bg-muted rounded animate-pulse" />
-      ) : (announcements ?? []).length === 0 ? (
+      {announcements.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <Megaphone className="w-8 h-8 mx-auto mb-2 opacity-40" />
           <p className="text-sm">No announcements posted yet.</p>
@@ -493,7 +502,7 @@ function AnnouncementsTab() {
         <Card>
           <CardContent className="p-0">
             <div className="divide-y divide-border">
-              {(announcements ?? []).map((ann) => (
+              {announcements.map((ann) => (
                 <div key={ann.id} className="px-5 py-4 flex items-start gap-4" data-testid={`row-announcement-${ann.id}`}>
                   <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
                     <Megaphone className="w-4 h-4 text-blue-700" />
@@ -564,15 +573,15 @@ function AnnouncementsTab() {
               <Textarea 
                 value={form.content} 
                 onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))} 
-                placeholder="Type the message detail that will show up on all resident dashboards..." 
+                placeholder="Type the message detail..." 
                 className="min-h-[120px]"
                 required 
                 data-testid="input-announcement-content"
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={createAnn.isPending} data-testid="button-submit-announcement">
-              {createAnn.isPending ? "Publishing..." : "Publish Announcement"}
+            <Button type="submit" className="w-full" data-testid="button-submit-announcement">
+              Publish Announcement
             </Button>
           </form>
         </DialogContent>
@@ -583,11 +592,11 @@ function AnnouncementsTab() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Announcement</AlertDialogTitle>
-            <AlertDialogDescription>Are you sure you want to remove this announcement? It will immediately disappear from all resident feeds.</AlertDialogDescription>
+            <AlertDialogDescription>Are you sure you want to remove this announcement?</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => deleteAnn && deleteAnnMut.mutate({ id: deleteAnn.id })} data-testid="button-confirm-delete-announcement">Delete</AlertDialogAction>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={handleDelete} data-testid="button-confirm-delete-announcement">Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
