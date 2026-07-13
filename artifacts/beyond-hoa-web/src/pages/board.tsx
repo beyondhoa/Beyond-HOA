@@ -3,7 +3,6 @@ import {
   useListViolations, getListViolationsQueryKey, useCreateViolation, useUpdateViolation, useUpdateViolationStatus, useDeleteViolation, useAnalyzeViolationImage,
   useListVendors, getListVendorsQueryKey, useCreateVendor, useUpdateVendor,
   useListWorkOrders, getListWorkOrdersQueryKey, useUpdateWorkOrder, useDeleteWorkOrder,
-  // 📢 ADDED ANNOUNCEMENT HOOKS
   useListAnnouncements, getListAnnouncementsQueryKey, useCreateAnnouncement, useDeleteAnnouncement
 } from "@workspace/api-client-react";
 import type { Violation, WorkOrder, Vendor, Announcement } from "@workspace/api-client-react";
@@ -31,18 +30,16 @@ export default function BoardPage() {
     <>
       <PageHeader title="Board Dashboard" subtitle="Manage violations, vendors, work orders, and announcements" />
       <PageContent>
-        <Tabs defaultValue="violations">
+    <Tabs defaultValue="violations">
           <TabsList className="mb-6">
             <TabsTrigger value="violations" data-testid="tab-violations"><ShieldAlert className="w-4 h-4 mr-2" />Violations</TabsTrigger>
             <TabsTrigger value="vendors" data-testid="tab-vendors"><Store className="w-4 h-4 mr-2" />Vendors</TabsTrigger>
             <TabsTrigger value="workorders" data-testid="tab-workorders"><Wrench className="w-4 h-4 mr-2" />Work Orders</TabsTrigger>
-            {/* 📢 NEW TAB TRIGGER */}
             <TabsTrigger value="announcements" data-testid="tab-announcements"><Megaphone className="w-4 h-4 mr-2" />Announcements</TabsTrigger>
           </TabsList>
           <TabsContent value="violations"><ViolationsTab /></TabsContent>
           <TabsContent value="vendors"><VendorsTab /></TabsContent>
           <TabsContent value="workorders"><WorkOrdersTab /></TabsContent>
-          {/* 📢 NEW TAB PANEL */}
           <TabsContent value="announcements"><AnnouncementsTab /></TabsContent>
         </Tabs>
       </PageContent>
@@ -60,6 +57,7 @@ function ViolationsTab() {
   const [commentOpen, setCommentOpen] = useState(false);
   const [editViolation, setEditViolation] = useState<Violation | null>(null);
   const [deleteViolation, setDeleteViolation] = useState<Violation | null>(null);
+  const [activeViolation, setActiveViolation] = useState<Violation | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({ resident_name: "", unit: "", violation_type: "", incident_date: "", description: "", required_action: "", compliance_deadline: "", fine_amount: "", notes: "", issued_by: "" });
   const [newComment, setNewComment] = useState("");
