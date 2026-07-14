@@ -12,6 +12,7 @@ import DuesPage from "@/pages/dues";
 import VotingPage from "@/pages/voting";
 import ResidentsPage from "@/pages/residents";
 import BoardPage from "@/pages/board";
+import BoardViolationsPage from "@/pages/board/violations";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,7 +41,7 @@ function PublicRoute({ component: Component }: { component: React.ComponentType 
 function Router() {
   return (
     <Switch>
-      <Route path="/login">
+     <Route path="/login">
         <PublicRoute component={LoginPage} />
       </Route>
       <Route path="/dashboard">
@@ -55,8 +56,11 @@ function Router() {
       <Route path="/voting">
         <ProtectedRoute component={VotingPage} />
       </Route>
-      <Route path="/residents">
+      <Route path="/board/residents">
         <ProtectedRoute component={ResidentsPage} />
+      </Route>
+      <Route path="/board/violations">
+        <ProtectedRoute component={BoardViolationsPage} />
       </Route>
       <Route path="/board">
         <ProtectedRoute component={BoardPage} />
@@ -64,7 +68,7 @@ function Router() {
       <Route path="/">
         <Redirect to="/dashboard" />
       </Route>
-      <Route component={NotFound} />
+     <Route path="/:rest*" component={NotFound} />
     </Switch>
   );
 }
