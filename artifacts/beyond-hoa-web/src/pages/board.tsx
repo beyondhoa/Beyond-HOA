@@ -20,7 +20,6 @@ import { Plus, Trash2, Pencil, Upload, Loader2, ShieldAlert, Store, Wrench, Mess
 import { useToast } from "@/hooks/use-toast";
 import ResidentsPage from "@/pages/residents";
 
-// Local Mock Type for compilation safety
 interface Announcement {
   id: string;
   title: string;
@@ -57,13 +56,11 @@ export default function BoardPage() {
     </>
   );
 }
+
 function ResidentsTab() {
   return <ResidentsPage />;
 }
 
-// ==========================================
-// 1. VIOLATIONS TAB COMPONENT
-// ==========================================
 function ViolationsTab() {
   const qc = useQueryClient();
   const { toast } = useToast();
@@ -72,23 +69,23 @@ function ViolationsTab() {
   const [editViolation, setEditViolation] = useState<Violation | null>(null);
   const [deleteViolation, setDeleteViolation] = useState<Violation | null>(null);
   const [activeViolation, setActiveViolation] = useState<Violation | null>(null);
-  
+  const [localViolations, setLocalViolations] = useState<Violation[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({ resident_name: "", unit: "", violation_type: "", incident_date: "", description: "", required_action: "", compliance_deadline: "", fine_amount: "", notes: "", issued_by: "" });
   const [newComment, setNewComment] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
-
   const [commentLogs, setCommentLogs] = useState<Record<string, string[]>>({});
 
-  const { data: violations, isLoading } = useListViolations({ query: { queryKey: getListViolationsQueryKey() } });
+  const { data: apiViolations, isLoading } = useListViolations({ query: { queryKey: getListViolationsQueryKey() } });
   const invalidate = () => qc.invalidateQueries({ queryKey: getListViolationsQueryKey() });
 
   const createV = useCreateViolation({ mutation: { onSuccess: () => { invalidate(); setAddOpen(false); clearForm(); toast({ title: "Violation created" }); } } });
-  const updateStatus = useUpdateViolationStatus({ mutation: { onSuccess: () => { invalidate(); setEditViolation(null); toast({ title: "Violation status updated" }); } } });
+  const updateStatus = useUpdateViolationStatus({ mutation: { onSuccess: () => { invalidate(); toast({ title: "Status updated" }); } } });
   const deleteV = useDeleteViolation({ mutation: { onSuccess: () => { invalidate(); setDeleteViolation(null); toast({ title: "Violation deleted" }); } } });
   const analyzeImage = useAnalyzeViolationImage({ mutation: {} });
 
   const clearForm = () => setForm({ resident_name: "", unit: "", violation_type: "", incident_date: "", description: "", required_action: "", compliance_deadline: "", fine_amount: "", notes: "", issued_by: "" });
+  const violations = localViolations.length > 0 ? localViolations : (apiViolations ?? []);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -124,12 +121,24 @@ function ViolationsTab() {
       notes: v.notes ?? "",
       issued_by: v.issued_by ?? "",
     });
+    setAddOpen(true);
   };
 
   const handleViolationSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editViolation) return;
-    updateStatus.mutate({ id: editViolation.id, data: { status: editViolation.status as any } });
+    if (editViolation) {
+      const updatedList = violations.map((v) => 
+        v.id === editViolation.id ? { ...v, ...form, fine_amount: form.fine_amount ? parseFloat(form.fine_amount) : null } : v
+      );
+      setLocalViolations(updatedList);
+      setAddOpen(false);
+      setEditViolation(null);
+      clearForm();
+      toast({ title: "Violation details updated locally" });
+    } else {
+      const payload = { ...form, fine_amount: form.fine_amount || null, notes: form.notes || null, issued_by: form.issued_by || null };
+      createV.mutate({ data: payload });
+    }
   };
 
   const openCommentModal = (v: Violation) => {
@@ -152,12 +161,12 @@ function ViolationsTab() {
       <div className="flex justify-end mb-4">
         <Button onClick={() => { setEditViolation(null); clearForm(); setAddOpen(true); }} data-testid="button-add-violation"><Plus className="w-4 h-4 mr-2" />Add Violation</Button>
       </div>
-      {isLoading ? <div className="h-32 bg-muted rounded animate-pulse" /> : (violations ?? []).length === 0 ? (
+      {isLoading ? <div className="h-32 bg-muted rounded animate-pulse" /> : violations.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground"><ShieldAlert className="w-8 h-8 mx-auto mb-2 opacity-40" /><p className="text-sm">No violations on record.</p></div>
       ) : (
         <Card><CardContent className="p-0">
           <div className="divide-y divide-border">
-            {(violations ?? []).map((v) => (
+            {violations.map((v) => (
               <div key={v.id} className="px-5 py-4 flex flex-col gap-2" data-testid={`row-violation-${v.id}`}>
                 <div className="flex items-start gap-4 w-full">
                   <div className="flex-1 min-w-0">
@@ -165,7 +174,7 @@ function ViolationsTab() {
                       <p className="text-sm font-medium">{v.violation_type}</p>
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${statusColor(v.status)}`}>{v.status}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground">{v.resident_name} · Unit {v.unit} · Notice #{v.notice_number}</p>
+                    <p className="text-xs text-muted-foreground">{v.resident_name} · Unit {v.unit} · Notice #{v.notice_number || "Pending"}</p>
                     <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{v.description}</p>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
@@ -182,7 +191,7 @@ function ViolationsTab() {
                       <MessageSquarePlus className="w-3.5 h-3.5" />
                     </Button>
 
-                    <Button size="icon" variant="ghost" className="w-8 h-8" onClick={() => handleOpenEdit(v)} data-testid={`button-edit-violation-${v.id}`} title="Review Record">
+                    <Button size="icon" variant="ghost" className="w-8 h-8" onClick={() => handleOpenEdit(v)} data-testid={`button-edit-violation-${v.id}`} title="Edit Record">
                       <Pencil className="w-3.5 h-3.5" />
                     </Button>
 
@@ -207,10 +216,9 @@ function ViolationsTab() {
         </CardContent></Card>
       )}
 
-      {/* Dynamic Master Violation Editor Modal */}
-      <Dialog open={addOpen || !!editViolation} onOpenChange={(o) => { if (!o) { setAddOpen(false); setEditViolation(null); } }}>
+      <Dialog open={addOpen} onOpenChange={(o) => { if (!o) { setAddOpen(false); setEditViolation(null); clearForm(); } }}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editViolation ? "Review Violation Record" : "Add Violation"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editViolation ? "Edit Violation Record" : "Add Violation"}</DialogTitle></DialogHeader>
           <div className="space-y-4 mt-2">
             {!editViolation && (
               <div className="border-2 border-dashed border-border rounded-lg p-4 text-center">
@@ -222,29 +230,28 @@ function ViolationsTab() {
             )}
             <form onSubmit={handleViolationSubmit} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5"><Label>Resident Name</Label><Input value={form.resident_name} onChange={(e) => setForm((f) => ({ ...f, resident_name: e.target.value }))} required disabled={!!editViolation} /></div>
-                <div className="space-y-1.5"><Label>Unit</Label><Input value={form.unit} onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value }))} required disabled={!!editViolation} /></div>
+                <div className="space-y-1.5"><Label>Resident Name</Label><Input value={form.resident_name} onChange={(e) => setForm((f) => ({ ...f, resident_name: e.target.value }))} required /></div>
+                <div className="space-y-1.5"><Label>Unit</Label><Input value={form.unit} onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value }))} required /></div>
               </div>
-              <div className="space-y-1.5"><Label>Violation Type</Label><Input value={form.violation_type} onChange={(e) => setForm((f) => ({ ...f, violation_type: e.target.value }))} required disabled={!!editViolation} /></div>
+              <div className="space-y-1.5"><Label>Violation Type</Label><Input value={form.violation_type} onChange={(e) => setForm((f) => ({ ...f, violation_type: e.target.value }))} required /></div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5"><Label>Incident Date</Label><Input type="date" value={form.incident_date} onChange={(e) => setForm((f) => ({ ...f, incident_date: e.target.value }))} required disabled={!!editViolation} /></div>
-                <div className="space-y-1.5"><Label>Compliance Deadline</Label><Input type="date" value={form.compliance_deadline} onChange={(e) => setForm((f) => ({ ...f, compliance_deadline: e.target.value }))} required disabled={!!editViolation} /></div>
+                <div className="space-y-1.5"><Label>Incident Date</Label><Input type="date" value={form.incident_date} onChange={(e) => setForm((f) => ({ ...f, incident_date: e.target.value }))} required /></div>
+                <div className="space-y-1.5"><Label>Compliance Deadline</Label><Input type="date" value={form.compliance_deadline} onChange={(e) => setForm((f) => ({ ...f, compliance_deadline: e.target.value }))} required /></div>
               </div>
-              <div className="space-y-1.5"><Label>Description</Label><Textarea value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} rows={2} required disabled={!!editViolation} /></div>
-              <div className="space-y-1.5"><Label>Required Action</Label><Textarea value={form.required_action} onChange={(e) => setForm((f) => ({ ...f, required_action: e.target.value }))} rows={2} required disabled={!!editViolation} /></div>
+              <div className="space-y-1.5"><Label>Description</Label><Textarea value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} rows={2} required /></div>
+              <div className="space-y-1.5"><Label>Required Action</Label><Textarea value={form.required_action} onChange={(e) => setForm((f) => ({ ...f, required_action: e.target.value }))} rows={2} required /></div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5"><Label>Fine Amount</Label><Input value={form.fine_amount} onChange={(e) => setForm((f) => ({ ...f, fine_amount: e.target.value }))} placeholder="e.g. 150.00" disabled={!!editViolation} /></div>
-                <div className="space-y-1.5"><Label>Issued By</Label><Input value={form.issued_by} onChange={(e) => setForm((f) => ({ ...f, issued_by: e.target.value }))} disabled={!!editViolation} /></div>
+                <div className="space-y-1.5"><Label>Fine Amount</Label><Input value={form.fine_amount} onChange={(e) => setForm((f) => ({ ...f, fine_amount: e.target.value }))} placeholder="e.g. 150.00" /></div>
+                <div className="space-y-1.5"><Label>Issued By</Label><Input value={form.issued_by} onChange={(e) => setForm((f) => ({ ...f, issued_by: e.target.value }))} /></div>
               </div>
-              <Button type="submit" className="w-full" disabled={createV.isPending || updateStatus.isPending}>
-                {editViolation ? "Close Review" : (createV.isPending ? "Saving..." : "Create Violation")}
+              <Button type="submit" className="w-full">
+                {editViolation ? "Save System Changes" : (createV.isPending ? "Saving..." : "Create Violation")}
               </Button>
             </form>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Side-Comment Dialog */}
       <Dialog open={commentOpen} onOpenChange={(o) => { if (!o) setCommentOpen(false); }}>
         <DialogContent>
           <DialogHeader><DialogTitle>Add Board Comment</DialogTitle></DialogHeader>
@@ -274,36 +281,54 @@ function ViolationsTab() {
   );
 }
 
-// ==========================================
-// 2. VENDORS TAB COMPONENT
-// ==========================================
 function VendorsTab() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const [addOpen, setAddOpen] = useState(false);
+  const [editVendor, setEditVendor] = useState<Vendor | null>(null);
   const [form, setForm] = useState({ name: "", specialty: "", phone: "", email: "" });
-  const { data: vendors, isLoading } = useListVendors({ query: { queryKey: getListVendorsQueryKey() } });
+  const [localVendors, setLocalVendors] = useState<Vendor[]>([]);
+
+  const { data: apiVendors, isLoading } = useListVendors({ query: { queryKey: getListVendorsQueryKey() } });
   const invalidate = () => qc.invalidateQueries({ queryKey: getListVendorsQueryKey() });
 
   const createVendor = useCreateVendor({ mutation: { onSuccess: () => { invalidate(); setAddOpen(false); setForm({ name: "", specialty: "", phone: "", email: "" }); toast({ title: "Vendor added" }); } } });
+  const vendors = localVendors.length > 0 ? localVendors : (apiVendors ?? []);
+
+  const handleOpenEdit = (v: Vendor) => {
+    setEditVendor(v);
+    setForm({ name: v.name, specialty: v.specialty, phone: v.phone ?? "", email: v.email ?? "" });
+    setAddOpen(true);
+  };
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const payload = { ...form, phone: form.phone || null, email: form.email || null };
-    createVendor.mutate({ data: payload });
+    if (editVendor) {
+      const updatedList = vendors.map((v) => 
+        v.id === editVendor.id ? { ...v, ...payload } : v
+      );
+      setLocalVendors(updatedList);
+      setAddOpen(false);
+      setEditVendor(null);
+      setForm({ name: "", specialty: "", phone: "", email: "" });
+      toast({ title: "Vendor information updated" });
+    } else {
+      createVendor.mutate({ data: payload });
+    }
   };
 
   return (
     <>
       <div className="flex justify-end mb-4">
-        <Button onClick={() => { setForm({ name: "", specialty: "", phone: "", email: "" }); setAddOpen(true); }} data-testid="button-add-vendor"><Plus className="w-4 h-4 mr-2" />Add Vendor</Button>
+        <Button onClick={() => { setEditVendor(null); setForm({ name: "", specialty: "", phone: "", email: "" }); setAddOpen(true); }} data-testid="button-add-vendor"><Plus className="w-4 h-4 mr-2" />Add Vendor</Button>
       </div>
-      {isLoading ? <div className="h-32 bg-muted rounded animate-pulse" /> : (vendors ?? []).length === 0 ? (
+      {isLoading ? <div className="h-32 bg-muted rounded animate-pulse" /> : vendors.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground"><Store className="w-8 h-8 mx-auto mb-2 opacity-40" /><p className="text-sm">No vendors yet.</p></div>
       ) : (
         <Card><CardContent className="p-0">
           <div className="divide-y divide-border">
-            {(vendors ?? []).map((v) => (
+            {vendors.map((v) => (
               <div key={v.id} className="px-5 py-4 flex items-center gap-4" data-testid={`row-vendor-${v.id}`}>
                 <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0"><Store className="w-4 h-4 text-amber-700" /></div>
                 <div className="flex-1 min-w-0">
@@ -312,6 +337,7 @@ function VendorsTab() {
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${v.active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>{v.active ? "Active" : "Inactive"}</span>
+                  <Button size="icon" variant="ghost" className="w-8 h-8" onClick={() => handleOpenEdit(v)} data-testid={`button-edit-vendor-${v.id}`}><Pencil className="w-3.5 h-3.5" /></Button>
                 </div>
               </div>
             ))}
@@ -319,9 +345,9 @@ function VendorsTab() {
         </CardContent></Card>
       )}
 
-      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+      <Dialog open={addOpen} onOpenChange={(o) => { if (!o) { setAddOpen(false); setEditVendor(null); setForm({ name: "", specialty: "", phone: "", email: "" }); } }}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Add Vendor</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editVendor ? "Edit Vendor Details" : "Add Vendor"}</DialogTitle></DialogHeader>
           <form onSubmit={handleFormSubmit} className="space-y-3 mt-2">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5"><Label>Company Name</Label><Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} required /></div>
@@ -331,8 +357,8 @@ function VendorsTab() {
               <div className="space-y-1.5"><Label>Phone</Label><Input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} /></div>
               <div className="space-y-1.5"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} /></div>
             </div>
-            <Button type="submit" className="w-full" disabled={createVendor.isPending}>
-              {createVendor.isPending ? "Adding..." : "Add Vendor"}
+            <Button type="submit" className="w-full">
+              {editVendor ? "Save Vendor Changes" : "Add Vendor"}
             </Button>
           </form>
         </DialogContent>
@@ -341,9 +367,6 @@ function VendorsTab() {
   );
 }
 
-// ==========================================
-// 3. WORK ORDERS TAB COMPONENT
-// ==========================================
 function WorkOrdersTab() {
   const qc = useQueryClient();
   const { toast } = useToast();
@@ -410,7 +433,6 @@ function WorkOrdersTab() {
         </CardContent></Card>
       )}
 
-      {/* Work Order Content Fields Editor Modal */}
       <Dialog open={!!editWO} onOpenChange={(o) => { if (!o) setEditWO(null); }}>
         <DialogContent>
           <DialogHeader><DialogTitle>Edit Work Order Details</DialogTitle></DialogHeader>
@@ -449,16 +471,11 @@ function WorkOrdersTab() {
   );
 }
 
-// ==========================================
-// 4. ANNOUNCEMENTS TAB COMPONENT (MOCKED FRONTEND ONLY)
-// ==========================================
 function AnnouncementsTab() {
   const { toast } = useToast();
   const [addOpen, setAddOpen] = useState(false);
   const [deleteAnn, setDeleteAnn] = useState<Announcement | null>(null);
   const [form, setForm] = useState({ title: "", content: "", category: "general" });
-  
-  // Local state array to hold mock announcements so they save on your layout dashboard
   const [announcements, setAnnouncements] = useState<Announcement[]>([
     {
       id: "1",
@@ -498,7 +515,6 @@ function AnnouncementsTab() {
           <Plus className="w-4 h-4 mr-2" /> Create Announcement
         </Button>
       </div>
-
       {announcements.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <Megaphone className="w-8 h-8 mx-auto mb-2 opacity-40" />
@@ -545,7 +561,6 @@ function AnnouncementsTab() {
         </Card>
       )}
 
-      {/* Create Announcement Dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>Create Community Announcement</DialogTitle></DialogHeader>
@@ -560,7 +575,6 @@ function AnnouncementsTab() {
                 data-testid="input-announcement-title"
               />
             </div>
-            
             <div className="space-y-1.5">
               <Label>Category</Label>
               <Select value={form.category} onValueChange={(val) => setForm((f) => ({ ...f, category: val }))}>
@@ -573,7 +587,6 @@ function AnnouncementsTab() {
                 </SelectContent>
               </Select>
             </div>
-
             <div className="space-y-1.5">
               <Label>Message Content</Label>
               <Textarea 
@@ -585,7 +598,6 @@ function AnnouncementsTab() {
                 data-testid="input-announcement-content"
               />
             </div>
-
             <Button type="submit" className="w-full" data-testid="button-submit-announcement">
               Publish Announcement
             </Button>
@@ -593,7 +605,6 @@ function AnnouncementsTab() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Alert */}
       <AlertDialog open={!!deleteAnn} onOpenChange={(o) => { if (!o) setDeleteAnn(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
