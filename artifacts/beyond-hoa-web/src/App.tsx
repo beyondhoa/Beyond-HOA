@@ -44,8 +44,9 @@ function BoardRoute({ component: Component }: { component: React.ComponentType }
   if (isLoading) return null;
   if (!resident) return <Redirect to="/login" />;
 
-  const authorizedBoardRoles = ["President", "Treasurer", "Secretary", "Board Member", "board"];
-  const hasAccess = authorizedBoardRoles.includes(resident.note ?? "");
+  const normalizedUserRole = (resident.notes ?? "").trim().toLowerCase();
+  const authorizedBoardRoles = ["president", "treasurer", "secretary", "board member", "board"];
+  const hasAccess = authorizedBoardRoles.includes(normalizedUserRole);
 
   if (!hasAccess) return <Redirect to="/dashboard" />;
 
