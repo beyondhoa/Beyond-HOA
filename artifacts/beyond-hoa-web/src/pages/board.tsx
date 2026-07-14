@@ -16,8 +16,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Pencil, Upload, Loader2, ShieldAlert, Store, Wrench, MessageSquarePlus, MessageSquare, Megaphone, Calendar } from "lucide-react";
+import { Plus, Trash2, Pencil, Upload, Loader2, ShieldAlert, Store, Wrench, MessageSquarePlus, MessageSquare, Megaphone, Calendar, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import ResidentsPage from "@/pages/residents";
 
 // Local Mock Type for compilation safety
 interface Announcement {
@@ -38,21 +39,26 @@ export default function BoardPage() {
     <>
       <PageHeader title="Board Dashboard" subtitle="Manage violations, vendors, work orders, and announcements" />
       <PageContent>
-        <Tabs defaultValue="violations">
+        <Tabs defaultValue="workorders">
           <TabsList className="mb-6">
-            <TabsTrigger value="violations" data-testid="tab-violations"><ShieldAlert className="w-4 h-4 mr-2" />Violations</TabsTrigger>
-            <TabsTrigger value="vendors" data-testid="tab-vendors"><Store className="w-4 h-4 mr-2" />Vendors</TabsTrigger>
             <TabsTrigger value="workorders" data-testid="tab-workorders"><Wrench className="w-4 h-4 mr-2" />Work Orders</TabsTrigger>
             <TabsTrigger value="announcements" data-testid="tab-announcements"><Megaphone className="w-4 h-4 mr-2" />Announcements</TabsTrigger>
+            <TabsTrigger value="violations" data-testid="tab-violations"><ShieldAlert className="w-4 h-4 mr-2" />Violations</TabsTrigger>
+            <TabsTrigger value="vendors" data-testid="tab-vendors"><Store className="w-4 h-4 mr-2" />Vendors</TabsTrigger>
+            <TabsTrigger value="residents" data-testid="tab-residents"><Users className="w-4 h-4 mr-2" />Residents</TabsTrigger>
           </TabsList>
           <TabsContent value="violations"><ViolationsTab /></TabsContent>
           <TabsContent value="vendors"><VendorsTab /></TabsContent>
           <TabsContent value="workorders"><WorkOrdersTab /></TabsContent>
           <TabsContent value="announcements"><AnnouncementsTab /></TabsContent>
+          <TabsContent value="residents"><ResidentsTab /></TabsContent>
         </Tabs>
       </PageContent>
     </>
   );
+}
+function ResidentsTab() {
+  return <ResidentsPage />;
 }
 
 // ==========================================
