@@ -13,7 +13,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import iconUrl = "@/assets/icon.png";
+import iconUrl from "@/assets/icon.png";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
