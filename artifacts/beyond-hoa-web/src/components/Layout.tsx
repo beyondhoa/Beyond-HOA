@@ -13,14 +13,15 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import iconUrl from "@/assets/icon.png";
+import iconUrl = "@/assets/icon.png";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { resident, logout } = useAuth();
 
-  const authorizedBoardRoles = ["President", "Treasurer", "Secretary", "Board Member", "board"];
-  const isBoardUser = authorizedBoardRoles.includes(resident?.note ?? "");
+  const normalizedUserRole = (resident?.note ?? "").trim().toLowerCase();
+  const authorizedBoardRoles = ["president", "treasurer", "secretary", "board member", "board"];
+  const isBoardUser = authorizedBoardRoles.includes(normalizedUserRole);
 
   const navItems = [
     { href: "/dashboard", label: "Dashboard", icon: Home },
