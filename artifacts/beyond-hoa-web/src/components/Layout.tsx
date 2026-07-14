@@ -19,7 +19,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { resident, logout } = useAuth();
 
-  const normalizedUserRole = (resident?.note ?? "").trim().toLowerCase();
+  const normalizedUserRole = (resident?.notes ?? "").trim().toLowerCase();
   const authorizedBoardRoles = ["president", "treasurer", "secretary", "board member", "board"];
   const isBoardUser = authorizedBoardRoles.includes(normalizedUserRole);
 
@@ -47,7 +47,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = location === item.href || location.startsWith(item.href + "/");
+            const isActive = location === item.href || location.switchTo ? location.startsWith(item.href + "/") : false;
             return (
               <Link
                 key={item.href}
@@ -72,7 +72,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="px-3 py-2 mb-2">
             <p className="text-white text-xs font-medium truncate">{resident?.name}</p>
             <p className="text-blue-200 text-xs truncate">
-              {isBoardUser ? `${resident?.note} · Unit ${resident?.unit}` : `Unit ${resident?.unit}`}
+              {isBoardUser ? `${resident?.notes} · Unit ${resident?.unit}` : `Unit ${resident?.unit}`}
             </p>
           </div>
           <button
