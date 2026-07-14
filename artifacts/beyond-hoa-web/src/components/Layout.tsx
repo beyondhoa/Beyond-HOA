@@ -20,8 +20,7 @@ const navItems = [
   { href: "/documents", label: "Documents", icon: FileText },
   { href: "/dues", label: "Dues & Payments", icon: CreditCard },
   { href: "/voting", label: "Voting", icon: Vote },
-  { href: "/residents", label: "Residents", icon: Users },
-  { href: "/board", label: "Board", icon: ShieldAlert },
+  { href: "/board", label: "Board Portal", icon: ShieldAlert },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
