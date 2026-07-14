@@ -38,6 +38,24 @@ function PublicRoute({ component: Component }: { component: React.ComponentType 
   return <Component />;
 }
 
+function BoardRoute({ component: Component }: { component: React.ComponentType }) {
+  const { resident, isLoading } = useAuth();
+
+  if (isLoading) return null;
+  if (!resident) return <Redirect to="/login" />;
+
+  const authorizedBoardRoles = ["President", "Treasurer", "Secretary", "Board Member", "board"];
+  const hasAccess = authorizedBoardRoles.includes(resident.note ?? "");
+
+  if (!hasAccess) return <Redirect to="/dashboard" />;
+
+  return (
+    <Layout>
+      <Component />
+    </Layout>
+  );
+}
+
 function Router() {
   return (
     <Switch>
@@ -57,18 +75,19 @@ function Router() {
         <ProtectedRoute component={VotingPage} />
       </Route>
       <Route path="/board/residents">
-        <ProtectedRoute component={ResidentsPage} />
+        <BoardRoute component={ResidentsPage} />
       </Route>
       <Route path="/board/violations">
-        <ProtectedRoute component={BoardViolationsPage} />
+        <BoardRoute component={BoardViolationsPage} />
       </Route>
       <Route path="/board">
-        <ProtectedRoute component={BoardPage} />
+        <BoardRoute component={BoardPage} />
       </Route>
+
       <Route path="/">
         <Redirect to="/dashboard" />
       </Route>
-     <Route path="/:rest*" component={NotFound} />
+      <Route path="/:rest*" component={NotFound} />
     </Switch>
   );
 }
