@@ -2,7 +2,8 @@ import { useState, useRef } from "react";
 import {
   useListViolations, getListViolationsQueryKey, useCreateViolation, useUpdateViolationStatus, useDeleteViolation, useAnalyzeViolationImage,
   useListVendors, getListVendorsQueryKey, useCreateVendor,
-  useListWorkOrders, getListWorkOrdersQueryKey, useUpdateWorkOrder, useDeleteWorkOrder
+  useListWorkOrders, getListWorkOrdersQueryKey, useUpdateWorkOrder, useDeleteWorkOrder,
+  useListAnnouncements, useCreateAnnouncement
 } from "@workspace/api-client-react";
 import type { Violation, WorkOrder, Vendor } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -19,6 +20,151 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2, Pencil, Upload, Loader2, ShieldAlert, Store, Wrench, MessageSquarePlus, MessageSquare, Megaphone, Calendar, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ResidentsPage from "@/pages/residents";
+
+function statusColor(s: string) {
+  const m: Record<string, string> = { open: "bg-yellow-100 text-yellow-800", resolved: "bg-green-100 text-green-800", appealed: "bg-blue-100 text-blue-800", in_progress: "bg-blue-100 text-blue-800", completed: "bg-green-100 text-green-800" };
+  return m[s] ?? "bg-gray-100 text-gray-800";
+}
+
+export default function BoardPage() {
+  return (
+    <>
+      <PageHeader title="Board Dashboard" subtitle="Manage violations, vendors, work orders, and announcements" />
+      <PageContent>
+        <Tabs defaultValue="workorders">
+          <TabsList className="mb-6">
+            <TabsTrigger value="workorders" data-testid="tab-workorders"><Wrench className="w-4 h-4 mr-2" />Work Orders</TabsTrigger>
+            <TabsTrigger value="announcements" data-testid="tab-announcements"><Megaphone className="w-4 h-4 mr-2" />Announcements</TabsTrigger>
+            <TabsTrigger value="violations" data-testid="tab-violations"><ShieldAlert className="w-4 h-4 mr-2" />Violations</TabsTrigger>
+            <TabsTrigger value="vendors" data-testid="tab-vendors"><Store className="w-4 h-4 mr-2" />Vendors</TabsTrigger>
+            <TabsTrigger value="residents" data-testid="tab-residents"><Users className="w-4 h-4 mr-2" />Residents</TabsTrigger>
+          </TabsList>
+          <TabsContent value="violations"><ViolationsTab /></TabsContent>
+          <TabsContent value="vendors"><VendorsTab /></TabsContent>
+          <TabsContent value="workorders"><WorkOrdersTab /></TabsContent>
+          <TabsContent value="announcements"><AnnouncementsTab /></TabsContent>
+          <TabsContent value="residents"><ResidentsTab /></TabsContent>
+        </Tabs>
+      </PageContent>
+    </>
+  );
+}
+
+function ResidentsTab() { return <ResidentsPage />; }
+
+function AnnouncementsTab() {
+const { toast } = useToast();
+  const [addOpen, setAddOpen] = useState(false);
+  const [form, setForm] = useState({ title: "", content: "", category: "general" });
+  const clearForm = () => setForm({ title: "", content: "", category: "general" });
+
+  // Fetch data from your Express API via your workspace client
+  const { data: announcements, refetch, isLoading } = useListAnnouncements();
+
+  const createAnn = useCreateAnnouncement({
+    mutation: {
+      onSuccess: () => {
+        refetch(); // Automatically refreshes the UI after successful POST
+        setAddOpen(false);
+        clearForm();
+        toast({ title: "Announcement Published" });
+      },
+      onError: (err) => {
+        console.error("Failed to post:", err);
+        toast({ title: "Error", description: "Failed to publish announcement.", variant: "destructive" });
+      }
+    }
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    createAnn.mutate({ data: form });
+  };
+
+  return (
+    <>
+      <div className="flex justify-end mb-4">
+        <Button onClick={() => setAddOpen(true)} data-testid="button-add-announcement">
+          <Plus className="w-4 h-4 mr-2" /> Create Announcement
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="text-center py-12 text-muted-foreground">Loading announcements...</div>
+      ) : !announcements || announcements.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <Megaphone className="w-8 h-8 mx-auto mb-2 opacity-40" />
+          <p className="text-sm">No announcements posted yet.</p>
+        </div>
+      ) : (
+        <Card>
+          <CardContent className="p-0">
+            <div className="divide-y divide-border">
+              {announcements.map((ann) => (
+                <div key={ann.id} className="px-5 py-4 flex items-start gap-4" data-testid={`row-announcement-${ann.id}`}>
+                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                    <Megaphone className="w-4 h-4 text-blue-700" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">{ann.title}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {ann.category} • {ann.createdAt ? new Date(ann.createdAt).toLocaleDateString() : "Recent"}
+                    </p>
+                    <p className="text-xs text-foreground mt-2 bg-muted/20 p-2.5 rounded border leading-relaxed">
+                      {ann.content}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Create Community Announcement</DialogTitle></DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+            <div className="space-y-1.5">
+              <Label>Announcement Title</Label>
+              <Input 
+                value={form.title} 
+                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} 
+                required 
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Category</Label>
+              <Select value={form.category} onValueChange={(val) => setForm((f) => ({ ...f, category: val }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="general">General</SelectItem>
+                  <SelectItem value="maintenance">Maintenance</SelectItem>
+                  <SelectItem value="emergency">Emergency</SelectItem>
+                  <SelectItem value="event">Community Event</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Message Content</Label>
+              <Textarea 
+                value={form.content} 
+                onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))} 
+                required 
+              />
+            </div>
+            <DialogFooter>
+              <Button type="submit" className="w-full" disabled={createAnn.isPending}>
+                {createAnn.isPending ? "Publishing..." : "Publish Announcement"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
+    </>
+  );
+}
 
 interface Announcement {
   id: string;
