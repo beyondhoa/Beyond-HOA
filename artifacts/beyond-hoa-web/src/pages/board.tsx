@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import {
   useListViolations, getListViolationsQueryKey, useCreateViolation, useUpdateViolationStatus, useDeleteViolation, useAnalyzeViolationImage,
-  useListVendors, getListVendorsQueryKey, useCreateVendor,
+  useListVendors, getListVendorsQueryKey, useCreateVendor, useDeleteVendor, // Added delete hook
   useListWorkOrders, getListWorkOrdersQueryKey, useUpdateWorkOrder, useDeleteWorkOrder,
 } from "@workspace/api-client-react";
 import type { Violation, WorkOrder, Vendor } from "@workspace/api-client-react";
@@ -70,6 +70,7 @@ function ResidentsTab() {
 function AnnouncementsTab() {
   const { toast } = useToast();
   const [addOpen, setAddOpen] = useState(false);
+  const [deleteAnn, setDeleteAnn] = useState<Announcement | null>(null);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isPending, setIsPending] = useState(false);
@@ -100,10 +101,17 @@ function AnnouncementsTab() {
     e.preventDefault();
     setIsPending(true);
     try {
+      const payload = {
+        ...form,
+        board_member_id: 1,
+        author_id: 1,       
+        resident_id: 1,     
+        author: "Board Management"
+      };
       const res = await fetch("/api/announcements", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) throw new Error("Failed to post");
@@ -111,12 +119,30 @@ function AnnouncementsTab() {
       toast({ title: "Announcement Published" });
       setAddOpen(false);
       clearForm();
-      fetchAnnouncements(); // Refresh the list view
+      fetchAnnouncements(); 
     } catch (err) {
       console.error(err);
       toast({ title: "Error", description: "Failed to publish announcement.", variant: "destructive" });
     } finally {
       setIsPending(false);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteAnn) return;
+    try {
+      const res = await fetch(`/api/announcements/${deleteAnn.id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error("Failed to delete notice");
+
+      toast({ title: "Announcement Removed" });
+      setDeleteAnn(null);
+      fetchAnnouncements();
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Deletion failed", description: "Could not remove notice.", variant: "destructive" });
     }
   };
 
@@ -145,11 +171,22 @@ function AnnouncementsTab() {
                     <Megaphone className="w-4 h-4 text-blue-700" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium">{ann.title}</p>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-700 capitalize font-medium">
-                        {ann.category}
-                      </span>
+                    <div className="flex items-center justify-between gap-2 w-full">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium">{ann.title}</p>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-700 capitalize font-medium">
+                          {ann.category}
+                        </span>
+                      </div>
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="w-7 h-7 text-muted-foreground hover:text-destructive flex-shrink-0" 
+                        onClick={() => setDeleteAnn(ann)}
+                        title="Remove Announcement"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
                       <Calendar className="w-3 h-3" /> Published on {ann.createdAt ? new Date(ann.createdAt).toLocaleDateString() : "Recent"}
@@ -210,6 +247,19 @@ function AnnouncementsTab() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deleteAnn} onOpenChange={(o) => { if (!o) setDeleteAnn(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Announcement</AlertDialogTitle>
+            <AlertDialogDescription>Delete notice board post "{deleteAnn?.title}" completely? Residents will no longer see this in their feed.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground" onClick={handleDeleteConfirm}>Remove Post</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
@@ -468,12 +518,14 @@ function VendorsTab() {
   const { toast } = useToast();
   const [addOpen, setAddOpen] = useState(false);
   const [editVendor, setEditVendor] = useState<Vendor | null>(null);
+  const [deleteVendor, setDeleteVendor] = useState<Vendor | null>(null);
   const [form, setForm] = useState({ name: "", specialty: "", phone: "", email: "" });
 
   const { data: vendors = [], isLoading } = useListVendors({ query: { queryKey: getListVendorsQueryKey() } });
   const invalidate = () => qc.invalidateQueries({ queryKey: getListVendorsQueryKey() });
 
   const createVendor = useCreateVendor({ mutation: { onSuccess: () => { invalidate(); setAddOpen(false); setForm({ name: "", specialty: "", phone: "", email: "" }); toast({ title: "Vendor added" }); } } });
+  const deleteVendorMut = useDeleteVendor({ mutation: { onSuccess: () => { invalidate(); setDeleteVendor(null); toast({ title: "Vendor removed successfully" }); } } });
 
   const handleOpenEdit = (v: Vendor) => {
     setEditVendor(v);
@@ -515,11 +567,14 @@ function VendorsTab() {
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${v.active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>{v.active ? "Active" : "Inactive"}</span>
                   <Button size="icon" variant="ghost" className="w-8 h-8" onClick={() => handleOpenEdit(v)} data-testid={`button-edit-vendor-${v.id}`}><Pencil className="w-3.5 h-3.5" /></Button>
+                  <Button size="icon" variant="ghost" className="w-8 h-8 text-destructive hover:text-destructive" onClick={() => setDeleteVendor(v)} data-testid={`button-delete-vendor-${v.id}`}>
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
                 </div>
               </div>
             ))}
           </div>
-        </CardContent></Card>
+        </Card></CardContent>
       )}
 
       <Dialog open={addOpen} onOpenChange={(o) => { if (!o) { setAddOpen(false); setEditVendor(null); setForm({ name: "", specialty: "", phone: "", email: "" }); } }}>
@@ -540,6 +595,19 @@ function VendorsTab() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deleteVendor} onOpenChange={(o) => { if (!o) setDeleteVendor(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Vendor</AlertDialogTitle>
+            <AlertDialogDescription>Remove {deleteVendor?.name} from active platform rosters? This cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground" onClick={() => deleteVendor && deleteVendorMut.mutate({ id: deleteVendor.id })} data-testid="button-confirm-delete-vendor">Remove Vendor</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
@@ -607,7 +675,7 @@ function WorkOrdersTab() {
               </div>
             ))}
           </div>
-       </CardContent></Card>
+        </Card></CardContent>
       )}
 
       <Dialog open={!!editWO} onOpenChange={(o) => { if (!o) setEditWO(null); }}>
