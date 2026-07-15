@@ -7,6 +7,7 @@ import vendorsRouter from "./vendors";
 import workOrdersRouter from "./work-orders";
 import documentsRouter from "./documents";
 import duesRouter from "./dues";
+import announcementsRouter from "./announcements";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use(vendorsRouter);
 router.use(workOrdersRouter);
 router.use(documentsRouter);
 router.use(duesRouter);
+router.use(announcementsRouter);
 
 export default router;
