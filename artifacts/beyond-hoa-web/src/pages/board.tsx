@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import {
   useListViolations, getListViolationsQueryKey, useCreateViolation, useUpdateViolationStatus, useDeleteViolation, useAnalyzeViolationImage,
-  useListVendors, getListVendorsQueryKey, useCreateVendor, useDeleteVendor, // Added delete hook
+  useListVendors, getListVendorsQueryKey, useCreateVendor, useDeleteVendor, 
   useListWorkOrders, getListWorkOrdersQueryKey, useUpdateWorkOrder, useDeleteWorkOrder,
 } from "@workspace/api-client-react";
 import type { Violation, WorkOrder, Vendor } from "@workspace/api-client-react";
@@ -527,7 +527,7 @@ function ViolationsTab() {
 }
 
 function VendorsTab() {
-  const qc = useQueryClient();
+const qc = useQueryClient();
   const { toast } = useToast();
   const [addOpen, setAddOpen] = useState(false);
   const [editVendor, setEditVendor] = useState<Vendor | null>(null);
@@ -538,7 +538,6 @@ function VendorsTab() {
   const invalidate = () => qc.invalidateQueries({ queryKey: getListVendorsQueryKey() });
 
   const createVendor = useCreateVendor({ mutation: { onSuccess: () => { invalidate(); setAddOpen(false); setForm({ name: "", specialty: "", phone: "", email: "" }); toast({ title: "Vendor added" }); } } });
-  const deleteVendorMut = useDeleteVendor({ mutation: { onSuccess: () => { invalidate(); setDeleteVendor(null); toast({ title: "Vendor removed successfully" }); } } });
 
   const handleOpenEdit = (v: Vendor) => {
     setEditVendor(v);
@@ -560,34 +559,62 @@ function VendorsTab() {
     }
   };
 
+  // Natively execute the HTTP DELETE route to bypass library restrictions
+  const handleDeleteConfirm = async () => {
+    if (!deleteVendor) return;
+    try {
+      const res = await fetch(`/api/vendors/${deleteVendor.id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error("Failed to clear database record");
+
+      toast({ title: "Vendor removed successfully" });
+      setDeleteVendor(null);
+      invalidate(); // Re-fetch the vendor cache list
+    } catch (err) {
+      console.error(err);
+      toast({ 
+        title: "Deletion failed", 
+        description: "Could not remove vendor record from database.", 
+        variant: "destructive" 
+      });
+    }
+  };
+
   return (
     <>
       <div className="flex justify-end mb-4">
         <Button onClick={() => { setEditVendor(null); setForm({ name: "", specialty: "", phone: "", email: "" }); setAddOpen(true); }} data-testid="button-add-vendor"><Plus className="w-4 h-4 mr-2" />Add Vendor</Button>
       </div>
-      {isLoading ? <div className="h-32 bg-muted rounded animate-pulse" /> : vendors.length === 0 ? (
+      
+      {isLoading ? (
+        <div className="h-32 bg-muted rounded animate-pulse" />
+      ) : vendors.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground"><Store className="w-8 h-8 mx-auto mb-2 opacity-40" /><p className="text-sm">No vendors yet.</p></div>
       ) : (
-        <Card><CardContent className="p-0">
-          <div className="divide-y divide-border">
-            {vendors.map((v) => (
-              <div key={v.id} className="px-5 py-4 flex items-center gap-4" data-testid={`row-vendor-${v.id}`}>
-                <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0"><Store className="w-4 h-4 text-amber-700" /></div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium">{v.name}</p>
-                  <p className="text-xs text-muted-foreground">{v.specialty}{v.phone ? ` · ${v.phone}` : ""}{v.email ? ` · ${v.email}` : ""}</p>
+        <Card>
+          <CardContent className="p-0">
+            <div className="divide-y divide-border">
+              {vendors.map((v) => (
+                <div key={v.id} className="px-5 py-4 flex items-center gap-4" data-testid={`row-vendor-${v.id}`}>
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0"><Store className="w-4 h-4 text-amber-700" /></div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">{v.name}</p>
+                    <p className="text-xs text-muted-foreground">{v.specialty}{v.phone ? ` · ${v.phone}` : ""}{v.email ? ` · ${v.email}` : ""}</p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${v.active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>{v.active ? "Active" : "Inactive"}</span>
+                    <Button size="icon" variant="ghost" className="w-8 h-8" onClick={() => handleOpenEdit(v)} data-testid={`button-edit-vendor-${v.id}`}><Pencil className="w-3.5 h-3.5" /></Button>
+                    <Button size="icon" variant="ghost" className="w-8 h-8 text-destructive hover:text-destructive" onClick={() => setDeleteVendor(v)} data-testid={`button-delete-vendor-${v.id}`}>
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${v.active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>{v.active ? "Active" : "Inactive"}</span>
-                  <Button size="icon" variant="ghost" className="w-8 h-8" onClick={() => handleOpenEdit(v)} data-testid={`button-edit-vendor-${v.id}`}><Pencil className="w-3.5 h-3.5" /></Button>
-                  <Button size="icon" variant="ghost" className="w-8 h-8 text-destructive hover:text-destructive" onClick={() => setDeleteVendor(v)} data-testid={`button-delete-vendor-${v.id}`}>
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent></Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       <Dialog open={addOpen} onOpenChange={(o) => { if (!o) { setAddOpen(false); setEditVendor(null); setForm({ name: "", specialty: "", phone: "", email: "" }); } }}>
@@ -617,11 +644,11 @@ function VendorsTab() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction className="bg-destructive text-destructive-foreground" onClick={() => deleteVendor && deleteVendorMut.mutate({ id: deleteVendor.id })} data-testid="button-confirm-delete-vendor">Remove Vendor</AlertDialogAction>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground" onClick={handleDeleteConfirm} data-testid="button-confirm-delete-vendor">Remove Vendor</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </> 
   );
 }
 
