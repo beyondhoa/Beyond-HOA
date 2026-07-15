@@ -1,9 +1,8 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   useListViolations, getListViolationsQueryKey, useCreateViolation, useUpdateViolationStatus, useDeleteViolation, useAnalyzeViolationImage,
   useListVendors, getListVendorsQueryKey, useCreateVendor,
   useListWorkOrders, getListWorkOrdersQueryKey, useUpdateWorkOrder, useDeleteWorkOrder,
-  useListAnnouncements, useCreateAnnouncement
 } from "@workspace/api-client-react";
 import type { Violation, WorkOrder, Vendor } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -71,29 +70,54 @@ function ResidentsTab() {
 function AnnouncementsTab() {
   const { toast } = useToast();
   const [addOpen, setAddOpen] = useState(false);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isPending, setIsPending] = useState(false);
   const [form, setForm] = useState({ title: "", content: "", category: "general" });
+  
   const clearForm = () => setForm({ title: "", content: "", category: "general" });
 
-  const { data: announcements, refetch, isLoading } = useListAnnouncements();
-
-  const createAnn = useCreateAnnouncement({
-    mutation: {
-      onSuccess: () => {
-        refetch();
-        setAddOpen(false);
-        clearForm();
-        toast({ title: "Announcement Published" });
-      },
-      onError: (err) => {
-        console.error("Failed to post:", err);
-        toast({ title: "Error", description: "Failed to publish announcement.", variant: "destructive" });
+  const fetchAnnouncements = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/announcements");
+      if (res.ok) {
+        const data = await res.json();
+        setAnnouncements(data);
       }
+    } catch (err) {
+      console.error("Failed to fetch announcements:", err);
+    } finally {
+      setIsLoading(false);
     }
-  });
+  };
+
+  useEffect(() => {
+    fetchAnnouncements();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    createAnn.mutate({ data: form });
+    setIsPending(true);
+    try {
+      const res = await fetch("/api/announcements", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+
+      if (!res.ok) throw new Error("Failed to post");
+
+      toast({ title: "Announcement Published" });
+      setAddOpen(false);
+      clearForm();
+      fetchAnnouncements(); // Refresh the list view
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Error", description: "Failed to publish announcement.", variant: "destructive" });
+    } finally {
+      setIsPending(false);
+    }
   };
 
   return (
@@ -106,7 +130,7 @@ function AnnouncementsTab() {
 
       {isLoading ? (
         <div className="text-center py-12 text-muted-foreground">Loading announcements...</div>
-      ) : !announcements || announcements.length === 0 ? (
+      ) : announcements.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <Megaphone className="w-8 h-8 mx-auto mb-2 opacity-40" />
           <p className="text-sm">No announcements posted yet.</p>
@@ -179,8 +203,8 @@ function AnnouncementsTab() {
               />
             </div>
             <DialogFooter>
-              <Button type="submit" className="w-full" disabled={createAnn.isPending} data-testid="button-submit-announcement">
-                {createAnn.isPending ? "Publishing..." : "Publish Announcement"}
+              <Button type="submit" className="w-full" disabled={isPending} data-testid="button-submit-announcement">
+                {isPending ? "Publishing..." : "Publish Announcement"}
               </Button>
             </DialogFooter>
           </form>
