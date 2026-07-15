@@ -106,6 +106,38 @@ router.put("/violations/:id/status", async (req, res) => {
   }
 });
 
+router.put("/violations/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 
+      resident_name, unit, violation_type, incident_date, 
+      compliance_deadline, description, required_action, 
+      fine_amount, notes, issued_by 
+    } = req.body;
+
+    const result = await pool.query(
+      `UPDATE violations 
+       SET resident_name=$1, unit=$2, violation_type=$3, incident_date=$4, 
+           compliance_deadline=$5, description=$6, required_action=$7, 
+           fine_amount=$8, notes=$9, issued_by=$10
+       WHERE id=$11 RETURNING *`,
+      [
+        resident_name, unit, violation_type, incident_date, 
+        compliance_deadline, description, required_action, 
+        fine_amount ? parseFloat(fine_amount) : null, notes, issued_by, 
+        id
+      ]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Violation record not found" });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    req.log.error({ err }, "Violation full update error");
+    res.status(500).json({ error: "Failed to update full violation record" });
+  }
+});
 router.delete("/violations/:id", async (req, res) => {
   try {
     const { id } = req.params;
