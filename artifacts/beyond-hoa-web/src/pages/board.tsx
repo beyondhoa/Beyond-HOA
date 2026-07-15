@@ -574,7 +574,7 @@ function VendorsTab() {
               </div>
             ))}
           </div>
-        </Card></CardContent>
+        </CardContent></Card>
       )}
 
       <Dialog open={addOpen} onOpenChange={(o) => { if (!o) { setAddOpen(false); setEditVendor(null); setForm({ name: "", specialty: "", phone: "", email: "" }); } }}>
@@ -675,7 +675,7 @@ function WorkOrdersTab() {
               </div>
             ))}
           </div>
-        </Card></CardContent>
+        </CardContent></Card>
       )}
 
       <Dialog open={!!editWO} onOpenChange={(o) => { if (!o) setEditWO(null); }}>
