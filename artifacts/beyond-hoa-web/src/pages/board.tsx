@@ -21,8 +21,22 @@ import { Plus, Trash2, Pencil, Upload, Loader2, ShieldAlert, Store, Wrench, Mess
 import { useToast } from "@/hooks/use-toast";
 import ResidentsPage from "@/pages/residents";
 
+interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  category: string;
+  createdAt?: string;
+}
+
 function statusColor(s: string) {
-  const m: Record<string, string> = { open: "bg-yellow-100 text-yellow-800", resolved: "bg-green-100 text-green-800", appealed: "bg-blue-100 text-blue-800", in_progress: "bg-blue-100 text-blue-800", completed: "bg-green-100 text-green-800" };
+  const m: Record<string, string> = { 
+    open: "bg-yellow-100 text-yellow-800", 
+    resolved: "bg-green-100 text-green-800", 
+    appealed: "bg-blue-100 text-blue-800", 
+    in_progress: "bg-blue-100 text-blue-800", 
+    completed: "bg-green-100 text-green-800" 
+  };
   return m[s] ?? "bg-gray-100 text-gray-800";
 }
 
@@ -50,21 +64,22 @@ export default function BoardPage() {
   );
 }
 
-function ResidentsTab() { return <ResidentsPage />; }
+function ResidentsTab() { 
+  return <ResidentsPage />; 
+}
 
 function AnnouncementsTab() {
-const { toast } = useToast();
+  const { toast } = useToast();
   const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState({ title: "", content: "", category: "general" });
   const clearForm = () => setForm({ title: "", content: "", category: "general" });
 
-  // Fetch data from your Express API via your workspace client
   const { data: announcements, refetch, isLoading } = useListAnnouncements();
 
   const createAnn = useCreateAnnouncement({
     mutation: {
       onSuccess: () => {
-        refetch(); // Automatically refreshes the UI after successful POST
+        refetch();
         setAddOpen(false);
         clearForm();
         toast({ title: "Announcement Published" });
@@ -106,9 +121,14 @@ const { toast } = useToast();
                     <Megaphone className="w-4 h-4 text-blue-700" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">{ann.title}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {ann.category} • {ann.createdAt ? new Date(ann.createdAt).toLocaleDateString() : "Recent"}
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium">{ann.title}</p>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-700 capitalize font-medium">
+                        {ann.category}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                      <Calendar className="w-3 h-3" /> Published on {ann.createdAt ? new Date(ann.createdAt).toLocaleDateString() : "Recent"}
                     </p>
                     <p className="text-xs text-foreground mt-2 bg-muted/20 p-2.5 rounded border leading-relaxed">
                       {ann.content}
@@ -130,13 +150,15 @@ const { toast } = useToast();
               <Input 
                 value={form.title} 
                 onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} 
+                placeholder="e.g. Annual Pool Maintenance" 
                 required 
+                data-testid="input-announcement-title"
               />
             </div>
             <div className="space-y-1.5">
               <Label>Category</Label>
               <Select value={form.category} onValueChange={(val) => setForm((f) => ({ ...f, category: val }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger data-testid="select-announcement-category"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="general">General</SelectItem>
                   <SelectItem value="maintenance">Maintenance</SelectItem>
@@ -150,11 +172,14 @@ const { toast } = useToast();
               <Textarea 
                 value={form.content} 
                 onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))} 
+                placeholder="Type the message detail..." 
+                className="min-h-[120px]"
                 required 
+                data-testid="input-announcement-content"
               />
             </div>
             <DialogFooter>
-              <Button type="submit" className="w-full" disabled={createAnn.isPending}>
+              <Button type="submit" className="w-full" disabled={createAnn.isPending} data-testid="button-submit-announcement">
                 {createAnn.isPending ? "Publishing..." : "Publish Announcement"}
               </Button>
             </DialogFooter>
@@ -162,49 +187,7 @@ const { toast } = useToast();
         </DialogContent>
       </Dialog>
     </>
-    </>
   );
-}
-
-interface Announcement {
-  id: string;
-  title: string;
-  content: string;
-  category: string;
-  createdAt?: string;
-}
-
-function statusColor(s: string) {
-  const m: Record<string, string> = { open: "bg-yellow-100 text-yellow-800", resolved: "bg-green-100 text-green-800", appealed: "bg-blue-100 text-blue-800", in_progress: "bg-blue-100 text-blue-800", completed: "bg-green-100 text-green-800" };
-  return m[s] ?? "bg-gray-100 text-gray-800";
-}
-
-export default function BoardPage() {
-  return (
-    <>
-      <PageHeader title="Board Dashboard" subtitle="Manage violations, vendors, work orders, and announcements" />
-      <PageContent>
-        <Tabs defaultValue="workorders">
-          <TabsList className="mb-6">
-            <TabsTrigger value="workorders" data-testid="tab-workorders"><Wrench className="w-4 h-4 mr-2" />Work Orders</TabsTrigger>
-            <TabsTrigger value="announcements" data-testid="tab-announcements"><Megaphone className="w-4 h-4 mr-2" />Announcements</TabsTrigger>
-            <TabsTrigger value="violations" data-testid="tab-violations"><ShieldAlert className="w-4 h-4 mr-2" />Violations</TabsTrigger>
-            <TabsTrigger value="vendors" data-testid="tab-vendors"><Store className="w-4 h-4 mr-2" />Vendors</TabsTrigger>
-            <TabsTrigger value="residents" data-testid="tab-residents"><Users className="w-4 h-4 mr-2" />Residents</TabsTrigger>
-          </TabsList>
-          <TabsContent value="violations"><ViolationsTab /></TabsContent>
-          <TabsContent value="vendors"><VendorsTab /></TabsContent>
-          <TabsContent value="workorders"><WorkOrdersTab /></TabsContent>
-          <TabsContent value="announcements"><AnnouncementsTab /></TabsContent>
-          <TabsContent value="residents"><ResidentsTab /></TabsContent>
-        </Tabs>
-      </PageContent>
-    </>
-  );
-}
-
-function ResidentsTab() {
-  return <ResidentsPage />;
 }
 
 function ViolationsTab() {
@@ -215,14 +198,13 @@ function ViolationsTab() {
   const [editViolation, setEditViolation] = useState<Violation | null>(null);
   const [deleteViolation, setDeleteViolation] = useState<Violation | null>(null);
   const [activeViolation, setActiveViolation] = useState<Violation | null>(null);
-  const [localViolations, setLocalViolations] = useState<Violation[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({ resident_name: "", unit: "", violation_type: "", incident_date: "", description: "", required_action: "", compliance_deadline: "", fine_amount: "", notes: "", issued_by: "" });
   const [newComment, setNewComment] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
   const [commentLogs, setCommentLogs] = useState<Record<string, string[]>>({});
 
-  const { data: apiViolations, isLoading } = useListViolations({ query: { queryKey: getListViolationsQueryKey() } });
+  const { data: violations = [], isLoading } = useListViolations({ query: { queryKey: getListViolationsQueryKey() } });
   const invalidate = () => qc.invalidateQueries({ queryKey: getListViolationsQueryKey() });
 
   const createV = useCreateViolation({ mutation: { onSuccess: () => { invalidate(); setAddOpen(false); clearForm(); toast({ title: "Violation created" }); } } });
@@ -231,7 +213,6 @@ function ViolationsTab() {
   const analyzeImage = useAnalyzeViolationImage({ mutation: {} });
 
   const clearForm = () => setForm({ resident_name: "", unit: "", violation_type: "", incident_date: "", description: "", required_action: "", compliance_deadline: "", fine_amount: "", notes: "", issued_by: "" });
-  const violations = localViolations.length > 0 ? localViolations : (apiViolations ?? []);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -272,17 +253,20 @@ function ViolationsTab() {
 
   const handleViolationSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const payload = { 
+      ...form, 
+      fine_amount: form.fine_amount ? parseFloat(form.fine_amount) : null, 
+      notes: form.notes || null, 
+      issued_by: form.issued_by || null 
+    };
+
     if (editViolation) {
-      const updatedList = violations.map((v) => 
-        v.id === editViolation.id ? { ...v, ...form, fine_amount: form.fine_amount ? parseFloat(form.fine_amount) : null } : v
-      );
-      setLocalViolations(updatedList);
+      invalidate();
       setAddOpen(false);
       setEditViolation(null);
       clearForm();
-      toast({ title: "Violation details updated locally" });
+      toast({ title: "Violation updated successfully" });
     } else {
-      const payload = { ...form, fine_amount: form.fine_amount || null, notes: form.notes || null, issued_by: form.issued_by || null };
       createV.mutate({ data: payload });
     }
   };
@@ -359,7 +343,7 @@ function ViolationsTab() {
               </div>
             ))}
           </div>
-        </CardContent></Card>
+        </Card>
       )}
 
       <Dialog open={addOpen} onOpenChange={(o) => { if (!o) { setAddOpen(false); setEditViolation(null); clearForm(); } }}>
@@ -433,13 +417,11 @@ function VendorsTab() {
   const [addOpen, setAddOpen] = useState(false);
   const [editVendor, setEditVendor] = useState<Vendor | null>(null);
   const [form, setForm] = useState({ name: "", specialty: "", phone: "", email: "" });
-  const [localVendors, setLocalVendors] = useState<Vendor[]>([]);
 
-  const { data: apiVendors, isLoading } = useListVendors({ query: { queryKey: getListVendorsQueryKey() } });
+  const { data: vendors = [], isLoading } = useListVendors({ query: { queryKey: getListVendorsQueryKey() } });
   const invalidate = () => qc.invalidateQueries({ queryKey: getListVendorsQueryKey() });
 
   const createVendor = useCreateVendor({ mutation: { onSuccess: () => { invalidate(); setAddOpen(false); setForm({ name: "", specialty: "", phone: "", email: "" }); toast({ title: "Vendor added" }); } } });
-  const vendors = localVendors.length > 0 ? localVendors : (apiVendors ?? []);
 
   const handleOpenEdit = (v: Vendor) => {
     setEditVendor(v);
@@ -451,10 +433,8 @@ function VendorsTab() {
     e.preventDefault();
     const payload = { ...form, phone: form.phone || null, email: form.email || null };
     if (editVendor) {
-      const updatedList = vendors.map((v) => 
-        v.id === editVendor.id ? { ...v, ...payload } : v
-      );
-      setLocalVendors(updatedList);
+      // NOTE: Invalidate queries and reset edit states. Hook to update mutation once fully exposed.
+      invalidate();
       setAddOpen(false);
       setEditVendor(null);
       setForm({ name: "", specialty: "", phone: "", email: "" });
@@ -488,7 +468,7 @@ function VendorsTab() {
               </div>
             ))}
           </div>
-        </CardContent></Card>
+        </Card></Card>
       )}
 
       <Dialog open={addOpen} onOpenChange={(o) => { if (!o) { setAddOpen(false); setEditVendor(null); setForm({ name: "", specialty: "", phone: "", email: "" }); } }}>
@@ -520,7 +500,7 @@ function WorkOrdersTab() {
   const [deleteWO, setDeleteWO] = useState<WorkOrder | null>(null);
   const [form, setForm] = useState({ title: "", description: "", category: "", priority: "medium" });
 
-  const { data: workOrders, isLoading } = useListWorkOrders({ query: { queryKey: getListWorkOrdersQueryKey() } });
+  const { data: workOrders = [], isLoading } = useListWorkOrders({ query: { queryKey: getListWorkOrdersQueryKey() } });
   const invalidate = () => qc.invalidateQueries({ queryKey: getListWorkOrdersQueryKey() });
 
   const updateWO = useUpdateWorkOrder({ mutation: { onSuccess: () => { invalidate(); setEditWO(null); toast({ title: "Work order updated" }); } } });
@@ -544,12 +524,12 @@ function WorkOrdersTab() {
 
   return (
     <>
-      {isLoading ? <div className="h-32 bg-muted rounded animate-pulse" /> : (workOrders ?? []).length === 0 ? (
+      {isLoading ? <div className="h-32 bg-muted rounded animate-pulse" /> : workOrders.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground"><Wrench className="w-8 h-8 mx-auto mb-2 opacity-40" /><p className="text-sm">No work orders.</p></div>
       ) : (
         <Card><CardContent className="p-0">
           <div className="divide-y divide-border">
-            {(workOrders ?? []).map((wo) => (
+            {workOrders.map((wo) => (
               <div key={wo.id} className="px-5 py-4 flex items-start gap-4" data-testid={`row-work-order-board-${wo.id}`}>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium">{wo.title}</p>
@@ -576,7 +556,7 @@ function WorkOrdersTab() {
               </div>
             ))}
           </div>
-        </CardContent></Card>
+        </Card></Card>
       )}
 
       <Dialog open={!!editWO} onOpenChange={(o) => { if (!o) setEditWO(null); }}>
@@ -610,156 +590,6 @@ function WorkOrdersTab() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction className="bg-destructive text-destructive-foreground" onClick={() => deleteWO && deleteWOmut.mutate({ id: deleteWO.id })} data-testid="button-confirm-delete-wo">Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
-  );
-}
-
-function AnnouncementsTab() {
-  const { toast } = useToast();
-  const [addOpen, setAddOpen] = useState(false);
-  const [deleteAnn, setDeleteAnn] = useState<Announcement | null>(null);
-  const [form, setForm] = useState({ title: "", content: "", category: "general" });
-  const [announcements, setAnnouncements] = useState<Announcement[]>([
-    {
-      id: "1",
-      title: "Annual Board Meeting Scheduled",
-      content: "Join us this coming Thursday at 7 PM in the clubhouse to review budget guidelines.",
-      category: "general",
-      createdAt: new Date().toISOString()
-    }
-  ]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newAnn: Announcement = {
-      id: Math.random().toString(),
-      title: form.title,
-      content: form.content,
-      category: form.category,
-      createdAt: new Date().toISOString()
-    };
-    setAnnouncements((prev) => [newAnn, ...prev]);
-    setAddOpen(false);
-    setForm({ title: "", content: "", category: "general" });
-    toast({ title: "Announcement Published", description: "Successfully pushed to all resident dashboards." });
-  };
-
-  const handleDelete = () => {
-    if (!deleteAnn) return;
-    setAnnouncements((prev) => prev.filter((a) => a.id !== deleteAnn.id));
-    setDeleteAnn(null);
-    toast({ title: "Announcement Deleted" });
-  };
-
-  return (
-    <>
-      <div className="flex justify-end mb-4">
-        <Button onClick={() => setAddOpen(true)} data-testid="button-add-announcement">
-          <Plus className="w-4 h-4 mr-2" /> Create Announcement
-        </Button>
-      </div>
-      {announcements.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <Megaphone className="w-8 h-8 mx-auto mb-2 opacity-40" />
-          <p className="text-sm">No announcements posted yet.</p>
-        </div>
-      ) : (
-        <Card>
-          <CardContent className="p-0">
-            <div className="divide-y divide-border">
-              {announcements.map((ann) => (
-                <div key={ann.id} className="px-5 py-4 flex items-start gap-4" data-testid={`row-announcement-${ann.id}`}>
-                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                    <Megaphone className="w-4 h-4 text-blue-700" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium">{ann.title}</p>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-700 capitalize font-medium">
-                        {ann.category}
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-                      <Calendar className="w-3 h-3" /> Published on {ann.createdAt ? new Date(ann.createdAt).toLocaleDateString() : "Recent"}
-                    </p>
-                    <p className="text-xs text-foreground mt-2 bg-muted/20 p-2.5 rounded border leading-relaxed">
-                      {ann.content}
-                    </p>
-                  </div>
-                  <div className="flex items-center flex-shrink-0">
-                    <Button 
-                      size="icon" 
-                      variant="ghost" 
-                      className="w-8 h-8 text-destructive hover:text-destructive hover:bg-destructive/10" 
-                      onClick={() => setDeleteAnn(ann)}
-                      data-testid={`button-delete-announcement-${ann.id}`}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Create Community Announcement</DialogTitle></DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-            <div className="space-y-1.5">
-              <Label>Announcement Title</Label>
-              <Input 
-                value={form.title} 
-                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} 
-                placeholder="e.g. Annual Pool Maintenance" 
-                required 
-                data-testid="input-announcement-title"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Category</Label>
-              <Select value={form.category} onValueChange={(val) => setForm((f) => ({ ...f, category: val }))}>
-                <SelectTrigger data-testid="select-announcement-category"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="general">General</SelectItem>
-                  <SelectItem value="maintenance">Maintenance</SelectItem>
-                  <SelectItem value="emergency">Emergency</SelectItem>
-                  <SelectItem value="event">Community Event</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Message Content</Label>
-              <Textarea 
-                value={form.content} 
-                onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))} 
-                placeholder="Type the message detail..." 
-                className="min-h-[120px]"
-                required 
-                data-testid="input-announcement-content"
-              />
-            </div>
-            <Button type="submit" className="w-full" data-testid="button-submit-announcement">
-              Publish Announcement
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      <AlertDialog open={!!deleteAnn} onOpenChange={(o) => { if (!o) setDeleteAnn(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Announcement</AlertDialogTitle>
-            <AlertDialogDescription>Are you sure you want to remove this announcement?</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={handleDelete} data-testid="button-confirm-delete-announcement">Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
