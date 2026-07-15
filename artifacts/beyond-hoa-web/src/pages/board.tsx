@@ -105,7 +105,8 @@ function AnnouncementsTab() {
       const payload = {
         title: form.title,
         content: form.content,
-        pinned: false
+        category: form.category,
+        pinned: form.category === "emergency"
       };
 
       const res = await fetch(`${API_BASE_URL}/api/announcements`, {
@@ -189,13 +190,13 @@ function AnnouncementsTab() {
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium">{ann.title}</p>
                         <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-700 capitalize font-medium">
-                          {ann.category}
+                          {ann.category || "General"}
                         </span>
                       </div>
                       <Button 
                         size="icon" 
                         variant="ghost" 
-                        className="w-7 h-7 text-muted-foreground hover:text-destructive flex-shrink-0" 
+                        className="w-7 h-7 text-destructive hover:text-destructive flex-shrink-0" 
                         onClick={() => setDeleteAnn(ann)}
                         title="Remove Announcement"
                       >
@@ -229,6 +230,18 @@ function AnnouncementsTab() {
                 required 
                 data-testid="input-announcement-title"
               />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Category</Label>
+              <Select value={form.category} onValueChange={(val) => setForm((f) => ({ ...f, category: val }))}>
+                <SelectTrigger data-testid="select-announcement-category"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="general">General</SelectItem>
+                  <SelectItem value="maintenance">Maintenance</SelectItem>
+                  <SelectItem value="emergency">Emergency</SelectItem>
+                  <SelectItem value="event">Community Event</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Message Content</Label>
@@ -284,7 +297,7 @@ function ViolationsTab() {
   const invalidate = () => qc.invalidateQueries({ queryKey: getListViolationsQueryKey() });
 
   const createV = useCreateViolation({ mutation: { onSuccess: () => { invalidate(); setAddOpen(false); clearForm(); toast({ title: "Violation created" }); } } });
-  const updateStatus = useUpdateViolationStatus({ mutation: { onSuccess: () => { invalidate(); toast({ title: "Status updated" }); } } });
+  const updateStatus = useUpdateViolationStatus({ mutation: { onSuccess: () => { toast({ title: "Status updated" }); invalidate(); } } });
   const deleteV = useDeleteViolation({ mutation: { onSuccess: () => { invalidate(); setDeleteViolation(null); toast({ title: "Violation deleted" }); } } });
   const analyzeImage = useAnalyzeViolationImage({ mutation: {} });
 
