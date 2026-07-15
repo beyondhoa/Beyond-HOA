@@ -78,10 +78,11 @@ function AnnouncementsTab() {
   
   const clearForm = () => setForm({ title: "", content: "", category: "general" });
 
+  const API_BASE_URL = import.meta.env.VITE_API_URL || "";
   const fetchAnnouncements = async () => {
-    setIsLoading(true);
+   setIsLoading(true);
     try {
-      const res = await fetch("/api/announcements");
+      const res = await fetch(`${API_BASE_URL}/api/announcements`);
       if (res.ok) {
         const data = await res.json();
         setAnnouncements(data);
@@ -107,7 +108,8 @@ function AnnouncementsTab() {
         pinned: false // Satisfies the 'pinned bool' column requirement
       };
 
-      const res = await fetch("/api/announcements", {
+      // 3. Prefix the POST request with your API base URL
+      const res = await fetch(`${API_BASE_URL}/api/announcements`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -144,7 +146,7 @@ function AnnouncementsTab() {
   const handleDeleteConfirm = async () => {
     if (!deleteAnn) return;
     try {
-      const res = await fetch(`/api/announcements/${deleteAnn.id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/announcements/${deleteAnn.id}`, {
         method: "DELETE",
       });
 
