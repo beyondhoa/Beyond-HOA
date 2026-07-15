@@ -102,27 +102,40 @@ function AnnouncementsTab() {
     setIsPending(true);
     try {
       const payload = {
-        ...form,
-        board_member_id: 1,
-        author_id: 1,       
-        resident_id: 1,     
-        author: "Board Management"
+        title: form.title,
+        content: form.content,
+        pinned: false // Satisfies the 'pinned bool' column requirement
       };
+
       const res = await fetch("/api/announcements", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error("Failed to post");
+      if (!res.ok) {
+        const errorText = await res.text();
+        let parsedError = "Server rejected payload";
+        try {
+          const jsonErr = JSON.parse(errorText);
+          parsedError = jsonErr.error || jsonErr.message || errorText;
+        } catch {
+          parsedError = errorText || `Status code: ${res.status}`;
+        }
+        throw new Error(parsedError);
+      }
 
       toast({ title: "Announcement Published" });
       setAddOpen(false);
       clearForm();
       fetchAnnouncements(); 
-    } catch (err) {
-      console.error(err);
-      toast({ title: "Error", description: "Failed to publish announcement.", variant: "destructive" });
+    } catch (err: any) {
+      console.error("Publishing error detail:", err);
+      toast({ 
+        title: "Publish Failed", 
+        description: err.message || "Failed to publish announcement.", 
+        variant: "destructive" 
+      });
     } finally {
       setIsPending(false);
     }
