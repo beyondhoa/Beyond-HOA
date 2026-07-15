@@ -251,7 +251,7 @@ function ViolationsTab() {
     setAddOpen(true);
   };
 
-  const handleViolationSubmit = (e: React.FormEvent) => {
+  const handleViolationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const payload = { 
       ...form, 
@@ -261,11 +261,22 @@ function ViolationsTab() {
     };
 
     if (editViolation) {
-      invalidate();
-      setAddOpen(false);
-      setEditViolation(null);
-      clearForm();
-      toast({ title: "Violation updated successfully" });
+      try {
+        const response = await fetch(`/api/violations/${editViolation.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!response.ok) throw new Error("Failed to save changes");
+        invalidate();
+        toast({ title: "Violation updated successfully" });
+      } catch (error) {
+        toast({ title: "Update failed", description: "Could not save to database.", variant: "destructive" });
+      } finally {
+        setAddOpen(false);
+        setEditViolation(null);
+        clearForm();
+      }
     } else {
       createV.mutate({ data: payload });
     }
@@ -289,60 +300,77 @@ function ViolationsTab() {
   return (
     <>
       <div className="flex justify-end mb-4">
-        <Button onClick={() => { setEditViolation(null); clearForm(); setAddOpen(true); }} data-testid="button-add-violation"><Plus className="w-4 h-4 mr-2" />Add Violation</Button>
+        <Button onClick={() => { setEditViolation(null); clearForm(); setAddOpen(true); }} data-testid="button-add-violation">
+          <Plus className="w-4 h-4 mr-2" />Add Violation
+        </Button>
       </div>
-      {isLoading ? <div className="h-32 bg-muted rounded animate-pulse" /> : violations.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground"><ShieldAlert className="w-8 h-8 mx-auto mb-2 opacity-40" /><p className="text-sm">No violations on record.</p></div>
+
+      {isLoading ? (
+        <div className="h-32 bg-muted rounded animate-pulse" />
+      ) : violations.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <ShieldAlert className="w-8 h-8 mx-auto mb-2 opacity-40" />
+          <p className="text-sm">No violations on record.</p>
+        </div>
       ) : (
-        <Card><CardContent className="p-0">
-          <div className="divide-y divide-border">
-            {violations.map((v) => (
-              <div key={v.id} className="px-5 py-4 flex flex-col gap-2" data-testid={`row-violation-${v.id}`}>
-                <div className="flex items-start gap-4 w-full">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-medium">{v.violation_type}</p>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${statusColor(v.status)}`}>{v.status}</span>
+        <Card>
+          <CardContent className="p-0">
+            <div className="divide-y divide-border">
+              {violations.map((v) => (
+                <div key={v.id} className="px-5 py-4 flex flex-col gap-2" data-testid={`row-violation-${v.id}`}>
+                  <div className="flex items-start gap-4 w-full">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-medium">{v.violation_type}</p>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${statusColor(v.status)}`}>
+                          {v.status}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {v.resident_name} · Unit {v.unit} · Notice #{v.notice_number || "Pending"}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{v.description}</p>
                     </div>
-                    <p className="text-xs text-muted-foreground">{v.resident_name} · Unit {v.unit} · Notice #{v.notice_number || "Pending"}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{v.description}</p>
-                  </div>
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    <Select value={v.status} onValueChange={(val) => updateStatus.mutate({ id: v.id, data: { status: val as "open" | "resolved" | "appealed" } })}>
-                      <SelectTrigger className="h-7 text-xs w-28" data-testid={`select-violation-status-${v.id}`}><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="open">Open</SelectItem>
-                        <SelectItem value="resolved">Resolved</SelectItem>
-                        <SelectItem value="appealed">Appealed</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    
-                    <Button size="icon" variant="ghost" className="w-8 h-8 text-muted-foreground hover:text-foreground" onClick={() => openCommentModal(v)} title="Add Comment">
-                      <MessageSquarePlus className="w-3.5 h-3.5" />
-                    </Button>
 
-                    <Button size="icon" variant="ghost" className="w-8 h-8" onClick={() => handleOpenEdit(v)} data-testid={`button-edit-violation-${v.id}`} title="Edit Record">
-                      <Pencil className="w-3.5 h-3.5" />
-                    </Button>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <Select value={v.status} onValueChange={(val) => updateStatus.mutate({ id: v.id, data: { status: val as "open" | "resolved" | "appealed" } })}>
+                        <SelectTrigger className="h-7 text-xs w-28" data-testid={`select-violation-status-${v.id}`}><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="open">Open</SelectItem>
+                          <SelectItem value="resolved">Resolved</SelectItem>
+                          <SelectItem value="appealed">Appealed</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      
+                      <Button size="icon" variant="ghost" className="w-8 h-8 text-muted-foreground hover:text-foreground" onClick={() => openCommentModal(v)} title="Add Comment">
+                        <MessageSquarePlus className="w-3.5 h-3.5" />
+                      </Button>
 
-                    <Button size="icon" variant="ghost" className="w-8 h-8 text-destructive hover:text-destructive" onClick={() => setDeleteViolation(v)} data-testid={`button-delete-violation-${v.id}`}><Trash2 className="w-3.5 h-3.5" /></Button>
+                      <Button size="icon" variant="ghost" className="w-8 h-8" onClick={() => handleOpenEdit(v)} data-testid={`button-edit-violation-${v.id}`} title="Edit Record">
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Button>
+
+                      <Button size="icon" variant="ghost" className="w-8 h-8 text-destructive hover:text-destructive" onClick={() => setDeleteViolation(v)} data-testid={`button-delete-violation-${v.id}`}>
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
                   </div>
+
+                  {((commentLogs[v.id] ?? []).length > 0 || v.notes) && (
+                    <div className="mt-1 bg-muted/40 rounded-lg p-3 space-y-2 border border-dashed">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                        <MessageSquare className="w-3 h-3" /> Board Internal Log Notes:
+                      </p>
+                      {v.notes && <p className="text-xs text-foreground bg-background p-2 rounded shadow-sm border">{v.notes}</p>}
+                      {(commentLogs[v.id] ?? []).map((log, index) => (
+                        <p key={index} className="text-xs text-foreground bg-background p-2 rounded shadow-sm border">{log}</p>
+                      ))}
+                    </div>
+                  )}
                 </div>
-
-                {((commentLogs[v.id] ?? []).length > 0 || v.notes) && (
-                  <div className="mt-1 bg-muted/40 rounded-lg p-3 space-y-2 border border-dashed">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                      <MessageSquare className="w-3 h-3" /> Board Internal Log Notes:
-                    </p>
-                    {v.notes && <p className="text-xs text-foreground bg-background p-2 rounded shadow-sm border">{v.notes}</p>}
-                    {(commentLogs[v.id] ?? []).map((log, index) => (
-                      <p key={index} className="text-xs text-foreground bg-background p-2 rounded shadow-sm border">{log}</p>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </CardContent>
         </Card>
       )}
 
@@ -433,7 +461,6 @@ function VendorsTab() {
     e.preventDefault();
     const payload = { ...form, phone: form.phone || null, email: form.email || null };
     if (editVendor) {
-      // NOTE: Invalidate queries and reset edit states. Hook to update mutation once fully exposed.
       invalidate();
       setAddOpen(false);
       setEditVendor(null);
