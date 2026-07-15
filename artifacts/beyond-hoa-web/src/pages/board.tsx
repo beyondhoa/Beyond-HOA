@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import {
   useListViolations, getListViolationsQueryKey, useCreateViolation, useUpdateViolationStatus, useDeleteViolation, useAnalyzeViolationImage,
-  useListVendors, getListVendorsQueryKey, useCreateVendor, useDeleteVendor, 
+  useListVendors, getListVendorsQueryKey, useCreateVendor,
   useListWorkOrders, getListWorkOrdersQueryKey, useUpdateWorkOrder, useDeleteWorkOrder,
 } from "@workspace/api-client-react";
 import type { Violation, WorkOrder, Vendor } from "@workspace/api-client-react";
@@ -77,10 +77,10 @@ function AnnouncementsTab() {
   const [form, setForm] = useState({ title: "", content: "", category: "general" });
   
   const clearForm = () => setForm({ title: "", content: "", category: "general" });
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL || "";
   const fetchAnnouncements = async () => {
-   setIsLoading(true);
+    setIsLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/announcements`);
       if (res.ok) {
@@ -105,10 +105,9 @@ function AnnouncementsTab() {
       const payload = {
         title: form.title,
         content: form.content,
-        pinned: false // Satisfies the 'pinned bool' column requirement
+        pinned: false
       };
 
-      // 3. Prefix the POST request with your API base URL
       const res = await fetch(`${API_BASE_URL}/api/announcements`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -230,18 +229,6 @@ function AnnouncementsTab() {
                 required 
                 data-testid="input-announcement-title"
               />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Category</Label>
-              <Select value={form.category} onValueChange={(val) => setForm((f) => ({ ...f, category: val }))}>
-                <SelectTrigger data-testid="select-announcement-category"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="general">General</SelectItem>
-                  <SelectItem value="maintenance">Maintenance</SelectItem>
-                  <SelectItem value="emergency">Emergency</SelectItem>
-                  <SelectItem value="event">Community Event</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Message Content</Label>
@@ -529,7 +516,7 @@ function ViolationsTab() {
 }
 
 function VendorsTab() {
-const qc = useQueryClient();
+  const qc = useQueryClient();
   const { toast } = useToast();
   const [addOpen, setAddOpen] = useState(false);
   const [editVendor, setEditVendor] = useState<Vendor | null>(null);
@@ -561,11 +548,9 @@ const qc = useQueryClient();
     }
   };
 
-  // Natively execute the HTTP DELETE route to bypass library restrictions
-  const handleDeleteConfirm = async () => {
-    if (!deleteVendor) return;
+  const handleDeleteConfirm = async (vendorId: string, vendorName: string) => {
     try {
-      const res = await fetch(`/api/vendors/${deleteVendor.id}`, {
+      const res = await fetch(`/api/vendors/${vendorId}`, {
         method: "DELETE",
       });
 
@@ -573,12 +558,15 @@ const qc = useQueryClient();
 
       toast({ title: "Vendor removed successfully" });
       setDeleteVendor(null);
-      invalidate(); // Re-fetch the vendor cache list
+      setAddOpen(false);
+      setEditVendor(null);
+      setForm({ name: "", specialty: "", phone: "", email: "" });
+      invalidate(); 
     } catch (err) {
       console.error(err);
       toast({ 
         title: "Deletion failed", 
-        description: "Could not remove vendor record from database.", 
+        description: `Could not remove ${vendorName} from database.`, 
         variant: "destructive" 
       });
     }
@@ -622,7 +610,7 @@ const qc = useQueryClient();
       <Dialog open={addOpen} onOpenChange={(o) => { if (!o) { setAddOpen(false); setEditVendor(null); setForm({ name: "", specialty: "", phone: "", email: "" }); } }}>
         <DialogContent>
           <DialogHeader><DialogTitle>{editVendor ? "Edit Vendor Details" : "Add Vendor"}</DialogTitle></DialogHeader>
-          <form onSubmit={handleFormSubmit} className="space-y-3 mt-2">
+          <form onSubmit={handleFormSubmit} className="space-y-4 mt-2">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5"><Label>Company Name</Label><Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} required /></div>
               <div className="space-y-1.5"><Label>Specialty</Label><Input value={form.specialty} onChange={(e) => setForm((f) => ({ ...f, specialty: e.target.value }))} required placeholder="e.g. Plumbing" /></div>
@@ -631,9 +619,22 @@ const qc = useQueryClient();
               <div className="space-y-1.5"><Label>Phone</Label><Input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} /></div>
               <div className="space-y-1.5"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} /></div>
             </div>
-            <Button type="submit" className="w-full">
-              {editVendor ? "Save Vendor Changes" : "Add Vendor"}
-            </Button>
+
+            <div className="flex gap-2 pt-2">
+              {editVendor && (
+                <Button 
+                  type="button" 
+                  variant="destructive" 
+                  className="px-4"
+                  onClick={() => handleDeleteConfirm(editVendor.id, editVendor.name)}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" /> Delete
+                </Button>
+              )}
+              <Button type="submit" className="flex-1">
+                {editVendor ? "Save Vendor Changes" : "Add Vendor"}
+              </Button>
+            </div>
           </form>
         </DialogContent>
       </Dialog>
@@ -646,11 +647,11 @@ const qc = useQueryClient();
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction className="bg-destructive text-destructive-foreground" onClick={handleDeleteConfirm} data-testid="button-confirm-delete-vendor">Remove Vendor</AlertDialogAction>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground" onClick={() => deleteVendor && handleDeleteConfirm(deleteVendor.id, deleteVendor.name)} data-testid="button-confirm-delete-vendor">Remove Vendor</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </> 
+    </>
   );
 }
 
@@ -688,36 +689,38 @@ function WorkOrdersTab() {
       {isLoading ? <div className="h-32 bg-muted rounded animate-pulse" /> : workOrders.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground"><Wrench className="w-8 h-8 mx-auto mb-2 opacity-40" /><p className="text-sm">No work orders.</p></div>
       ) : (
-        <Card><CardContent className="p-0">
-          <div className="divide-y divide-border">
-            {workOrders.map((wo) => (
-              <div key={wo.id} className="px-5 py-4 flex items-start gap-4" data-testid={`row-work-order-board-${wo.id}`}>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium">{wo.title}</p>
-                  <p className="text-xs text-muted-foreground">{wo.resident_name} · Unit {wo.unit} · {wo.category} · <span className="capitalize">{wo.priority}</span> priority</p>
-                  {wo.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{wo.description}</p>}
-                </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <Select value={wo.status} onValueChange={(val) => updateWO.mutate({ id: wo.id, data: { status: val as "submitted" | "in-progress" | "completed" | "cancelled" } })}>
-                    <SelectTrigger className="h-7 text-xs w-32" data-testid={`select-wo-status-${wo.id}`}><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="submitted">Submitted</SelectItem>
-                      <SelectItem value="in-progress">In Progress</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  
-                  <Button size="icon" variant="ghost" className="w-8 h-8" onClick={() => handleOpenEdit(wo)} data-testid={`button-edit-wo-${wo.id}`} title="Edit Work Order">
-                    <Pencil className="w-3.5 h-3.5" />
-                  </Button>
+        <Card>
+          <CardContent className="p-0">
+            <div className="divide-y divide-border">
+              {workOrders.map((wo) => (
+                <div key={wo.id} className="px-5 py-4 flex items-start gap-4" data-testid={`row-work-order-board-${wo.id}`}>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">{wo.title}</p>
+                    <p className="text-xs text-muted-foreground">{wo.resident_name} · Unit {wo.unit} · {wo.category} · <span className="capitalize">{wo.priority}</span> priority</p>
+                    {wo.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{wo.description}</p>}
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <Select value={wo.status} onValueChange={(val) => updateWO.mutate({ id: wo.id, data: { status: val as "submitted" | "in-progress" | "completed" | "cancelled" } })}>
+                      <SelectTrigger className="h-7 text-xs w-32" data-testid={`select-wo-status-${wo.id}`}><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="submitted">Submitted</SelectItem>
+                        <SelectItem value="in-progress">In Progress</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    <Button size="icon" variant="ghost" className="w-8 h-8" onClick={() => handleOpenEdit(wo)} data-testid={`button-edit-wo-${wo.id}`} title="Edit Work Order">
+                      <Pencil className="w-3.5 h-3.5" />
+                    </Button>
 
-                  <Button size="icon" variant="ghost" className="w-8 h-8 text-destructive hover:text-destructive" onClick={() => setDeleteWO(wo)} data-testid={`button-delete-wo-${wo.id}`}><Trash2 className="w-3.5 h-3.5" /></Button>
+                    <Button size="icon" variant="ghost" className="w-8 h-8 text-destructive hover:text-destructive" onClick={() => setDeleteWO(wo)} data-testid={`button-delete-wo-${wo.id}`}><Trash2 className="w-3.5 h-3.5" /></Button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </CardContent></Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       <Dialog open={!!editWO} onOpenChange={(o) => { if (!o) setEditWO(null); }}>
