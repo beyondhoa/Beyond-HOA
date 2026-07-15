@@ -1,6 +1,0 @@
-{
-  "build": {
-    "builder": "nixpacks",
-    "buildCommand": "VITE_API_URL=$VITE_API_URL pnpm --filter=@workspace/beyond-hoa-web run build"
-  }
-}
