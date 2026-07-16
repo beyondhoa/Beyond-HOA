@@ -3,8 +3,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   useListWorkOrders,
   getListWorkOrdersQueryKey,
-  useListViolations,
-  getListViolationsQueryKey,
   useCreateWorkOrder,
   useGetDuesStripeConfigured,
 } from "@workspace/api-client-react";
@@ -31,13 +29,11 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { 
-  AlertTriangle, 
   Wrench, 
   CreditCard, 
   Plus, 
   Clock, 
   Vote, 
-  FileText, 
   Megaphone,
   ChevronRight
 } from "lucide-react";
@@ -80,11 +76,9 @@ export default function DashboardPage() {
   const [annLoading, setAnnLoading] = useState(false);
 
   const { data: workOrders, isLoading: woLoading } = useListWorkOrders({ query: { queryKey: getListWorkOrdersQueryKey() } });
-  const { data: violations } = useListViolations({ query: { queryKey: getListViolationsQueryKey() } });
   const { data: stripeConfig } = useGetDuesStripeConfigured();
 
   const myWorkOrders = workOrders?.filter((wo) => wo.resident_name === resident?.name) ?? [];
-  const openViolations = violations?.filter((v) => v.status === "open").length ?? 0;
 
   const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
@@ -140,14 +134,57 @@ export default function DashboardPage() {
       <PageHeader
         title={`Welcome, ${resident?.name?.split(" ")[0]}`}
         subtitle={`Unit ${resident?.unit} · ${resident?.status === "owner" ? "Owner" : "Tenant"}`}
-        action={
+      />
+      <PageContent className="space-y-6">
+        
+        {/* 1. Stat Tiles Row */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          
+          {/* Tile 1: Dues Status -> Links to /dues */}
+          <a href="/dues" className="block group">
+            <Card data-testid="card-dues-status" className="border-l-4 border-l-stone-400 group-hover:shadow-md group-hover:scale-[1.01] transition-all cursor-pointer h-full">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-4">
+                  <div className="bg-stone-100 rounded-xl p-3">
+                    <CreditCard className="w-5 h-5 text-stone-700" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground font-medium">Dues Status</p>
+                    <p className="text-xl font-bold text-slate-900">
+                      {stripeConfig?.configured ? "Paid" : "Setup Needed"}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </a>
+
+          {/* Tile 2: Work Orders -> Click to open Submit Modal */}
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-indigo-950 hover:bg-indigo-900 text-white" data-testid="button-new-work-order">
-                <Plus className="w-4 h-4 mr-2" />
-                New Work Order
-              </Button>
+              <Card data-testid="card-my-work-orders" className="border-l-4 border-l-amber-500 hover:shadow-md hover:scale-[1.01] transition-all h-full flex flex-col justify-between cursor-pointer group">
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-4">
+                    <div className="bg-amber-50 rounded-xl p-3">
+                      <Wrench className="w-5 h-5 text-amber-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground font-medium">
+                        Work Orders
+                      </p>
+                      <p className="text-xl font-bold text-slate-900">{myWorkOrders.length} Active</p>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 pt-3 border-t border-dashed border-stone-200">
+                    <span className="text-xs font-semibold text-amber-700 group-hover:text-amber-850 flex items-center gap-1 transition-colors">
+                      <Plus className="w-3.5 h-3.5" /> Submit a Work Order
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
             </DialogTrigger>
+            
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Submit Work Order</DialogTitle>
@@ -213,52 +250,10 @@ export default function DashboardPage() {
               </form>
             </DialogContent>
           </Dialog>
-        }
-      />
-      <PageContent className="space-y-6">
-        
-        {/* 1. Clickable Stat Tiles Row (Dues, Work Orders, Votes, Violations) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          
-          {/* Tile 1: Dues Status -> Links to /dues */}
-          <a href="/dues" className="block group">
-            <Card data-testid="card-dues-status" className="border-l-4 border-l-stone-400 group-hover:shadow-md group-hover:scale-[1.01] transition-all cursor-pointer">
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-4">
-                  <div className="bg-stone-100 rounded-xl p-3">
-                    <CreditCard className="w-5 h-5 text-stone-700" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground font-medium">Dues Status</p>
-                    <p className="text-xl font-bold text-slate-900">
-                      {stripeConfig?.configured ? "Paid" : "Setup Needed"}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </a>
-
-          {/* Tile 2: Work Orders -> Links to /work-orders */}
-          <a href="/work-orders" className="block group">
-            <Card data-testid="card-my-work-orders" className="border-l-4 border-l-amber-500 group-hover:shadow-md group-hover:scale-[1.01] transition-all cursor-pointer">
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-4">
-                  <div className="bg-amber-50 rounded-xl p-3">
-                    <Wrench className="w-5 h-5 text-amber-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground font-medium">Work Orders</p>
-                    <p className="text-xl font-bold text-slate-900">{myWorkOrders.length} Active</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </a>
 
           {/* Tile 3: Active Votes -> Links to /voting */}
           <a href="/voting" className="block group">
-            <Card data-testid="card-active-votes" className="border-l-4 border-l-indigo-900 group-hover:shadow-md group-hover:scale-[1.01] transition-all cursor-pointer">
+            <Card data-testid="card-active-votes" className="border-l-4 border-l-indigo-900 group-hover:shadow-md group-hover:scale-[1.01] transition-all cursor-pointer h-full">
               <CardContent className="pt-6">
                 <div className="flex items-center gap-4">
                   <div className="bg-indigo-50 rounded-xl p-3">
@@ -273,29 +268,12 @@ export default function DashboardPage() {
             </Card>
           </a>
 
-          {/* Tile 4: Violations -> Links to /violations */}
-          <a href="/violations" className="block group">
-            <Card data-testid="card-open-violations" className="border-l-4 border-l-red-500 group-hover:shadow-md group-hover:scale-[1.01] transition-all cursor-pointer">
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-4">
-                  <div className="bg-red-50/80 rounded-xl p-3">
-                    <AlertTriangle className="w-5 h-5 text-red-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground font-medium">Violations</p>
-                    <p className="text-xl font-bold text-slate-900">{openViolations}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </a>
-
         </div>
 
-        {/* 2. Quick Actions Row (2 Items: Calendar & Contact Board) */}
+        {/* 2. Quick Actions Row */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           
-          {/* Community Calendar */}
+          {/* Community Calendar -> Safely wired back to documents anchor tag */}
           <a href="/documents#calendar" className="flex items-center justify-between p-4 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-md hover:scale-[1.01] transition-all font-semibold text-sm text-indigo-950 group">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-indigo-50 rounded-lg text-indigo-900">
@@ -328,7 +306,7 @@ export default function DashboardPage() {
         {/* 3. Bottom Split Layout (Announcements Left, Work Orders Right) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
-          {/* Community Announcements (LEFT COLUMN) */}
+          {/* Community Announcements */}
           <Card className="h-full border-t-2 border-t-amber-500">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2 text-amber-800">
@@ -383,7 +361,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Recent Work Orders (RIGHT COLUMN) */}
+          {/* Recent Work Orders */}
           <Card className="h-full border-t-2 border-t-indigo-900">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2 text-indigo-950">
