@@ -8,7 +8,7 @@ const router: IRouter = Router();
 router.get("/announcements", async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT id, title, content, pinned, created_at AS \"createdAt\" FROM announcements ORDER BY created_at DESC"
+      "SELECT id, title, content, category, pinned, created_at AS \"createdAt\" FROM announcements ORDER BY created_at DESC"
     );
     res.json(result.rows);
   } catch (err) {
@@ -20,14 +20,14 @@ router.get("/announcements", async (req, res) => {
 // POST /api/announcements
 router.post("/announcements", async (req, res) => {
   try {
-    const { title, content, pinned } = req.body;
+    const { title, content, category, pinned } = req.body;
     if (!title || !content) {
       return res.status(400).json({ error: "Title and content are required fields" });
     }
 
     const result = await pool.query(
-      "INSERT INTO announcements (title, content, pinned) VALUES ($1, $2, $3) RETURNING id, title, content, pinned, created_at AS \"createdAt\"",
-      [title, content, pinned ?? false]
+      "INSERT INTO announcements (title, content, category, pinned) VALUES ($1, $2, $3, $4) RETURNING id, title, content, category, pinned, created_at AS \"createdAt\"",
+      [title, content, category || "general", pinned ?? false]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
