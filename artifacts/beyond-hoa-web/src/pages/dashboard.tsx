@@ -38,7 +38,8 @@ import {
   Clock, 
   Vote, 
   FileText, 
-  Megaphone 
+  Megaphone,
+  ChevronRight
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -215,116 +216,119 @@ export default function DashboardPage() {
         }
       />
       <PageContent className="space-y-6">
+        
+        {/* 1. Clickable Stat Tiles Row (Dues, Work Orders, Votes, Violations) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card data-testid="card-dues-status" className="border-l-4 border-l-stone-400">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="bg-stone-100 rounded-xl p-3">
-                  <CreditCard className="w-5 h-5 text-stone-700" />
+          
+          {/* Tile 1: Dues Status -> Links to /dues */}
+          <a href="/dues" className="block group">
+            <Card data-testid="card-dues-status" className="border-l-4 border-l-stone-400 group-hover:shadow-md group-hover:scale-[1.01] transition-all cursor-pointer">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-4">
+                  <div className="bg-stone-100 rounded-xl p-3">
+                    <CreditCard className="w-5 h-5 text-stone-700" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground font-medium">Dues Status</p>
+                    <p className="text-xl font-bold text-slate-900">
+                      {stripeConfig?.configured ? "Paid" : "Setup Needed"}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground font-medium">Dues Status</p>
-                  <p className="text-xl font-bold text-slate-900">
-                    {stripeConfig?.configured ? "Paid" : "Setup Needed"}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </a>
 
-          <Card data-testid="card-active-votes" className="border-l-4 border-l-indigo-900">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="bg-indigo-50 rounded-xl p-3">
-                  <Vote className="w-5 h-5 text-indigo-900" />
+          {/* Tile 2: Work Orders -> Links to /work-orders */}
+          <a href="/work-orders" className="block group">
+            <Card data-testid="card-my-work-orders" className="border-l-4 border-l-amber-500 group-hover:shadow-md group-hover:scale-[1.01] transition-all cursor-pointer">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-4">
+                  <div className="bg-amber-50 rounded-xl p-3">
+                    <Wrench className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground font-medium">Work Orders</p>
+                    <p className="text-xl font-bold text-slate-900">{myWorkOrders.length} Active</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground font-medium">Active Votes</p>
-                  <p className="text-xl font-bold text-slate-900">1 Open</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </a>
 
-          <Card data-testid="card-my-work-orders" className="border-l-4 border-l-amber-500">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="bg-amber-50 rounded-xl p-3">
-                  <Wrench className="w-5 h-5 text-amber-600" />
+          {/* Tile 3: Active Votes -> Links to /voting */}
+          <a href="/voting" className="block group">
+            <Card data-testid="card-active-votes" className="border-l-4 border-l-indigo-900 group-hover:shadow-md group-hover:scale-[1.01] transition-all cursor-pointer">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-4">
+                  <div className="bg-indigo-50 rounded-xl p-3">
+                    <Vote className="w-5 h-5 text-indigo-900" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground font-medium">Active Votes</p>
+                    <p className="text-xl font-bold text-slate-900">1 Open</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground font-medium">Work Orders</p>
-                  <p className="text-xl font-bold text-slate-900">{myWorkOrders.length} Active</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </a>
 
-          <Card data-testid="card-open-violations" className="border-l-4 border-l-red-500">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="bg-red-50/80 rounded-xl p-3">
-                  <AlertTriangle className="w-5 h-5 text-red-600" />
+          {/* Tile 4: Violations -> Links to /violations */}
+          <a href="/violations" className="block group">
+            <Card data-testid="card-open-violations" className="border-l-4 border-l-red-500 group-hover:shadow-md group-hover:scale-[1.01] transition-all cursor-pointer">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-4">
+                  <div className="bg-red-50/80 rounded-xl p-3">
+                    <AlertTriangle className="w-5 h-5 text-red-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground font-medium">Violations</p>
+                    <p className="text-xl font-bold text-slate-900">{openViolations}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground font-medium">Violations</p>
-                  <p className="text-xl font-bold text-slate-900">{openViolations}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </a>
+
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <a href="/voting" className="flex items-center justify-center p-4 bg-card border rounded-xl hover:bg-indigo-50/40 hover:border-indigo-200 transition-colors font-medium text-sm space-x-2 text-indigo-950">
-            <Vote className="h-4 w-4" /> <span>Voting</span>
+        {/* 2. Quick Actions Row (2 Items: Calendar & Contact Board) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          
+          {/* Community Calendar */}
+          <a href="/documents#calendar" className="flex items-center justify-between p-4 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-md hover:scale-[1.01] transition-all font-semibold text-sm text-indigo-950 group">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-indigo-50 rounded-lg text-indigo-900">
+                <Clock className="h-5 w-5" />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-slate-900">Community Calendar</p>
+                <p className="text-xs text-muted-foreground font-normal">HOA meetings & events</p>
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
           </a>
-          <a href="/dues" className="flex items-center justify-center p-4 bg-card border rounded-xl hover:bg-indigo-50/40 hover:border-indigo-200 transition-colors font-medium text-sm space-x-2 text-indigo-950">
-            <CreditCard className="h-4 w-4" /> <span>Dues</span>
+
+          {/* Contact Board */}
+          <a href="mailto:board@beyondhoa.com" className="flex items-center justify-between p-4 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-md hover:scale-[1.01] transition-all font-semibold text-sm text-indigo-950 group">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-amber-50 rounded-lg text-amber-600">
+                <Megaphone className="h-5 w-5" />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-slate-900">Contact Board</p>
+                <p className="text-xs text-muted-foreground font-normal">Message the administrators</p>
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
           </a>
-          <a href="/documents" className="flex items-center justify-center p-4 bg-card border rounded-xl hover:bg-indigo-50/40 hover:border-indigo-200 transition-colors font-medium text-sm space-x-2 text-indigo-950">
-            <FileText className="h-4 w-4" /> <span>Documents</span>
-          </a>
+
         </div>
 
+        {/* 3. Bottom Split Layout (Announcements Left, Work Orders Right) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="h-full border-t-2 border-t-indigo-900">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2 text-indigo-950">
-                <Clock className="w-4 h-4 text-indigo-900/70" />
-                Recent Work Orders
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {woLoading ? (
-                <div className="space-y-2">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-12 bg-muted rounded animate-pulse" />
-                  ))}
-                </div>
-              ) : recentWOs.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Wrench className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                  <p className="text-sm">No work orders yet. Submit your first one above.</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-border">
-                  {recentWOs.map((wo) => (
-                    <div key={wo.id} className="py-3 flex items-center justify-between" data-testid={`row-work-order-${wo.id}`}>
-                      <div>
-                        <p className="text-sm font-medium text-slate-900">{wo.title}</p>
-                        <p className="text-xs text-muted-foreground capitalize">{wo.category} · {wo.priority} priority</p>
-                      </div>
-                      <span className={`text-xs px-2 py-0.5 rounded-full border font-medium capitalize ${statusColor(wo.status)}`}>
-                        {wo.status.replace("_", " ")}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
+          
+          {/* Community Announcements (LEFT COLUMN) */}
           <Card className="h-full border-t-2 border-t-amber-500">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2 text-amber-800">
@@ -378,6 +382,45 @@ export default function DashboardPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Recent Work Orders (RIGHT COLUMN) */}
+          <Card className="h-full border-t-2 border-t-indigo-900">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2 text-indigo-950">
+                <Clock className="w-4 h-4 text-indigo-900/70" />
+                Recent Work Orders
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {woLoading ? (
+                <div className="space-y-2">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-12 bg-muted rounded animate-pulse" />
+                  ))}
+                </div>
+              ) : recentWOs.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Wrench className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                  <p className="text-sm">No work orders yet. Submit your first one above.</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {recentWOs.map((wo) => (
+                    <div key={wo.id} className="py-3 flex items-center justify-between" data-testid={`row-work-order-${wo.id}`}>
+                      <div>
+                        <p className="text-sm font-medium text-slate-900">{wo.title}</p>
+                        <p className="text-xs text-muted-foreground capitalize">{wo.category} · {wo.priority} priority</p>
+                      </div>
+                      <span className={`text-xs px-2 py-0.5 rounded-full border font-medium capitalize ${statusColor(wo.status)}`}>
+                        {wo.status.replace("_", " ")}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
         </div>
       </PageContent>
     </>
