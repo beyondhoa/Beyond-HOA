@@ -70,6 +70,7 @@ function ResidentsTab() {
 function AnnouncementsTab() {
   const { toast } = useToast();
   const [addOpen, setAddOpen] = useState(false);
+  const [editAnn, setEditAnn] = useState<Announcement | null>(null);
   const [deleteAnn, setDeleteAnn] = useState<Announcement | null>(null);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -79,6 +80,16 @@ function AnnouncementsTab() {
   const clearForm = () => setForm({ title: "", content: "", category: "general" });
   const API_BASE_URL = import.meta.env.VITE_API_URL;
 
+  const handleOpenEdit = (ann: Announcement) => {
+    setEditAnn(ann);
+    setForm({
+      title: ann.title,
+      content: ann.content,
+      category: ann.category || "general",
+    });
+    setAddOpen(true);
+  };
+  
   const fetchAnnouncements = async () => {
     setIsLoading(true);
     try {
@@ -109,8 +120,15 @@ function AnnouncementsTab() {
         pinned: form.category === "emergency"
       };
 
-      const res = await fetch(`${API_BASE_URL}/api/announcements`, {
-        method: "POST",
+      const isEditing = !!editAnn;
+      const url = isEditing 
+        ? `${API_BASE_URL}/api/announcements/${editAnn.id}` 
+        : `${API_BASE_URL}/api/announcements`;
+      
+      const method = isEditing ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method: method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
@@ -127,15 +145,16 @@ function AnnouncementsTab() {
         throw new Error(parsedError);
       }
 
-      toast({ title: "Announcement Published" });
+      toast({ title: isEditing ? "Announcement Updated" : "Announcement Published" });
       setAddOpen(false);
+      setEditAnn(null);
       clearForm();
       fetchAnnouncements(); 
     } catch (err: any) {
-      console.error("Publishing error detail:", err);
+      console.error("Submission error detail:", err);
       toast({ 
-        title: "Publish Failed", 
-        description: err.message || "Failed to publish announcement.", 
+        title: "Submission Failed", 
+        description: err.message || "Failed to process announcement.", 
         variant: "destructive" 
       });
     } finally {
@@ -164,7 +183,7 @@ function AnnouncementsTab() {
   return (
     <>
       <div className="flex justify-end mb-4">
-        <Button onClick={() => setAddOpen(true)} data-testid="button-add-announcement">
+        <Button onClick={() => { setEditAnn(null); clearForm(); setAddOpen(true); }} data-testid="button-add-announcement">
           <Plus className="w-4 h-4 mr-2" /> Create Announcement
         </Button>
       </div>
@@ -193,15 +212,26 @@ function AnnouncementsTab() {
                           {ann.category || "General"}
                         </span>
                       </div>
-                      <Button 
-                        size="icon" 
-                        variant="ghost" 
-                        className="w-7 h-7 text-destructive hover:text-destructive flex-shrink-0" 
-                        onClick={() => setDeleteAnn(ann)}
-                        title="Remove Announcement"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="w-7 h-7 text-muted-foreground hover:text-foreground" 
+                          onClick={() => handleOpenEdit(ann)}
+                          title="Edit Announcement"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="w-7 h-7 text-destructive hover:text-destructive" 
+                          onClick={() => setDeleteAnn(ann)}
+                          title="Remove Announcement"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
                       <Calendar className="w-3 h-3" /> Published on {ann.createdAt ? new Date(ann.createdAt).toLocaleDateString() : "Recent"}
@@ -217,9 +247,11 @@ function AnnouncementsTab() {
         </Card>
       )}
 
-      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+      <Dialog open={addOpen} onOpenChange={(o) => { if (!o) { setAddOpen(false); setEditAnn(null); clearForm(); } }}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Create Community Announcement</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{editAnn ? "Edit Community Announcement" : "Create Community Announcement"}</DialogTitle>
+          </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4 mt-2">
             <div className="space-y-1.5">
               <Label>Announcement Title</Label>
@@ -256,7 +288,7 @@ function AnnouncementsTab() {
             </div>
             <DialogFooter>
               <Button type="submit" className="w-full" disabled={isPending} data-testid="button-submit-announcement">
-                {isPending ? "Publishing..." : "Publish Announcement"}
+                {isPending ? "Processing..." : editAnn ? "Save Changes" : "Publish Announcement"}
               </Button>
             </DialogFooter>
           </form>
@@ -277,7 +309,7 @@ function AnnouncementsTab() {
       </AlertDialog>
     </>
   );
-}
+} 
 
 function ViolationsTab() {
   const qc = useQueryClient();
