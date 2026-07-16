@@ -37,7 +37,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <img src={iconUrl} alt="Beyond HOA" className="w-9 h-9 rounded-lg" />
             <div>
               <p className="text-white font-semibold text-sm leading-tight">Beyond HOA</p>
-              <p className="text-indigo-200 text-xs">Community Portal</p>
+              <p className="text-indigo-200 text-sm">Community Portal</p>
             </div>
           </div>
         </div>
@@ -68,8 +68,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         <div className="p-3 border-t border-indigo-900/60">
           <div className="px-3 py-2 mb-2">
-            <p className="text-white text-xs font-medium truncate">{resident?.name}</p>
-            <p className="text-indigo-200 text-xs truncate">
+            <p className="text-white text-sm font-medium truncate">{resident?.name}</p>
+            <p className="text-indigo-200 text-sm truncate">
               {isBoardUser ? `${resident?.notes} · Unit ${resident?.unit}` : `Unit ${resident?.unit}`}
             </p>
           </div>
