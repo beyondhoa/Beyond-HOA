@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   useListWorkOrders,
@@ -38,44 +38,25 @@ import {
   Clock, 
   Vote, 
   FileText, 
-  MessageSquare, 
   Megaphone 
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-// Option A: True Parity Seed Data mirrored from Mobile
-const SEED_ANNOUNCEMENTS = [
-  {
-    id: '1',
-    title: 'Annual Pool Maintenance',
-    content: 'The community pool will be closed for seasonal maintenance from Monday through Wednesday next week.',
-    category: 'maintenance',
-    isPinned: true,
-    date: 'Oct 12'
-  },
-  {
-    id: '2',
-    title: 'Budget Vote Approaching',
-    content: 'Please review the proposed 2027 budget documents ahead of the upcoming community vote.',
-    category: 'governance',
-    isPinned: true,
-    date: 'Oct 10'
-  },
-  {
-    id: '3',
-    title: 'Trash Collection Delay',
-    content: 'Due to the holiday, trash and recycling pickup will be delayed by one day this week.',
-    category: 'general',
-    isPinned: false,
-    date: 'Oct 09'
-  }
-];
+interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  category: string;
+  pinned: boolean;
+  createdAt?: string;
+}
 
 const categoryColors: Record<string, { bg: string, text: string, dot: string }> = {
   governance: { bg: 'bg-blue-50 dark:bg-blue-950/50', text: 'text-blue-700 dark:text-blue-300', dot: 'bg-blue-600' },
   maintenance: { bg: 'bg-amber-50 dark:bg-amber-950/50', text: 'text-amber-700 dark:text-amber-300', dot: 'bg-amber-500' },
   general: { bg: 'bg-green-50 dark:bg-green-950/50', text: 'text-green-700 dark:text-green-300', dot: 'bg-green-500' },
-  urgent: { bg: 'bg-red-50 dark:bg-red-950/50', text: 'text-red-700 dark:text-red-300', dot: 'bg-red-500' },
+  emergency: { bg: 'bg-red-50 dark:bg-red-950/50', text: 'text-red-700 dark:text-red-300', dot: 'bg-red-500' },
+  event: { bg: 'bg-purple-50 dark:bg-purple-950/50', text: 'text-purple-700 dark:text-purple-300', dot: 'bg-purple-500' },
 };
 
 function statusColor(status: string) {
@@ -94,6 +75,8 @@ export default function DashboardPage() {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ title: "", category: "plumbing", priority: "medium", description: "" });
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [annLoading, setAnnLoading] = useState(false);
 
   const { data: workOrders, isLoading: woLoading } = useListWorkOrders({ query: { queryKey: getListWorkOrdersQueryKey() } });
   const { data: violations } = useListViolations({ query: { queryKey: getListViolationsQueryKey() } });
@@ -101,6 +84,27 @@ export default function DashboardPage() {
 
   const myWorkOrders = workOrders?.filter((wo) => wo.resident_name === resident?.name) ?? [];
   const openViolations = violations?.filter((v) => v.status === "open").length ?? 0;
+
+  const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+
+  const fetchAnnouncements = async () => {
+    setAnnLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/announcements`);
+      if (res.ok) {
+        const data = await res.json();
+        setAnnouncements(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch announcements:", err);
+    } finally {
+      setAnnLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAnnouncements();
+  }, []);
 
   const createWO = useCreateWorkOrder({
     mutation: {
@@ -211,9 +215,7 @@ export default function DashboardPage() {
         }
       />
       <PageContent className="space-y-6">
-        {/* 1. Stat Tiles Row (Extended to 4 items) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Dues Status */}
           <Card data-testid="card-dues-status">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
@@ -230,7 +232,6 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Active Votes (New Parity Addition) */}
           <Card data-testid="card-active-votes">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
@@ -245,7 +246,6 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* My Work Orders */}
           <Card data-testid="card-my-work-orders">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
@@ -260,7 +260,6 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Open Violations */}
           <Card data-testid="card-open-violations">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
@@ -276,7 +275,6 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* 2. Quick Actions Row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <a href="/voting" className="flex items-center justify-center p-4 bg-card border rounded-xl hover:bg-accent transition-colors font-medium text-sm space-x-2">
             <Vote className="h-4 w-4" /> <span>Voting</span>
@@ -289,9 +287,7 @@ export default function DashboardPage() {
           </a>
         </div>
 
-        {/* Bottom Split Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* 3. Recent Work Orders Section */}
           <Card className="h-full">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
@@ -329,7 +325,6 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* 4. Community Announcements Section */}
           <Card className="h-full">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
@@ -338,34 +333,49 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {SEED_ANNOUNCEMENTS
-                .slice()
-                .sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0))
-                .map((announcement) => {
-                  const colors = categoryColors[announcement.category] || categoryColors.general;
-                  return (
-                    <div 
-                      key={announcement.id} 
-                      className="p-4 rounded-xl border bg-card hover:bg-accent/30 transition-colors flex flex-col space-y-2"
-                    >
-                      <div className="flex justify-between items-start gap-4">
-                        <div className="flex items-center gap-2">
-                          <span className={`h-2 w-2 rounded-full ${colors.dot}`} />
-                          <h4 className="font-semibold text-sm tracking-tight text-foreground">{announcement.title}</h4>
+              {annLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-20 bg-muted rounded animate-pulse" />
+                  ))}
+                </div>
+              ) : announcements.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Megaphone className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                  <p className="text-sm">No community announcements have been posted yet.</p>
+                </div>
+              ) : (
+                announcements
+                  .slice()
+                  .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0))
+                  .map((announcement) => {
+                    const colors = categoryColors[announcement.category] || categoryColors.general;
+                    return (
+                      <div 
+                        key={announcement.id} 
+                        className="p-4 rounded-xl border bg-card hover:bg-accent/30 transition-colors flex flex-col space-y-2"
+                      >
+                        <div className="flex justify-between items-start gap-4">
+                          <div className="flex items-center gap-2">
+                            <span className={`h-2 w-2 rounded-full ${colors.dot}`} />
+                            <h4 className="font-semibold text-sm tracking-tight text-foreground">{announcement.title}</h4>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            {announcement.pinned && (
+                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 uppercase tracking-wider font-bold">Pinned</Badge>
+                            )}
+                            <span className="text-xs text-muted-foreground">
+                              {announcement.createdAt ? new Date(announcement.createdAt).toLocaleDateString(undefined, { month: 'short', day: '2-digit' }) : "Recent"}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          {announcement.isPinned && (
-                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 uppercase tracking-wider font-bold">Pinned</Badge>
-                          )}
-                          <span className="text-xs text-muted-foreground">{announcement.date}</span>
-                        </div>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          {announcement.content}
+                        </p>
                       </div>
-                      <p className="text-sm text-muted-foreground leading-relaxed">
-                        {announcement.content}
-                      </p>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+              )}
             </CardContent>
           </Card>
         </div>
