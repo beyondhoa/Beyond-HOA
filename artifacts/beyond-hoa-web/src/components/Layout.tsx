@@ -1,4 +1,3 @@
-import React from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -6,47 +5,47 @@ import {
   FileText,
   CreditCard,
   Vote,
-  Users,
   ShieldAlert,
   LogOut,
+  Building2,
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Logo } from "@/components/Logo"; 
+import iconUrl from "@/assets/icon.png";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { resident, logout } = useAuth();
 
-  // Determine if the logged-in user is a board member
   const normalizedUserRole = (resident?.notes ?? "").trim().toLowerCase();
   const authorizedBoardRoles = ["president", "treasurer", "secretary", "board member", "board"];
   const isBoardUser = authorizedBoardRoles.includes(normalizedUserRole);
 
-  // Generate dynamic navigation items based on user role
   const navItems = [
     { href: "/dashboard", label: "Dashboard", icon: Home },
     { href: "/documents", label: "Documents", icon: FileText },
     { href: "/dues", label: "Dues & Payments", icon: CreditCard },
     { href: "/voting", label: "Voting", icon: Vote },
-    { href: "/residents", label: "Residents", icon: Users },
     ...(isBoardUser ? [{ href: "/board", label: "Board Portal", icon: ShieldAlert }] : []),
   ];
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      {/* Dark Sidebar matched to match your custom deep Indigo theme */}
       <aside className="w-64 flex-shrink-0 bg-indigo-950 flex flex-col shadow-xl border-r border-indigo-900/40">
         <div className="p-5 border-b border-indigo-900/60">
-          {/* Custom Styled Responsive Vector Logo */}
-          <Logo className="h-10 w-auto" showText={true} />
+          <div className="flex items-center gap-3">
+            <img src={iconUrl} alt="Beyond HOA" className="w-9 h-9 rounded-lg" />
+            <div>
+              <p className="text-white font-semibold text-sm leading-tight">Beyond HOA</p>
+              <p className="text-indigo-200 text-sm">Community Portal</p>
+            </div>
+          </div>
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = location === item.href || (location && typeof location === 'string' && location.startsWith(item.href + "/"));
-            
+            const isActive = location === item.href || (location && typeof location === 'object' && location.switchTo) ? location.startsWith(item.href + "/") : false;
             return (
               <Link
                 key={item.href}
@@ -67,7 +66,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        {/* Sidebar Footer with Session Management */}
         <div className="p-3 border-t border-indigo-900/60">
           <div className="px-3 py-2 mb-2">
             <p className="text-white text-sm font-medium truncate">{resident?.name}</p>
@@ -95,7 +93,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Layout helper layouts used throughout other sub-pages
 export function PageHeader({ title, subtitle, action }: { title: string; subtitle?: string; action?: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between px-8 pt-8 pb-6">
@@ -110,4 +107,8 @@ export function PageHeader({ title, subtitle, action }: { title: string; subtitl
 
 export function PageContent({ children }: { children: React.ReactNode }) {
   return <div className="px-8 pb-8">{children}</div>;
+}
+
+export function BuildingIcon() {
+  return <Building2 className="w-4 h-4" />;
 }
