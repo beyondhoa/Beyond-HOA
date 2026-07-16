@@ -1,9 +1,10 @@
+import React, { useState } from 'react';
 import { useListDocuments, getListDocumentsQueryKey } from "@workspace/api-client-react";
 import { PageHeader, PageContent } from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { FileText, ExternalLink, Search } from "lucide-react";
-import { useState } from "react";
+import SmartSearchDocs from '@/components/SmartSearchDocs'; // Added your AI Search Component import
 
 function categoryBadge(category: string) {
   const map: Record<string, string> = {
@@ -30,17 +31,29 @@ export default function DocumentsPage() {
     <>
       <PageHeader title="Documents" subtitle="HOA bylaws, meeting minutes, and community guidelines" />
       <PageContent>
+        {/* 🌟 1. Smart AI Search (Placed prominently at the top of the content) */}
+        <div className="mb-8">
+          <SmartSearchDocs />
+        </div>
+
+        <hr className="my-8 border-t border-muted" />
+
+        {/* 📂 2. Standard Document Manager Browser */}
+        <h3 className="text-lg font-semibold text-foreground mb-4">Browse All Files</h3>
+        
+        {/* Manual Keyword Filter */}
         <div className="mb-4 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search documents..."
+            placeholder="Filter list by title or category..."
             className="pl-9"
             data-testid="input-search-documents"
           />
         </div>
 
+        {/* Documents List */}
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3, 4].map((i) => (
