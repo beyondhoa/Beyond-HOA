@@ -822,14 +822,25 @@ function ViolationsTab() {
       </Dialog>
 
       <AlertDialog open={!!deleteViolation} onOpenChange={(o) => { if (!o) setDeleteViolation(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader><DialogTitle>Delete Violation</AlertDialogTitle><AlertDialogDescription>Delete violation for {deleteViolation?.resident_name}? This cannot be undone.</AlertDialogDescription></AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction className="bg-destructive text-destructive-foreground" onClick={() => deleteViolation && deleteV.mutate({ id: deleteViolation.id })} data-testid="button-confirm-delete-violation">Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+  <AlertDialogContent>
+    <AlertDialogHeader>
+      <AlertDialogTitle>Delete Violation</AlertDialogTitle>
+      <AlertDialogDescription>
+        Delete violation for {deleteViolation?.resident_name}? This cannot be undone.
+      </AlertDialogDescription>
+    </AlertDialogHeader>
+    <AlertDialogFooter>
+      <AlertDialogCancel>Cancel</AlertDialogCancel>
+      <AlertDialogAction 
+        className="bg-destructive text-destructive-foreground hover:bg-destructive/90" 
+        onClick={() => deleteViolation && deleteV.mutate({ id: deleteViolation.id })} 
+        data-testid="button-confirm-delete-violation"
+      >
+        Delete
+      </AlertDialogAction>
+    </AlertDialogFooter>
+  </AlertDialogContent>
+</AlertDialog>
     </>
   );
 }
