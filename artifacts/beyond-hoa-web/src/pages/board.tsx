@@ -173,50 +173,7 @@ function OverviewTab({ setTab }: OverviewTabProps) {
 
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        
-        <div onClick={() => setTab("announcements")} className="flex items-center justify-between p-4 bg-gradient-to-r from-indigo-950 to-indigo-900 border border-indigo-950 rounded-xl hover:shadow-md hover:scale-[1.01] transition-all font-semibold text-sm text-white group cursor-pointer">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-white/10 rounded-lg">
-              <Megaphone className="h-5 w-5 text-amber-400" />
-            </div>
-            <div className="text-left">
-              <p className="font-semibold text-white">Broadcast Announcement</p>
-              <p className="text-sm text-indigo-200 font-normal">Pin updates to dashboards</p>
-            </div>
-          </div>
-          <ChevronRight className="h-4 w-4 text-indigo-300 group-hover:translate-x-1 transition-transform" />
-        </div>
-
-        <div onClick={() => setTab("vendors")} className="flex items-center justify-between p-4 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-md hover:scale-[1.01] transition-all font-semibold text-sm text-indigo-950 group cursor-pointer">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-indigo-50 rounded-lg text-indigo-900">
-              <Truck className="h-5 w-5 text-indigo-700" />
-            </div>
-            <div className="text-left">
-              <p className="font-semibold text-slate-900">Manage Vendors</p>
-              <p className="text-sm text-muted-foreground font-normal">Directory & contractors</p>
-            </div>
-          </div>
-          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-        </div>
-
-        <div onClick={() => setTab("residents")} className="flex items-center justify-between p-4 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-md hover:scale-[1.01] transition-all font-semibold text-sm text-indigo-950 group cursor-pointer">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-amber-50 rounded-lg text-amber-600">
-              <Users className="h-5 w-5 text-amber-600" />
-            </div>
-            <div className="text-left">
-              <p className="font-semibold text-slate-900">Resident Directory</p>
-              <p className="text-sm text-muted-foreground font-normal">Units, contact info, & notes</p>
-            </div>
-          </div>
-          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-        </div>
-
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
         <Card className="h-full border-t-2 border-t-amber-500">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
@@ -252,61 +209,64 @@ function OverviewTab({ setTab }: OverviewTabProps) {
           </CardContent>
         </Card>
 
+        <Card className="h-full border-t-2 border-t-blue-600">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2 text-blue-950">
+              <Plus className="w-4 h-4 text-blue-600/70" />
+              Architectural Requests
+            </CardTitle>
+            <span onClick={() => setTab("violations")} className="text-xs text-blue-900 hover:underline cursor-pointer font-semibold">View All</span>
+          </CardHeader>
+          <CardContent>
+            <div className="divide-y divide-border border rounded-xl bg-stone-50/30 overflow-hidden">
+              <div className="p-3 flex items-center justify-between text-sm bg-card">
+                <div>
+                  <p className="font-semibold text-slate-900">Solar Panel Installation</p>
+                  <p className="text-xs text-muted-foreground">Unit 142 · Submitted 3 days ago</p>
+                </div>
+                <Badge className="bg-amber-50 text-amber-800 border-amber-200">Pending Review</Badge>
+              </div>
+              <div className="p-3 flex items-center justify-between text-sm bg-card">
+                <div>
+                  <p className="font-semibold text-slate-900">Rear Deck Extension</p>
+                  <p className="text-xs text-muted-foreground">Unit 108 · Submitted 1 week ago</p>
+                </div>
+                <Badge className="bg-indigo-50 text-indigo-900 border-indigo-200/50">In Progress</Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="h-full border-t-2 border-t-indigo-900">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2 text-indigo-950">
               <ShieldAlert className="w-4 h-4 text-indigo-900/70" />
-              Violations & Architectural Requests
+              Open Violations
             </CardTitle>
             <span onClick={() => setTab("violations")} className="text-xs text-indigo-900 hover:underline cursor-pointer font-semibold">View All</span>
           </CardHeader>
-          <CardContent className="space-y-4">
-            
-            <div className="space-y-2">
-              <p className="text-xs font-bold uppercase tracking-wider text-indigo-900">Architectural Requests</p>
-              <div className="divide-y divide-border border rounded-xl bg-stone-50/30 overflow-hidden">
-                <div className="p-3 flex items-center justify-between text-sm bg-card">
-                  <div>
-                    <p className="font-semibold text-slate-900">Solar Panel Installation</p>
-                    <p className="text-xs text-muted-foreground">Unit 142 · Submitted 3 days ago</p>
-                  </div>
-                  <Badge className="bg-amber-50 text-amber-800 border-amber-200">Pending Review</Badge>
-                </div>
-                <div className="p-3 flex items-center justify-between text-sm bg-card">
-                  <div>
-                    <p className="font-semibold text-slate-900">Rear Deck Extension</p>
-                    <p className="text-xs text-muted-foreground">Unit 108 · Submitted 1 week ago</p>
-                  </div>
-                  <Badge className="bg-indigo-50 text-indigo-900 border-indigo-200/50">In Progress</Badge>
-                </div>
+          <CardContent>
+            {openViolations.length === 0 ? (
+              <div className="text-center py-4 border border-dashed rounded-xl bg-card">
+                <p className="text-xs text-muted-foreground">No open violations on record.</p>
               </div>
-            </div>
-
-            <div className="space-y-2 pt-2">
-              <p className="text-xs font-bold uppercase tracking-wider text-red-600">Open Violations</p>
-              {openViolations.length === 0 ? (
-                <div className="text-center py-4 border border-dashed rounded-xl bg-card">
-                  <p className="text-xs text-muted-foreground">No open violations on record.</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-border border rounded-xl overflow-hidden bg-card">
-                  {openViolations.slice(0, 3).map((vio) => (
-                    <div key={vio.id} className="p-3 flex items-center justify-between text-sm">
-                      <div>
-                        <p className="font-semibold text-slate-900">{vio.violation_type || "Property Infraction"}</p>
-                        <p className="text-xs text-muted-foreground capitalize">
-                          Unit {vio.unit} · Issued: {new Date(vio.incident_date || "").toLocaleDateString()}
-                        </p>
-                      </div>
-                      <Badge className="bg-red-50 text-red-700 border-red-200">
-                        {vio.status}
-                      </Badge>
+            ) : (
+              <div className="divide-y divide-border border rounded-xl overflow-hidden bg-card">
+                {openViolations.slice(0, 3).map((vio) => (
+                  <div key={vio.id} className="p-3 flex items-center justify-between text-sm">
+                    <div>
+                      <p className="font-semibold text-slate-900">{vio.violation_type || "Property Infraction"}</p>
+                      <p className="text-xs text-muted-foreground capitalize">
+                        Unit {vio.unit} · Issued: {new Date(vio.incident_date || "").toLocaleDateString()}
+                      </p>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
+                    <Badge className="bg-red-50 text-red-700 border-red-200">
+                      {vio.status}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
