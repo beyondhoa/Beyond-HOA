@@ -7,16 +7,37 @@ import {
 import type { Violation, WorkOrder, Vendor } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { PageHeader, PageContent } from "@/components/Layout";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Pencil, Upload, Loader2, ShieldAlert, Store, Wrench, MessageSquarePlus, MessageSquare, Megaphone, Calendar, Users } from "lucide-react";
+import { 
+  Plus, 
+  Trash2, 
+  Pencil, 
+  Upload, 
+  Loader2, 
+  ShieldAlert, 
+  Store, 
+  Wrench, 
+  MessageSquarePlus, 
+  MessageSquare, 
+  Megaphone, 
+  Calendar, 
+  Users,
+  CreditCard,
+  Vote,
+  ChevronRight,
+  Truck,
+  LayoutDashboard,
+  AlertTriangle
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ResidentsPage from "@/pages/residents";
 
@@ -40,18 +61,26 @@ function statusColor(s: string) {
 }
 
 export default function BoardPage() {
+  const [activeTab, setActiveTab] = useState("overview");
+
   return (
     <>
       <PageHeader title="Board Dashboard" subtitle="Manage violations, vendors, work orders, and announcements" />
       <PageContent>
-        <Tabs defaultValue="workorders">
-          <TabsList className="mb-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="mb-2">
+            <TabsTrigger value="overview" data-testid="tab-overview"><LayoutDashboard className="w-4 h-4 mr-2" />Overview</TabsTrigger>
             <TabsTrigger value="workorders" data-testid="tab-workorders"><Wrench className="w-4 h-4 mr-2" />Work Orders</TabsTrigger>
             <TabsTrigger value="announcements" data-testid="tab-announcements"><Megaphone className="w-4 h-4 mr-2" />Announcements</TabsTrigger>
             <TabsTrigger value="violations" data-testid="tab-violations"><ShieldAlert className="w-4 h-4 mr-2" />Violations</TabsTrigger>
             <TabsTrigger value="vendors" data-testid="tab-vendors"><Store className="w-4 h-4 mr-2" />Vendors</TabsTrigger>
             <TabsTrigger value="residents" data-testid="tab-residents"><Users className="w-4 h-4 mr-2" />Residents</TabsTrigger>
           </TabsList>
+          
+          <TabsContent value="overview">
+            <OverviewTab setTab={setActiveTab} />
+          </TabsContent>
+
           <TabsContent value="violations"><ViolationsTab /></TabsContent>
           <TabsContent value="vendors"><VendorsTab /></TabsContent>
           <TabsContent value="workorders"><WorkOrdersTab /></TabsContent>
@@ -60,6 +89,229 @@ export default function BoardPage() {
         </Tabs>
       </PageContent>
     </>
+  );
+}
+
+interface OverviewTabProps {
+  setTab: (tab: string) => void;
+}
+
+function OverviewTab({ setTab }: OverviewTabProps) {
+  const { data: workOrders } = useListWorkOrders({ query: { queryKey: getListWorkOrdersQueryKey() } });
+  const { data: violations } = useListViolations({ query: { queryKey: getListViolationsQueryKey() } });
+
+  const activeWOs = workOrders?.filter(wo => wo.status !== "completed" && wo.status !== "resolved") ?? [];
+  const openViolations = violations?.filter(v => v.status === "open") ?? [];
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <div onClick={() => setTab("residents")} className="block group cursor-pointer">
+          <Card className="border-l-4 border-l-stone-400 group-hover:shadow-md group-hover:scale-[1.01] transition-all h-full">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="bg-stone-100 rounded-xl p-3">
+                  <CreditCard className="w-5 h-5 text-stone-700" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground font-medium">Outstanding Dues</p>
+                  <p className="text-xl font-bold text-slate-900">$1,420.00</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div onClick={() => setTab("workorders")} className="block group cursor-pointer">
+          <Card className="border-l-4 border-l-amber-500 group-hover:shadow-md group-hover:scale-[1.01] transition-all h-full">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="bg-amber-50 rounded-xl p-3">
+                  <Wrench className="w-5 h-5 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground font-medium">Active Work Orders</p>
+                  <p className="text-xl font-bold text-slate-900">{activeWOs.length} Requests</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="block group h-full">
+          <Card className="border-l-4 border-l-indigo-900 h-full">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="bg-indigo-50 rounded-xl p-3">
+                  <Vote className="w-5 h-5 text-indigo-900" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground font-medium">Active Votes</p>
+                  <p className="text-xl font-bold text-slate-900">2 Ballots</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div onClick={() => setTab("violations")} className="block group cursor-pointer">
+          <Card className="border-l-4 border-l-red-500 group-hover:shadow-md group-hover:scale-[1.01] transition-all h-full">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="bg-red-50/80 rounded-xl p-3">
+                  <AlertTriangle className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground font-medium">Open Violations</p>
+                  <p className="text-xl font-bold text-slate-900">{openViolations.length} Pending</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        
+        <div onClick={() => setTab("announcements")} className="flex items-center justify-between p-4 bg-gradient-to-r from-indigo-950 to-indigo-900 border border-indigo-950 rounded-xl hover:shadow-md hover:scale-[1.01] transition-all font-semibold text-sm text-white group cursor-pointer">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-white/10 rounded-lg">
+              <Megaphone className="h-5 w-5 text-amber-400" />
+            </div>
+            <div className="text-left">
+              <p className="font-semibold text-white">Broadcast Announcement</p>
+              <p className="text-sm text-indigo-200 font-normal">Pin updates to dashboards</p>
+            </div>
+          </div>
+          <ChevronRight className="h-4 w-4 text-indigo-300 group-hover:translate-x-1 transition-transform" />
+        </div>
+
+        <div onClick={() => setTab("vendors")} className="flex items-center justify-between p-4 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-md hover:scale-[1.01] transition-all font-semibold text-sm text-indigo-950 group cursor-pointer">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-indigo-50 rounded-lg text-indigo-900">
+              <Truck className="h-5 w-5 text-indigo-700" />
+            </div>
+            <div className="text-left">
+              <p className="font-semibold text-slate-900">Manage Vendors</p>
+              <p className="text-sm text-muted-foreground font-normal">Directory & contractors</p>
+            </div>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+        </div>
+
+        <div onClick={() => setTab("residents")} className="flex items-center justify-between p-4 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-md hover:scale-[1.01] transition-all font-semibold text-sm text-indigo-950 group cursor-pointer">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-amber-50 rounded-lg text-amber-600">
+              <Users className="h-5 w-5 text-amber-600" />
+            </div>
+            <div className="text-left">
+              <p className="font-semibold text-slate-900">Resident Directory</p>
+              <p className="text-sm text-muted-foreground font-normal">Units, contact info, & notes</p>
+            </div>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+        </div>
+
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <Card className="h-full border-t-2 border-t-amber-500">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2 text-amber-800">
+              <Wrench className="w-4 h-4 text-amber-600/70" />
+              Pending Maintenance Tasks
+            </CardTitle>
+            <span onClick={() => setTab("workorders")} className="text-xs text-amber-700 hover:underline cursor-pointer font-semibold">View All</span>
+          </CardHeader>
+          <CardContent>
+            {activeWOs.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Wrench className="w-8 h-8 mx-auto mb-2 opacity-40 text-stone-400" />
+                <p className="text-sm">No pending maintenance requests right now.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-border">
+                {activeWOs.slice(0, 5).map((wo) => (
+                  <div key={wo.id} className="py-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">{wo.title}</p>
+                      <p className="text-sm text-muted-foreground capitalize">
+                        Unit {wo.unit} · {wo.category} · {wo.priority}
+                      </p>
+                    </div>
+                    <span className={`text-sm px-2 py-0.5 rounded-full border font-medium capitalize ${statusColor(wo.status)}`}>
+                      {wo.status.replace("_", " ")}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="h-full border-t-2 border-t-indigo-900">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2 text-indigo-950">
+              <ShieldAlert className="w-4 h-4 text-indigo-900/70" />
+              Violations & Architectural Requests
+            </CardTitle>
+            <span onClick={() => setTab("violations")} className="text-xs text-indigo-900 hover:underline cursor-pointer font-semibold">View All</span>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            
+            <div className="space-y-2">
+              <p className="text-xs font-bold uppercase tracking-wider text-indigo-900">Architectural Requests</p>
+              <div className="divide-y divide-border border rounded-xl bg-stone-50/30 overflow-hidden">
+                <div className="p-3 flex items-center justify-between text-sm bg-card">
+                  <div>
+                    <p className="font-semibold text-slate-900">Solar Panel Installation</p>
+                    <p className="text-xs text-muted-foreground">Unit 142 · Submitted 3 days ago</p>
+                  </div>
+                  <Badge className="bg-amber-50 text-amber-800 border-amber-200">Pending Review</Badge>
+                </div>
+                <div className="p-3 flex items-center justify-between text-sm bg-card">
+                  <div>
+                    <p className="font-semibold text-slate-900">Rear Deck Extension</p>
+                    <p className="text-xs text-muted-foreground">Unit 108 · Submitted 1 week ago</p>
+                  </div>
+                  <Badge className="bg-indigo-50 text-indigo-900 border-indigo-200/50">In Progress</Badge>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2 pt-2">
+              <p className="text-xs font-bold uppercase tracking-wider text-red-600">Open Violations</p>
+              {openViolations.length === 0 ? (
+                <div className="text-center py-4 border border-dashed rounded-xl bg-card">
+                  <p className="text-xs text-muted-foreground">No open violations on record.</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-border border rounded-xl overflow-hidden bg-card">
+                  {openViolations.slice(0, 3).map((vio) => (
+                    <div key={vio.id} className="p-3 flex items-center justify-between text-sm">
+                      <div>
+                        <p className="font-semibold text-slate-900">{vio.violation_type || "Property Infraction"}</p>
+                        <p className="text-xs text-muted-foreground capitalize">
+                          Unit {vio.unit} · Issued: {new Date(vio.incident_date || "").toLocaleDateString()}
+                        </p>
+                      </div>
+                      <Badge className="bg-red-50 text-red-700 border-red-200">
+                        {vio.status}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+          </CardContent>
+        </Card>
+
+      </div>
+    </div>
   );
 }
 
@@ -549,7 +801,7 @@ function ViolationsTab() {
 
       <AlertDialog open={!!deleteViolation} onOpenChange={(o) => { if (!o) setDeleteViolation(null); }}>
         <AlertDialogContent>
-          <AlertDialogHeader><AlertDialogTitle>Delete Violation</AlertDialogTitle><AlertDialogDescription>Delete violation for {deleteViolation?.resident_name}? This cannot be undone.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogHeader><DialogTitle>Delete Violation</DialogTitle><AlertDialogDescription>Delete violation for {deleteViolation?.resident_name}? This cannot be undone.</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction className="bg-destructive text-destructive-foreground" onClick={() => deleteViolation && deleteV.mutate({ id: deleteViolation.id })} data-testid="button-confirm-delete-violation">Delete</AlertDialogAction>
@@ -809,7 +1061,7 @@ function WorkOrdersTab() {
 
       <AlertDialog open={!!deleteWO} onOpenChange={(o) => { if (!o) setDeleteWO(null); }}>
         <AlertDialogContent>
-          <AlertDialogHeader><AlertDialogTitle>Delete Work Order</AlertDialogTitle><AlertDialogDescription>Delete "{deleteWO?.title}"? This cannot be undone.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogHeader><DialogTitle>Delete Work Order</DialogTitle><AlertDialogDescription>Delete "{deleteWO?.title}"? This cannot be undone.</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction className="bg-destructive text-destructive-foreground" onClick={() => deleteWO && deleteWOmut.mutate({ id: deleteWO.id })} data-testid="button-confirm-delete-wo">Delete</AlertDialogAction>
