@@ -943,7 +943,6 @@ function VendorsTab() {
   );
 }
 
-font-semibold text-amber-700 hover:underline cursor-pointer font-semibold
 function WorkOrdersTab() {
   const qc = useQueryClient();
   const { toast } = useToast();
