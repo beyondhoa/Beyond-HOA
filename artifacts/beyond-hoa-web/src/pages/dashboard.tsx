@@ -149,7 +149,7 @@ export default function DashboardPage() {
                     <CreditCard className="w-5 h-5 text-stone-700" />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground font-medium">Dues Status</p>
+                    <p className="text-sm font-semibold text-muted-foreground font-medium">Dues Status</p>
                     <p className="text-xl font-bold text-slate-900">
                       {stripeConfig?.configured ? "Paid" : "Setup Needed"}
                     </p>
@@ -169,7 +169,7 @@ export default function DashboardPage() {
                       <Wrench className="w-5 h-5 text-amber-600" />
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground font-medium">
+                      <p className="text-sm font-semibold text-muted-foreground font-medium">
                         Work Orders
                       </p>
                       <p className="text-xl font-bold text-slate-900">{myWorkOrders.length} Active</p>
@@ -260,7 +260,7 @@ export default function DashboardPage() {
                     <Vote className="w-5 h-5 text-indigo-900" />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground font-medium">Active Votes</p>
+                    <p className="text-sm font-semibold text-muted-foreground font-medium">Active Votes</p>
                     <p className="text-xl font-bold text-slate-900">1 Open</p>
                   </div>
                 </div>
