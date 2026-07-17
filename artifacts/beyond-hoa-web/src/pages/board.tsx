@@ -30,13 +30,13 @@ interface Announcement {
 
 function statusColor(s: string) {
   const m: Record<string, string> = { 
-    open: "bg-yellow-100 text-yellow-800", 
-    resolved: "bg-green-100 text-green-800", 
-    appealed: "bg-blue-100 text-blue-800", 
-    in_progress: "bg-blue-100 text-blue-800", 
-    completed: "bg-green-100 text-green-800" 
+    open: "bg-amber-50 text-amber-800 border-amber-200", 
+    resolved: "bg-stone-100 text-stone-800 border-stone-200", 
+    appealed: "bg-indigo-50 text-indigo-900 border-indigo-200/50", 
+    in_progress: "bg-indigo-50 text-indigo-900 border-indigo-200/50", 
+    completed: "bg-stone-100 text-stone-800 border-stone-200" 
   };
-  return m[s] ?? "bg-gray-100 text-gray-800";
+  return m[s] ?? "bg-stone-50 text-stone-600 border border-stone-200";
 }
 
 export default function BoardPage() {
@@ -183,7 +183,7 @@ function AnnouncementsTab() {
   return (
     <>
       <div className="flex justify-end mb-4">
-        <Button onClick={() => { setEditAnn(null); clearForm(); setAddOpen(true); }} data-testid="button-add-announcement">
+        <Button onClick={() => { setEditAnn(null); clearForm(); setAddOpen(true); }} className="bg-indigo-950 hover:bg-indigo-900 text-white" data-testid="button-add-announcement">
           <Plus className="w-4 h-4 mr-2" /> Create Announcement
         </Button>
       </div>
@@ -192,23 +192,23 @@ function AnnouncementsTab() {
         <div className="text-center py-12 text-muted-foreground">Loading announcements...</div>
       ) : announcements.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          <Megaphone className="w-8 h-8 mx-auto mb-2 opacity-40" />
+          <Megaphone className="w-8 h-8 mx-auto mb-2 opacity-40 text-stone-400" />
           <p className="text-sm">No announcements posted yet.</p>
         </div>
       ) : (
-        <Card>
+        <Card className="border-t-2 border-t-amber-500">
           <CardContent className="p-0">
             <div className="divide-y divide-border">
               {announcements.map((ann) => (
                 <div key={ann.id} className="px-5 py-4 flex items-start gap-4" data-testid={`row-announcement-${ann.id}`}>
-                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                    <Megaphone className="w-4 h-4 text-blue-700" />
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
+                    <Megaphone className="w-4 h-4 text-amber-600" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2 w-full">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium">{ann.title}</p>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-700 capitalize font-medium">
+                        <p className="text-sm font-semibold text-slate-900">{ann.title}</p>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-900 capitalize font-medium">
                           {ann.category || "General"}
                         </span>
                       </div>
@@ -233,10 +233,10 @@ function AnnouncementsTab() {
                         </Button>
                       </div>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-                      <Calendar className="w-3 h-3" /> Published on {ann.createdAt ? new Date(ann.createdAt).toLocaleDateString() : "Recent"}
+                    <p className="text-sm text-muted-foreground mt-0.5 flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5" /> Published on {ann.createdAt ? new Date(ann.createdAt).toLocaleDateString() : "Recent"}
                     </p>
-                    <p className="text-xs text-foreground mt-2 bg-muted/20 p-2.5 rounded border leading-relaxed">
+                    <p className="text-sm text-foreground mt-2 bg-muted/20 p-2.5 rounded border border-stone-200 leading-relaxed">
                       {ann.content}
                     </p>
                   </div>
@@ -287,7 +287,7 @@ function AnnouncementsTab() {
               />
             </div>
             <DialogFooter>
-              <Button type="submit" className="w-full" disabled={isPending} data-testid="button-submit-announcement">
+              <Button type="submit" className="w-full bg-indigo-950 hover:bg-indigo-900 text-white" disabled={isPending} data-testid="button-submit-announcement">
                 {isPending ? "Processing..." : editAnn ? "Save Changes" : "Publish Announcement"}
               </Button>
             </DialogFooter>
@@ -421,7 +421,7 @@ function ViolationsTab() {
   return (
     <>
       <div className="flex justify-end mb-4">
-        <Button onClick={() => { setEditViolation(null); clearForm(); setAddOpen(true); }} data-testid="button-add-violation">
+        <Button onClick={() => { setEditViolation(null); clearForm(); setAddOpen(true); }} className="bg-indigo-950 hover:bg-indigo-900 text-white" data-testid="button-add-violation">
           <Plus className="w-4 h-4 mr-2" />Add Violation
         </Button>
       </div>
@@ -430,11 +430,11 @@ function ViolationsTab() {
         <div className="h-32 bg-muted rounded animate-pulse" />
       ) : violations.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          <ShieldAlert className="w-8 h-8 mx-auto mb-2 opacity-40" />
+          <ShieldAlert className="w-8 h-8 mx-auto mb-2 opacity-40 text-stone-400" />
           <p className="text-sm">No violations on record.</p>
         </div>
       ) : (
-        <Card>
+        <Card className="border-t-2 border-t-indigo-900">
           <CardContent className="p-0">
             <div className="divide-y divide-border">
               {violations.map((v) => (
@@ -442,20 +442,20 @@ function ViolationsTab() {
                   <div className="flex items-start gap-4 w-full">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm font-medium">{v.violation_type}</p>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${statusColor(v.status)}`}>
+                        <p className="text-sm font-semibold text-slate-900">{v.violation_type}</p>
+                        <span className={`text-sm px-2 py-0.5 rounded-full font-medium border capitalize ${statusColor(v.status)}`}>
                           {v.status}
                         </span>
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-sm text-muted-foreground">
                         {v.resident_name} · Unit {v.unit} · Notice #{v.notice_number || "Pending"}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{v.description}</p>
+                      <p className="text-sm text-muted-foreground mt-0.5 line-clamp-1">{v.description}</p>
                     </div>
 
                     <div className="flex items-center gap-1 flex-shrink-0">
                       <Select value={v.status} onValueChange={(val) => updateStatus.mutate({ id: v.id, data: { status: val as "open" | "resolved" | "appealed" } })}>
-                        <SelectTrigger className="h-7 text-xs w-28" data-testid={`select-violation-status-${v.id}`}><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="h-7 text-sm w-28" data-testid={`select-violation-status-${v.id}`}><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="open">Open</SelectItem>
                           <SelectItem value="resolved">Resolved</SelectItem>
@@ -464,27 +464,27 @@ function ViolationsTab() {
                       </Select>
                       
                       <Button size="icon" variant="ghost" className="w-8 h-8 text-muted-foreground hover:text-foreground" onClick={() => openCommentModal(v)} title="Add Comment">
-                        <MessageSquarePlus className="w-3.5 h-3.5" />
+                        <MessageSquarePlus className="w-4 h-4" />
                       </Button>
 
-                      <Button size="icon" variant="ghost" className="w-8 h-8" onClick={() => handleOpenEdit(v)} data-testid={`button-edit-violation-${v.id}`} title="Edit Record">
-                        <Pencil className="w-3.5 h-3.5" />
+                      <Button size="icon" variant="ghost" className="w-8 h-8 text-muted-foreground hover:text-foreground" onClick={() => handleOpenEdit(v)} data-testid={`button-edit-violation-${v.id}`} title="Edit Record">
+                        <Pencil className="w-4 h-4" />
                       </Button>
 
                       <Button size="icon" variant="ghost" className="w-8 h-8 text-destructive hover:text-destructive" onClick={() => setDeleteViolation(v)} data-testid={`button-delete-violation-${v.id}`}>
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>
 
                   {((commentLogs[v.id] ?? []).length > 0 || v.notes) && (
-                    <div className="mt-1 bg-muted/40 rounded-lg p-3 space-y-2 border border-dashed">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                        <MessageSquare className="w-3 h-3" /> Board Internal Log Notes:
+                    <div className="mt-1 bg-stone-50 rounded-lg p-3 space-y-2 border border-dashed border-stone-200">
+                      <p className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                        <MessageSquare className="w-4 h-4" /> Board Internal Log Notes:
                       </p>
-                      {v.notes && <p className="text-xs text-foreground bg-background p-2 rounded shadow-sm border">{v.notes}</p>}
+                      {v.notes && <p className="text-sm text-slate-800 bg-background p-2 rounded shadow-sm border border-stone-200">{v.notes}</p>}
                       {(commentLogs[v.id] ?? []).map((log, index) => (
-                        <p key={index} className="text-xs text-foreground bg-background p-2 rounded shadow-sm border">{log}</p>
+                        <p key={index} className="text-sm text-slate-800 bg-background p-2 rounded shadow-sm border border-stone-200">{log}</p>
                       ))}
                     </div>
                   )}
@@ -502,7 +502,7 @@ function ViolationsTab() {
             {!editViolation && (
               <div className="border-2 border-dashed border-border rounded-lg p-4 text-center">
                 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} data-testid="input-violation-photo" />
-                <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={analyzing}>
+                <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={analyzing} className="border-indigo-950 text-indigo-950 hover:bg-indigo-50">
                   {analyzing ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Analyzing...</> : <><Upload className="w-4 h-4 mr-2" />Analyze Photo with AI</>}
                 </Button>
               </div>
@@ -523,7 +523,7 @@ function ViolationsTab() {
                 <div className="space-y-1.5"><Label>Fine Amount</Label><Input value={form.fine_amount} onChange={(e) => setForm((f) => ({ ...f, fine_amount: e.target.value }))} placeholder="e.g. 150.00" /></div>
                 <div className="space-y-1.5"><Label>Issued By</Label><Input value={form.issued_by} onChange={(e) => setForm((f) => ({ ...f, issued_by: e.target.value }))} /></div>
               </div>
-              <Button type="submit" className="w-full">
+              <Button type="submit" className="w-full bg-indigo-950 hover:bg-indigo-900 text-white">
                 {editViolation ? "Save System Changes" : (createV.isPending ? "Saving..." : "Create Violation")}
               </Button>
             </form>
@@ -541,7 +541,7 @@ function ViolationsTab() {
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setCommentOpen(false)}>Cancel</Button>
-              <Button type="submit">Save Comment</Button>
+              <Button type="submit" className="bg-indigo-950 hover:bg-indigo-900 text-white">Save Comment</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -620,29 +620,40 @@ function VendorsTab() {
   return (
     <>
       <div className="flex justify-end mb-4">
-        <Button onClick={() => { setEditVendor(null); setForm({ name: "", specialty: "", phone: "", email: "" }); setAddOpen(true); }} data-testid="button-add-vendor"><Plus className="w-4 h-4 mr-2" />Add Vendor</Button>
+        <Button onClick={() => { setEditVendor(null); setForm({ name: "", specialty: "", phone: "", email: "" }); setAddOpen(true); }} className="bg-indigo-950 hover:bg-indigo-900 text-white" data-testid="button-add-vendor">
+          <Plus className="w-4 h-4 mr-2" />Add Vendor
+        </Button>
       </div>
       
       {isLoading ? (
         <div className="h-32 bg-muted rounded animate-pulse" />
       ) : vendors.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground"><Store className="w-8 h-8 mx-auto mb-2 opacity-40" /><p className="text-sm">No vendors yet.</p></div>
+        <div className="text-center py-12 text-muted-foreground">
+          <Store className="w-8 h-8 mx-auto mb-2 opacity-40 text-stone-400" />
+          <p className="text-sm">No vendors yet.</p>
+        </div>
       ) : (
-        <Card>
+        <Card className="border-t-2 border-t-amber-500">
           <CardContent className="p-0">
             <div className="divide-y divide-border">
               {vendors.map((v) => (
                 <div key={v.id} className="px-5 py-4 flex items-center gap-4" data-testid={`row-vendor-${v.id}`}>
-                  <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0"><Store className="w-4 h-4 text-amber-700" /></div>
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
+                    <Store className="w-4 h-4 text-amber-600" />
+                  </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">{v.name}</p>
-                    <p className="text-xs text-muted-foreground">{v.specialty}{v.phone ? ` · ${v.phone}` : ""}{v.email ? ` · ${v.email}` : ""}</p>
+                    <p className="text-sm font-semibold text-slate-900">{v.name}</p>
+                    <p className="text-sm text-muted-foreground">{v.specialty}{v.phone ? ` · ${v.phone}` : ""}{v.email ? ` · ${v.email}` : ""}</p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${v.active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>{v.active ? "Active" : "Inactive"}</span>
-                    <Button size="icon" variant="ghost" className="w-8 h-8" onClick={() => handleOpenEdit(v)} data-testid={`button-edit-vendor-${v.id}`}><Pencil className="w-3.5 h-3.5" /></Button>
+                    <span className={`text-sm px-2 py-0.5 rounded-full font-medium border ${v.active ? "bg-stone-100 text-stone-800 border-stone-200" : "bg-stone-50 text-stone-600"}`}>
+                      {v.active ? "Active" : "Inactive"}
+                    </span>
+                    <Button size="icon" variant="ghost" className="w-8 h-8 text-muted-foreground hover:text-foreground" onClick={() => handleOpenEdit(v)} data-testid={`button-edit-vendor-${v.id}`}>
+                      <Pencil className="w-4 h-4" />
+                    </Button>
                     <Button size="icon" variant="ghost" className="w-8 h-8 text-destructive hover:text-destructive" onClick={() => setDeleteVendor(v)} data-testid={`button-delete-vendor-${v.id}`}>
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
@@ -676,7 +687,7 @@ function VendorsTab() {
                   <Trash2 className="w-4 h-4 mr-2" /> Delete
                 </Button>
               )}
-              <Button type="submit" className="flex-1">
+              <Button type="submit" className="flex-1 bg-indigo-950 hover:bg-indigo-900 text-white">
                 {editVendor ? "Save Vendor Changes" : "Add Vendor"}
               </Button>
             </div>
@@ -732,21 +743,24 @@ function WorkOrdersTab() {
   return (
     <>
       {isLoading ? <div className="h-32 bg-muted rounded animate-pulse" /> : workOrders.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground"><Wrench className="w-8 h-8 mx-auto mb-2 opacity-40" /><p className="text-sm">No work orders.</p></div>
+        <div className="text-center py-12 text-muted-foreground">
+          <Wrench className="w-8 h-8 mx-auto mb-2 opacity-40 text-stone-400" />
+          <p className="text-sm">No work orders.</p>
+        </div>
       ) : (
-        <Card>
+        <Card className="border-t-2 border-t-indigo-900">
           <CardContent className="p-0">
             <div className="divide-y divide-border">
               {workOrders.map((wo) => (
                 <div key={wo.id} className="px-5 py-4 flex items-start gap-4" data-testid={`row-work-order-board-${wo.id}`}>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">{wo.title}</p>
-                    <p className="text-xs text-muted-foreground">{wo.resident_name} · Unit {wo.unit} · {wo.category} · <span className="capitalize">{wo.priority}</span> priority</p>
-                    {wo.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{wo.description}</p>}
+                    <p className="text-sm font-semibold text-slate-900">{wo.title}</p>
+                    <p className="text-sm text-muted-foreground">{wo.resident_name} · Unit {wo.unit} · {wo.category} · <span className="capitalize">{wo.priority}</span> priority</p>
+                    {wo.description && <p className="text-sm text-muted-foreground mt-0.5 line-clamp-1">{wo.description}</p>}
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
                     <Select value={wo.status} onValueChange={(val) => updateWO.mutate({ id: wo.id, data: { status: val as "submitted" | "in-progress" | "completed" | "cancelled" } })}>
-                      <SelectTrigger className="h-7 text-xs w-32" data-testid={`select-wo-status-${wo.id}`}><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="h-7 text-sm w-32" data-testid={`select-wo-status-${wo.id}`}><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="submitted">Submitted</SelectItem>
                         <SelectItem value="in-progress">In Progress</SelectItem>
@@ -755,11 +769,11 @@ function WorkOrdersTab() {
                       </SelectContent>
                     </Select>
                     
-                    <Button size="icon" variant="ghost" className="w-8 h-8" onClick={() => handleOpenEdit(wo)} data-testid={`button-edit-wo-${wo.id}`} title="Edit Work Order">
-                      <Pencil className="w-3.5 h-3.5" />
+                    <Button size="icon" variant="ghost" className="w-8 h-8 text-muted-foreground hover:text-foreground" onClick={() => handleOpenEdit(wo)} data-testid={`button-edit-wo-${wo.id}`} title="Edit Work Order">
+                      <Pencil className="w-4 h-4" />
                     </Button>
 
-                    <Button size="icon" variant="ghost" className="w-8 h-8 text-destructive hover:text-destructive" onClick={() => setDeleteWO(wo)} data-testid={`button-delete-wo-${wo.id}`}><Trash2 className="w-3.5 h-3.5" /></Button>
+                    <Button size="icon" variant="ghost" className="w-8 h-8 text-destructive hover:text-destructive" onClick={() => setDeleteWO(wo)} data-testid={`button-delete-wo-${wo.id}`}><Trash2 className="w-4 h-4" /></Button>
                   </div>
                 </div>
               ))}
@@ -788,7 +802,7 @@ function WorkOrdersTab() {
               </div>
             </div>
             <div className="space-y-1.5"><Label>Description Details</Label><Textarea value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} rows={3} /></div>
-            <Button type="submit" className="w-full" disabled={updateWO.isPending}>{updateWO.isPending ? "Saving..." : "Save Work Order Changes"}</Button>
+            <Button type="submit" className="w-full bg-indigo-950 hover:bg-indigo-900 text-white" disabled={updateWO.isPending}>{updateWO.isPending ? "Saving..." : "Save Work Order Changes"}</Button>
           </form>
         </DialogContent>
       </Dialog>
