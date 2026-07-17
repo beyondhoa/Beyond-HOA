@@ -139,8 +139,8 @@ function OverviewTab({ setTab }: OverviewTabProps) {
           </Card>
         </div>
 
-        <div className="block group h-full">
-          <Card className="border-l-4 border-l-indigo-900 h-full">
+        <div onClick={() => setTab("voting")} className="block group cursor-pointer">
+          <Card className="border-l-4 border-l-indigo-900 group-hover:shadow-md group-hover:scale-[1.01] transition-all h-full">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
                 <div className="bg-indigo-50 rounded-xl p-3">
@@ -222,7 +222,7 @@ function OverviewTab({ setTab }: OverviewTabProps) {
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2 text-amber-800">
               <Wrench className="w-4 h-4 text-amber-600/70" />
-              Pending Maintenance Tasks
+              Pending Work Orders
             </CardTitle>
             <span onClick={() => setTab("workorders")} className="text-xs text-amber-700 hover:underline cursor-pointer font-semibold">View All</span>
           </CardHeader>
@@ -256,33 +256,13 @@ function OverviewTab({ setTab }: OverviewTabProps) {
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2 text-indigo-950">
               <ShieldAlert className="w-4 h-4 text-indigo-900/70" />
-              Violations & Architectural Requests
+              Violations
             </CardTitle>
             <span onClick={() => setTab("violations")} className="text-xs text-indigo-900 hover:underline cursor-pointer font-semibold">View All</span>
           </CardHeader>
           <CardContent className="space-y-4">
             
             <div className="space-y-2">
-              <p className="text-xs font-bold uppercase tracking-wider text-indigo-900">Architectural Requests</p>
-              <div className="divide-y divide-border border rounded-xl bg-stone-50/30 overflow-hidden">
-                <div className="p-3 flex items-center justify-between text-sm bg-card">
-                  <div>
-                    <p className="font-semibold text-slate-900">Solar Panel Installation</p>
-                    <p className="text-xs text-muted-foreground">Unit 142 · Submitted 3 days ago</p>
-                  </div>
-                  <Badge className="bg-amber-50 text-amber-800 border-amber-200">Pending Review</Badge>
-                </div>
-                <div className="p-3 flex items-center justify-between text-sm bg-card">
-                  <div>
-                    <p className="font-semibold text-slate-900">Rear Deck Extension</p>
-                    <p className="text-xs text-muted-foreground">Unit 108 · Submitted 1 week ago</p>
-                  </div>
-                  <Badge className="bg-indigo-50 text-indigo-900 border-indigo-200/50">In Progress</Badge>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2 pt-2">
               <p className="text-xs font-bold uppercase tracking-wider text-red-600">Open Violations</p>
               {openViolations.length === 0 ? (
                 <div className="text-center py-4 border border-dashed rounded-xl bg-card">
@@ -963,6 +943,7 @@ function VendorsTab() {
   );
 }
 
+font-semibold text-amber-700 hover:underline cursor-pointer font-semibold
 function WorkOrdersTab() {
   const qc = useQueryClient();
   const { toast } = useToast();
