@@ -5,6 +5,8 @@ import {
   useCreateDuesCheckout,
   useListDuesPayments,
   getListDuesPaymentsQueryKey,
+  useGetMe, // 1. Added hook to get current authenticated user
+  getGetMeQueryKey,
 } from "@workspace/api-client-react";
 import { PageHeader, PageContent } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,12 +31,27 @@ export default function DuesPage() {
   const { toast } = useToast();
   const [amount] = useState(250);
 
+  // 2. Fetch the current logged-in user context
+  const { data: me, isLoading: meLoading } = useGetMe({
+    query: { queryKey: getGetMeQueryKey() },
+  });
+
   const { data: stripeConfig, isLoading: configLoading } = useGetDuesStripeConfigured({
     query: { queryKey: getGetDuesStripeConfiguredQueryKey() },
   });
-  const { data: payments, isLoading: paymentsLoading } = useListDuesPayments({
+
+  // 3. Fetch all payments from API
+  const { data: allPayments, isLoading: paymentsLoading } = useListDuesPayments({
     query: { queryKey: getListDuesPaymentsQueryKey() },
   });
+
+  // 4. Filter payments array strictly for the logged-in resident
+  // Checks both `resident_id` and `residentId` properties, or falls back to user ID
+  const currentResidentId = me?.resident_id ?? me?.residentId ?? me?.id;
+  
+  const payments = allPayments?.filter(
+    (p) => String(p.resident_id ?? p.residentId) === String(currentResidentId)
+  ) ?? [];
 
   const checkout = useCreateDuesCheckout({
     mutation: {
@@ -52,8 +69,22 @@ export default function DuesPage() {
   });
 
   const handlePay = () => {
-    checkout.mutate({ data: { duesId: "monthly", period: new Date().toISOString().slice(0, 7), amount } });
+    if (!currentResidentId) {
+      toast({ title: "Error", description: "Resident identity not found. Please log in again.", variant: "destructive" });
+      return;
+    }
+
+    checkout.mutate({ 
+      data: { 
+        duesId: "monthly", 
+        period: new Date().toISOString().slice(0, 7), 
+        amount,
+        residentId: currentResidentId, // Pass residentId to associate Stripe session
+      } 
+    });
   };
+
+  const isLoading = meLoading || paymentsLoading;
 
   return (
     <>
@@ -80,7 +111,7 @@ export default function DuesPage() {
                     <Button
                       className="w-full"
                       onClick={handlePay}
-                      disabled={checkout.isPending}
+                      disabled={checkout.isPending || meLoading}
                       data-testid="button-pay-dues"
                     >
                       {checkout.isPending ? "Redirecting..." : "Pay Now via Stripe"}
@@ -111,16 +142,16 @@ export default function DuesPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {paymentsLoading ? (
+                {isLoading ? (
                   <div className="space-y-3">
                     {[1, 2, 3].map((i) => (
                       <div key={i} className="h-12 bg-muted rounded animate-pulse" />
                     ))}
                   </div>
-                ) : !payments || payments.length === 0 ? (
+                ) : payments.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <CheckCircle className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                    <p className="text-sm">No payment history yet.</p>
+                    <p className="text-sm">No payment history found for your unit.</p>
                   </div>
                 ) : (
                   <div className="divide-y divide-border">
