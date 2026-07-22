@@ -12,7 +12,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CreditCard, CheckCircle, AlertCircle, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth"; // Imports your app's existing session hook
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
@@ -31,26 +30,23 @@ export default function DuesPage() {
   const { toast } = useToast();
   const [amount] = useState(250);
 
-  // 1. Retrieve the authenticated user session
-  const auth = useAuth?.() ?? { user: null, isLoading: false };
-  const user = auth.user;
-  const authLoading = auth.isLoading;
-
-  // Extract the resident identifier safely
-  const currentResidentId = user?.resident_id ?? user?.residentId ?? user?.id;
+  // Set the active resident ID (e.g. from local storage, URL params, or session state)
+  const [currentResidentId] = useState<string | number | null>(() => {
+    return localStorage.getItem("current_resident_id") || 1;
+  });
 
   const { data: stripeConfig, isLoading: configLoading } = useGetDuesStripeConfigured({
     query: { queryKey: getGetDuesStripeConfiguredQueryKey() },
   });
 
-  // 2. Fetch all payment records
+  // Fetch all payment records
   const { data: allPayments, isLoading: paymentsLoading } = useListDuesPayments({
     query: { queryKey: getListDuesPaymentsQueryKey() },
   });
 
-  // 3. Filter payments array strictly for the active resident
+  // Filter payments array strictly for the active resident
   const payments = allPayments?.filter((p) => {
-    if (!currentResidentId) return true; // Show full list if no specific user context is bound
+    if (!currentResidentId) return true;
     const itemResidentId = p.resident_id ?? p.residentId;
     return String(itemResidentId) === String(currentResidentId);
   }) ?? [];
@@ -72,7 +68,7 @@ export default function DuesPage() {
 
   const handlePay = () => {
     if (!currentResidentId) {
-      toast({ title: "Error", description: "Resident identity not found. Please log in again.", variant: "destructive" });
+      toast({ title: "Error", description: "Resident identity not found.", variant: "destructive" });
       return;
     }
 
@@ -85,8 +81,6 @@ export default function DuesPage() {
       } 
     });
   };
-
-  const isLoading = authLoading || paymentsLoading;
 
   return (
     <>
@@ -113,7 +107,7 @@ export default function DuesPage() {
                     <Button
                       className="w-full"
                       onClick={handlePay}
-                      disabled={checkout.isPending || authLoading}
+                      disabled={checkout.isPending}
                       data-testid="button-pay-dues"
                     >
                       {checkout.isPending ? "Redirecting..." : "Pay Now via Stripe"}
@@ -144,7 +138,7 @@ export default function DuesPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {isLoading ? (
+                {paymentsLoading ? (
                   <div className="space-y-3">
                     {[1, 2, 3].map((i) => (
                       <div key={i} className="h-12 bg-muted rounded animate-pulse" />
