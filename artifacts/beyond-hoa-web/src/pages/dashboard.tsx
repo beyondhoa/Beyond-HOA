@@ -35,6 +35,7 @@ import {
   Clock, 
   Vote, 
   Megaphone,
+  FileText,
   ChevronRight
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -138,7 +139,7 @@ export default function DashboardPage() {
       <PageContent className="space-y-6">
         
         {/* 1. Stat Tiles Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           
           {/* Tile 1: Dues Status -> Links to /dues */}
           <a href="/dues" className="block group">
@@ -271,9 +272,9 @@ export default function DashboardPage() {
         </div>
 
         {/* 2. Quick Actions Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-          {/* Contact Board */}
+          {/* Contact Board Card */}
           <a href="mailto:board@beyondhoa.com" className="flex items-center justify-between p-4 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-md hover:scale-[1.01] transition-all font-semibold text-base text-indigo-950 group">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-amber-50 rounded-lg text-amber-600">
@@ -282,6 +283,20 @@ export default function DashboardPage() {
               <div className="text-left">
                 <p className="font-semibold text-slate-900">Contact Board</p>
                 <p className="text-sm text-muted-foreground font-normal">Message the administrators</p>
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+          </a>
+
+          {/* Community Documents Card */}
+          <a href="/documents" className="flex items-center justify-between p-4 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-md hover:scale-[1.01] transition-all font-semibold text-base text-indigo-950 group">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-indigo-50 rounded-lg text-indigo-900">
+                <FileText className="h-5 w-5" />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-slate-900">Community Documents</p>
+                <p className="text-sm text-muted-foreground font-normal">View bylaws & guidelines</p>
               </div>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
