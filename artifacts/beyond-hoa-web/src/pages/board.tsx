@@ -3,7 +3,6 @@ import {
   useListViolations, getListViolationsQueryKey, useCreateViolation, useUpdateViolationStatus, useDeleteViolation, useAnalyzeViolationImage,
   useListVendors, getListVendorsQueryKey, useCreateVendor,
   useListWorkOrders, getListWorkOrdersQueryKey, useUpdateWorkOrder, useDeleteWorkOrder,
-  useListDuesPayments, getListDuesPaymentsQueryKey
 } from "@workspace/api-client-react";
 import type { Violation, WorkOrder, Vendor } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -37,9 +36,7 @@ import {
   ChevronRight,
   Truck,
   LayoutDashboard,
-  AlertTriangle,
-  CheckCircle2,
-  DollarSign
+  AlertTriangle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ResidentsPage from "@/pages/residents";
@@ -105,52 +102,28 @@ interface OverviewTabProps {
 }
 
 function OverviewTab({ setTab }: OverviewTabProps) {
-  const [unpaidModalOpen, setUnpaidModalOpen] = useState(false);
-
   const { data: workOrders } = useListWorkOrders({ query: { queryKey: getListWorkOrdersQueryKey() } });
   const { data: violations } = useListViolations({ query: { queryKey: getListViolationsQueryKey() } });
-  const { data: allPayments } = useListDuesPayments({ query: { queryKey: getListDuesPaymentsQueryKey() } });
 
   const activeWOs = workOrders?.filter(wo => wo.status !== "completed" && wo.status !== "resolved") ?? [];
   const openViolations = violations?.filter(v => v.status === "open") ?? [];
-
-  // Filter out settled payments to isolate unpaid/overdue/failed records
-  const unpaidPayments = allPayments?.filter(
-    (p) => p.status === "unpaid" || p.status === "failed" || p.status === "overdue" || p.status === "pending"
-  ) ?? [];
-
-  // Calculate live financial metrics from public.dues_payments
-  const totalUnpaid = unpaidPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-
-  const totalCollected = allPayments
-    ?.filter((p) => p.status === "paid")
-    .reduce((sum, p) => sum + (Number(p.amount) || 0), 0) ?? 0;
-
-  const overdueCount = allPayments?.filter(
-    (p) => p.status === "overdue" || p.status === "failed"
-  ).length ?? 0;
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
-        {/* Outstanding Dues Card - Triggers Unpaid Residents Modal */}
-        <div onClick={() => setUnpaidModalOpen(true)} className="block group cursor-pointer">
-          <Card className="border-l-4 border-l-amber-600 group-hover:shadow-md group-hover:scale-[1.01] transition-all h-full">
+        <div onClick={() => setTab("residents")} className="block group cursor-pointer">
+          <Card className="border-l-4 border-l-stone-400 group-hover:shadow-md group-hover:scale-[1.01] transition-all h-full">
             <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="bg-amber-50 rounded-xl p-3">
-                    <CreditCard className="w-5 h-5 text-amber-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground font-medium">Outstanding Dues</p>
-                    <p className="text-xl font-bold text-amber-600">${totalUnpaid.toFixed(2)}</p>
-                  </div>
+              <div className="flex items-center gap-4">
+                <div className="bg-stone-100 rounded-xl p-3">
+                  <CreditCard className="w-5 h-5 text-stone-700" />
                 </div>
-                <ChevronRight className="w-4 h-4 text-amber-600/60 group-hover:translate-x-1 transition-transform" />
+                <div>
+                  <p className="text-sm text-muted-foreground font-medium">Outstanding Dues</p>
+                  <p className="text-xl font-bold text-slate-900">$1,420.00</p>
+                </div>
               </div>
-              <p className="text-[11px] text-amber-700/80 mt-2 font-medium">Click to view resident list ({unpaidPayments.length})</p>
             </CardContent>
           </Card>
         </div>
@@ -204,35 +177,6 @@ function OverviewTab({ setTab }: OverviewTabProps) {
         </div>
 
       </div>
-
-      {/* Financials Summary Breakdown */}
-      <Card className="border-t-2 border-t-green-600">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2 text-slate-900">
-            <DollarSign className="w-4 h-4 text-green-600" />
-            Financial Standing Summary (dues_payments)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="p-4 bg-green-50/50 border border-green-200/60 rounded-xl">
-              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Total Collected</p>
-              <p className="text-2xl font-bold text-green-700 mt-1">${totalCollected.toFixed(2)}</p>
-              <p className="text-xs text-muted-foreground mt-1">Settled payments in system</p>
-            </div>
-            <div onClick={() => setUnpaidModalOpen(true)} className="p-4 bg-amber-50/50 border border-amber-200/60 rounded-xl cursor-pointer hover:bg-amber-100/50 transition-colors">
-              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Outstanding Balance</p>
-              <p className="text-2xl font-bold text-amber-700 mt-1">${totalUnpaid.toFixed(2)}</p>
-              <p className="text-xs text-amber-800 font-medium text-xs mt-1">Click to view resident list &rarr;</p>
-            </div>
-            <div className="p-4 bg-red-50/50 border border-red-200/60 rounded-xl">
-              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Overdue Line Items</p>
-              <p className="text-2xl font-bold text-red-700 mt-1">{overdueCount}</p>
-              <p className="text-xs text-muted-foreground mt-1">Failed or past-due accounts</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         
@@ -352,68 +296,6 @@ function OverviewTab({ setTab }: OverviewTabProps) {
         </Card>
 
       </div>
-
-      {/* Unpaid Balances Modal */}
-      <Dialog open={unpaidModalOpen} onOpenChange={setUnpaidModalOpen}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-lg">
-              <CreditCard className="w-5 h-5 text-amber-600" />
-              Unpaid Dues Breakdown (${totalUnpaid.toFixed(2)})
-            </DialogTitle>
-          </DialogHeader>
-
-          {unpaidPayments.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-green-600 opacity-80" />
-              <p className="text-sm font-medium text-slate-900">All caught up!</p>
-              <p className="text-xs text-muted-foreground mt-0.5">There are no outstanding resident balances.</p>
-            </div>
-          ) : (
-            <div className="space-y-3 mt-2">
-              <p className="text-xs text-muted-foreground">
-                Showing {unpaidPayments.length} resident record(s) with outstanding assessment balances:
-              </p>
-              <div className="divide-y divide-border border rounded-xl overflow-hidden bg-card">
-                {unpaidPayments.map((p) => (
-                  <div key={p.id} className="p-3.5 flex items-center justify-between hover:bg-stone-50/80 transition-colors">
-                    <div>
-                      <p className="font-semibold text-sm text-slate-900">
-                        {p.resident_name || `Resident ID #${p.resident_id || p.residentId || "N/A"}`}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Unit {p.unit || "—"} · Period: {p.period || "Monthly Assessment"}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-amber-700">
-                        ${p.amount ? Number(p.amount).toFixed(2) : "0.00"}
-                      </p>
-                      <Badge className={`text-[10px] mt-0.5 capitalize ${
-                        p.status === 'overdue' || p.status === 'failed' 
-                          ? 'bg-red-50 text-red-700 border-red-200' 
-                          : 'bg-amber-50 text-amber-800 border-amber-200'
-                      }`}>
-                        {p.status}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <DialogFooter className="pt-2">
-                <Button 
-                  variant="outline" 
-                  onClick={() => { setUnpaidModalOpen(false); setTab("residents"); }}
-                  className="w-full text-indigo-950 border-indigo-950 hover:bg-indigo-50"
-                >
-                  <Users className="w-4 h-4 mr-2" /> Go to Resident Directory
-                </Button>
-              </DialogFooter>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
@@ -464,7 +346,7 @@ function AnnouncementsTab() {
   const [form, setForm] = useState({ title: "", content: "", category: "general" });
   
   const clearForm = () => setForm({ title: "", content: "", category: "general" });
-  const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
 
   const handleOpenEdit = (ann: Announcement) => {
     setEditAnn(ann);
@@ -705,14 +587,11 @@ function ViolationsTab() {
   const [editViolation, setEditViolation] = useState<Violation | null>(null);
   const [deleteViolation, setDeleteViolation] = useState<Violation | null>(null);
   const [activeViolation, setActiveViolation] = useState<Violation | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({ resident_name: "", unit: "", violation_type: "", incident_date: "", description: "", required_action: "", compliance_deadline: "", fine_amount: "", notes: "", issued_by: "" });
   const [newComment, setNewComment] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
   const [commentLogs, setCommentLogs] = useState<Record<string, string[]>>({});
-
-  const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
   const { data: violations = [], isLoading } = useListViolations({ query: { queryKey: getListViolationsQueryKey() } });
   const invalidate = () => qc.invalidateQueries({ queryKey: getListViolationsQueryKey() });
@@ -771,29 +650,21 @@ function ViolationsTab() {
     };
 
     if (editViolation) {
-      setIsSubmitting(true);
       try {
-        const response = await fetch(`${API_BASE_URL}/api/violations/${editViolation.id}`, {
+        const response = await fetch(`/api/violations/${editViolation.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-
-        if (!response.ok) {
-          const errText = await response.text();
-          throw new Error(errText || "Failed to save changes");
-        }
-
-        toast({ title: "Violation updated successfully" });
+        if (!response.ok) throw new Error("Failed to save changes");
         invalidate();
+        toast({ title: "Violation updated successfully" });
+      } catch (error) {
+        toast({ title: "Update failed", description: "Could not save to database.", variant: "destructive" });
+      } finally {
         setAddOpen(false);
         setEditViolation(null);
         clearForm();
-      } catch (error: any) {
-        console.error("Violation update error:", error);
-        toast({ title: "Update failed", description: error.message || "Could not save to database.", variant: "destructive" });
-      } finally {
-        setIsSubmitting(false);
       }
     } else {
       createV.mutate({ data: payload });
@@ -920,8 +791,8 @@ function ViolationsTab() {
                 <div className="space-y-1.5"><Label>Fine Amount</Label><Input value={form.fine_amount} onChange={(e) => setForm((f) => ({ ...f, fine_amount: e.target.value }))} placeholder="e.g. 150.00" /></div>
                 <div className="space-y-1.5"><Label>Issued By</Label><Input value={form.issued_by} onChange={(e) => setForm((f) => ({ ...f, issued_by: e.target.value }))} /></div>
               </div>
-              <Button type="submit" className="w-full bg-indigo-950 hover:bg-indigo-900 text-white" disabled={isSubmitting || createV.isPending}>
-                {isSubmitting ? "Saving..." : editViolation ? "Save System Changes" : (createV.isPending ? "Saving..." : "Create Violation")}
+              <Button type="submit" className="w-full bg-indigo-950 hover:bg-indigo-900 text-white">
+                {editViolation ? "Save System Changes" : (createV.isPending ? "Saving..." : "Create Violation")}
               </Button>
             </form>
           </div>
@@ -963,10 +834,7 @@ function VendorsTab() {
   const [addOpen, setAddOpen] = useState(false);
   const [editVendor, setEditVendor] = useState<Vendor | null>(null);
   const [deleteVendor, setDeleteVendor] = useState<Vendor | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({ name: "", specialty: "", phone: "", email: "" });
-
-  const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
   const { data: vendors = [], isLoading } = useListVendors({ query: { queryKey: getListVendorsQueryKey() } });
   const invalidate = () => qc.invalidateQueries({ queryKey: getListVendorsQueryKey() });
@@ -979,38 +847,15 @@ function VendorsTab() {
     setAddOpen(true);
   };
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
+  const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const payload = { ...form, phone: form.phone || null, email: form.email || null };
-    
     if (editVendor) {
-      setIsSubmitting(true);
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/vendors/${editVendor.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        if (!res.ok) {
-          throw new Error("Failed to update vendor record");
-        }
-
-        toast({ title: "Vendor information updated" });
-        invalidate();
-        setAddOpen(false);
-        setEditVendor(null);
-        setForm({ name: "", specialty: "", phone: "", email: "" });
-      } catch (err) {
-        console.error("Vendor update failed:", err);
-        toast({
-          title: "Update Failed",
-          description: "Could not save vendor changes to the database.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsSubmitting(false);
-      }
+      invalidate();
+      setAddOpen(false);
+      setEditVendor(null);
+      setForm({ name: "", specialty: "", phone: "", email: "" });
+      toast({ title: "Vendor information updated" });
     } else {
       createVendor.mutate({ data: payload });
     }
@@ -1018,7 +863,7 @@ function VendorsTab() {
 
   const handleDeleteConfirm = async (vendorId: string, vendorName: string) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/vendors/${vendorId}`, {
+      const res = await fetch(`/api/vendors/${vendorId}`, {
         method: "DELETE",
       });
 
@@ -1110,8 +955,8 @@ function VendorsTab() {
                   <Trash2 className="w-4 h-4 mr-2" /> Delete
                 </Button>
               )}
-              <Button type="submit" className="flex-1 bg-indigo-950 hover:bg-indigo-900 text-white" disabled={isSubmitting || createVendor.isPending}>
-                {isSubmitting ? "Saving..." : editVendor ? "Save Vendor Changes" : "Add Vendor"}
+              <Button type="submit" className="flex-1 bg-indigo-950 hover:bg-indigo-900 text-white">
+                {editVendor ? "Save Vendor Changes" : "Add Vendor"}
               </Button>
             </div>
           </form>
