@@ -5,14 +5,14 @@ import {
   useCreateDuesCheckout,
   useListDuesPayments,
   getListDuesPaymentsQueryKey,
-  useGetMe, // 1. Added hook to get current authenticated user
-  getGetMeQueryKey,
 } from "@workspace/api-client-react";
+
 import { PageHeader, PageContent } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CreditCard, CheckCircle, AlertCircle, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth"; // Imports your app's existing session hook
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
@@ -31,27 +31,29 @@ export default function DuesPage() {
   const { toast } = useToast();
   const [amount] = useState(250);
 
-  // 2. Fetch the current logged-in user context
-  const { data: me, isLoading: meLoading } = useGetMe({
-    query: { queryKey: getGetMeQueryKey() },
-  });
+  // 1. Retrieve the authenticated user session
+  const auth = useAuth?.() ?? { user: null, isLoading: false };
+  const user = auth.user;
+  const authLoading = auth.isLoading;
+
+  // Extract the resident identifier safely
+  const currentResidentId = user?.resident_id ?? user?.residentId ?? user?.id;
 
   const { data: stripeConfig, isLoading: configLoading } = useGetDuesStripeConfigured({
     query: { queryKey: getGetDuesStripeConfiguredQueryKey() },
   });
 
-  // 3. Fetch all payments from API
+  // 2. Fetch all payment records
   const { data: allPayments, isLoading: paymentsLoading } = useListDuesPayments({
     query: { queryKey: getListDuesPaymentsQueryKey() },
   });
 
-  // 4. Filter payments array strictly for the logged-in resident
-  // Checks both `resident_id` and `residentId` properties, or falls back to user ID
-  const currentResidentId = me?.resident_id ?? me?.residentId ?? me?.id;
-  
-  const payments = allPayments?.filter(
-    (p) => String(p.resident_id ?? p.residentId) === String(currentResidentId)
-  ) ?? [];
+  // 3. Filter payments array strictly for the active resident
+  const payments = allPayments?.filter((p) => {
+    if (!currentResidentId) return true; // Show full list if no specific user context is bound
+    const itemResidentId = p.resident_id ?? p.residentId;
+    return String(itemResidentId) === String(currentResidentId);
+  }) ?? [];
 
   const checkout = useCreateDuesCheckout({
     mutation: {
@@ -79,12 +81,12 @@ export default function DuesPage() {
         duesId: "monthly", 
         period: new Date().toISOString().slice(0, 7), 
         amount,
-        residentId: currentResidentId, // Pass residentId to associate Stripe session
+        ...(currentResidentId ? { residentId: String(currentResidentId) } : {}),
       } 
     });
   };
 
-  const isLoading = meLoading || paymentsLoading;
+  const isLoading = authLoading || paymentsLoading;
 
   return (
     <>
@@ -111,7 +113,7 @@ export default function DuesPage() {
                     <Button
                       className="w-full"
                       onClick={handlePay}
-                      disabled={checkout.isPending || meLoading}
+                      disabled={checkout.isPending || authLoading}
                       data-testid="button-pay-dues"
                     >
                       {checkout.isPending ? "Redirecting..." : "Pay Now via Stripe"}
