@@ -65,7 +65,10 @@ export default function BoardPage() {
 
   return (
     <>
-      <PageHeader title="Board Dashboard" subtitle="Manage violations, vendors, work orders, and announcements" />
+      <PageHeader 
+        title="Board Dashboard" 
+        subtitle={<span className="text-base sm:text-lg text-muted-foreground font-normal">Manage violations, vendors, work orders, and announcements</span>} 
+      />
       <PageContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="mb-2">
@@ -177,43 +180,43 @@ function OverviewTab({ setTab }: OverviewTabProps) {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         
-        <div onClick={() => setTab("announcements")} className="flex items-center justify-between p-4 bg-gradient-to-r from-indigo-950 to-indigo-900 border border-indigo-950 rounded-xl hover:shadow-md hover:scale-[1.01] transition-all font-semibold text-sm text-white group cursor-pointer">
+        <div onClick={() => setTab("announcements")} className="flex items-center justify-between p-4 bg-gradient-to-r from-indigo-950 to-indigo-900 border border-indigo-950 rounded-xl hover:shadow-md hover:scale-[1.01] transition-all text-white group cursor-pointer">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-white/10 rounded-lg">
               <Megaphone className="h-5 w-5 text-amber-400" />
             </div>
             <div className="text-left">
-              <p className="font-semibold text-white">Broadcast Announcement</p>
-              <p className="text-sm text-indigo-200 font-normal">Pin updates to dashboards</p>
+              <p className="text-base sm:text-lg font-bold text-white">Broadcast Announcement</p>
+              <p className="text-base text-indigo-200 font-normal">Pin updates to dashboards</p>
             </div>
           </div>
-          <ChevronRight className="h-4 w-4 text-indigo-300 group-hover:translate-x-1 transition-transform" />
+          <ChevronRight className="h-5 w-5 text-indigo-300 group-hover:translate-x-1 transition-transform" />
         </div>
 
-        <div onClick={() => setTab("vendors")} className="flex items-center justify-between p-4 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-md hover:scale-[1.01] transition-all font-semibold text-sm text-indigo-950 group cursor-pointer">
+        <div onClick={() => setTab("vendors")} className="flex items-center justify-between p-4 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-md hover:scale-[1.01] transition-all text-indigo-950 group cursor-pointer">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-indigo-50 rounded-lg text-indigo-900">
               <Truck className="h-5 w-5 text-indigo-700" />
             </div>
             <div className="text-left">
-              <p className="font-semibold text-slate-900">Manage Vendors</p>
-              <p className="text-sm text-muted-foreground font-normal">Directory & contractors</p>
+              <p className="text-base sm:text-lg font-bold text-slate-900">Manage Vendors</p>
+              <p className="text-base text-muted-foreground font-normal">Directory & contractors</p>
             </div>
           </div>
-          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
         </div>
 
-        <div onClick={() => setTab("residents")} className="flex items-center justify-between p-4 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-md hover:scale-[1.01] transition-all font-semibold text-sm text-indigo-950 group cursor-pointer">
+        <div onClick={() => setTab("residents")} className="flex items-center justify-between p-4 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-md hover:scale-[1.01] transition-all text-indigo-950 group cursor-pointer">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-amber-50 rounded-lg text-amber-600">
               <Users className="h-5 w-5 text-amber-600" />
             </div>
             <div className="text-left">
-              <p className="font-semibold text-slate-900">Resident Directory</p>
-              <p className="text-sm text-muted-foreground font-normal">Units, contact info, & notes</p>
+              <p className="text-base sm:text-lg font-bold text-slate-900">Resident Directory</p>
+              <p className="text-base text-muted-foreground font-normal">Units, contact info, & notes</p>
             </div>
           </div>
-          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
         </div>
 
       </div>
