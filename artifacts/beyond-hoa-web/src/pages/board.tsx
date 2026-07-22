@@ -70,7 +70,7 @@ export default function BoardPage() {
     <>
       <PageHeader 
         title="Board Dashboard" 
-        subtitle={<span className="text-base sm:text-lg text-muted-foreground font-normal">Manage violations, vendors, work orders, and announcements</span>} 
+        subtitle={<span className="text-sm sm:text-base text-muted-foreground font-normal">Manage violations, vendors, work orders, and announcements</span>} 
       />
       <PageContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
