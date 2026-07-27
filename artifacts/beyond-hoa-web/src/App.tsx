@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
+import { useHashLocation } from "wouter/use-hash-location";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,9 +22,20 @@ const queryClient = new QueryClient({
   },
 });
 
+function LoadingFallback() {
+  return (
+    <div className="flex min-h-full w-full items-center justify-center bg-background text-foreground p-4">
+      <div className="flex flex-col items-center gap-3">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-950 border-t-transparent" />
+        <p className="text-xs font-mono text-muted-foreground">Loading Beyond HOA...</p>
+      </div>
+    </div>
+  );
+}
+
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { resident, isLoading } = useAuth();
-  if (isLoading) return null;
+  if (isLoading) return <LoadingFallback />;
   if (!resident) return <Redirect to="/login" />;
   return (
     <Layout>
@@ -33,7 +46,7 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
 
 function PublicRoute({ component: Component }: { component: React.ComponentType }) {
   const { resident, isLoading } = useAuth();
-  if (isLoading) return null;
+  if (isLoading) return <LoadingFallback />;
   if (resident) return <Redirect to="/dashboard" />;
   return <Component />;
 }
@@ -41,7 +54,7 @@ function PublicRoute({ component: Component }: { component: React.ComponentType 
 function BoardRoute({ component: Component }: { component: React.ComponentType }) {
   const { resident, isLoading } = useAuth();
 
-  if (isLoading) return null;
+  if (isLoading) return <LoadingFallback />;
   if (!resident) return <Redirect to="/login" />;
 
   const normalizedUserRole = (resident.notes ?? "").trim().toLowerCase();
@@ -60,7 +73,7 @@ function BoardRoute({ component: Component }: { component: React.ComponentType }
 function Router() {
   return (
     <Switch>
-     <Route path="/login">
+      <Route path="/login">
         <PublicRoute component={LoginPage} />
       </Route>
       <Route path="/dashboard">
@@ -93,13 +106,19 @@ function Router() {
   );
 }
 
-function App() {
-  return (
+export default function App() {
+  useEffect(() => {
+    document.documentElement.classList.remove('dark');
+  }, []);
+
+return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AuthProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <Router />
+          <WouterRouter hook={useHashLocation}>
+            <div className="h-full w-full flex flex-col bg-background text-foreground">
+              <Router />
+            </div>
           </WouterRouter>
         </AuthProvider>
         <Toaster />
@@ -107,5 +126,3 @@ function App() {
     </QueryClientProvider>
   );
 }
-
-export default App;

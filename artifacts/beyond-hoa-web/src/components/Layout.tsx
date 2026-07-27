@@ -30,18 +30,26 @@ export function Layout({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-background overflow-hidden select-none">
+    <div className="flex flex-col md:flex-row h-screen w-full bg-background select-none overflow-hidden">
       
-      {/* 1. MOBILE TOP HEADER (Hidden on Desktop) */}
-      <header className="flex-none h-14 bg-indigo-950 px-4 flex items-center justify-between border-b border-indigo-900/60 shadow-md md:hidden z-30">
+      {/* 1. MOBILE TOP HEADER (With Top Safe Area) */}
+      <header className="flex-none h-[calc(3.5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] bg-indigo-950 px-4 flex items-center justify-between border-b border-indigo-900/60 shadow-md md:hidden z-30">
         <div className="flex items-center gap-2.5">
           <img src={iconUrl} alt="Beyond HOA" className="w-7 h-7 rounded-lg" />
-          <span className="text-white font-semibold text-sm">Beyond HOA</span>
+          <div className="flex flex-col">
+            <span className="text-white font-semibold text-sm leading-tight">Beyond HOA</span>
+            <span className="text-indigo-200 text-xs">
+              Hi, {resident?.name?.split(' ')[0]} · Unit {resident?.unit}
+            </span>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="text-indigo-200 text-xs truncate max-w-[120px]">
-            {resident?.name}
-          </span>
+        <div className="flex items-center gap-2">
+          {isBoardUser && (
+            <div className="flex items-center gap-1.5 px-2.5 py-0.5 bg-indigo-900/80 text-white rounded-full text-xs font-medium border border-indigo-700/50">
+              <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
+              Board
+            </div>
+          )}
           <button
             onClick={logout}
             aria-label="Sign out"
@@ -52,8 +60,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      {/* 2. DESKTOP SIDEBAR (Hidden on Mobile) */}
-      <aside className="hidden md:flex w-64 flex-shrink-0 bg-indigo-950 flex-col shadow-xl border-r border-indigo-900/40">
+      {/* 2. DESKTOP SIDEBAR */}
+      <aside className="hidden md:flex w-64 flex-shrink-0 bg-indigo-950 flex-col shadow-xl border-r border-indigo-900/40 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
         <div className="p-5 border-b border-indigo-900/60">
           <div className="flex items-center gap-3">
             <img src={iconUrl} alt="Beyond HOA" className="w-9 h-9 rounded-lg" />
@@ -109,14 +117,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* 3. MAIN SCROLLABLE CONTENT */}
-      <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
-        <div className="min-h-full">
+      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto pb-24 md:pb-0 bg-background text-foreground">
+        <div className="flex-1 flex flex-col w-full">
           {children}
         </div>
       </main>
 
-      {/* 4. MOBILE BOTTOM TAB BAR (Hidden on Desktop) */}
-      <nav className="fixed bottom-0 left-0 right-0 h-16 bg-indigo-950 border-t border-indigo-900/60 flex items-center justify-around z-40 md:hidden pb-[env(safe-area-inset-bottom)] shadow-lg">
+      {/* 4. MOBILE BOTTOM TAB BAR (With Dynamic Bottom Safe Area Height) */}
+      <nav className="fixed bottom-0 left-0 right-0 h-[calc(4rem+env(safe-area-inset-bottom))] bg-indigo-950 border-t border-indigo-900/60 flex items-center justify-around z-50 md:hidden pb-[env(safe-area-inset-bottom)] shadow-lg">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive =
@@ -149,18 +157,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export function PageHeader({ title, subtitle, action }: { title: string; subtitle?: string; action?: React.ReactNode }) {
   return (
-    <div className="flex items-start justify-between px-4 sm:px-8 pt-4 sm:pt-8 pb-4 sm:pb-6">
+    <div className="flex items-start justify-between px-3 sm:px-8 pt-4 sm:pt-8 pb-3 sm:pb-6">
       <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-slate-900">{title}</h1>
-        {subtitle && <p className="mt-1 text-xs sm:text-sm text-muted-foreground">{subtitle}</p>}
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate">{title}</h1>
+        {subtitle && <p className="mt-1 text-xs text-muted-foreground truncate">{subtitle}</p>}
       </div>
-      {action && <div>{action}</div>}
+      {action && <div className="shrink-0 ml-2">{action}</div>}
     </div>
   );
 }
 
 export function PageContent({ children }: { children: React.ReactNode }) {
-  return <div className="px-4 sm:px-8 pb-8">{children}</div>;
+  return <div className="px-3 sm:px-8 pb-4 sm:pb-8">{children}</div>;
 }
 
 export function BuildingIcon() {

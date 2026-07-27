@@ -30,10 +30,10 @@ export default function LoginPage() {
     loginMutation.mutate({ data: { email, password } });
   };
 
-  return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
+ return (
+    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background text-foreground p-4">
+      <div className="w-full max-w-sm flex flex-col items-center">
+        <div className="text-center mb-8 w-full">
           <div className="flex justify-center mb-4">
             <div className="bg-primary rounded-2xl p-3 shadow-lg">
               <img src={iconUrl} alt="Beyond HOA" className="w-12 h-12" />
@@ -43,10 +43,10 @@ export default function LoginPage() {
           <p className="text-muted-foreground text-sm mt-1">Community Management Portal</p>
         </div>
 
-        <Card className="shadow-md border-border">
+        <Card className="w-full shadow-md border-border bg-card">
           <CardContent className="pt-6">
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 text-left">
                 <Label htmlFor="email">Email address</Label>
                 <Input
                   id="email"
@@ -59,7 +59,7 @@ export default function LoginPage() {
                   data-testid="input-email"
                 />
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 text-left">
                 <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
@@ -74,14 +74,14 @@ export default function LoginPage() {
               </div>
 
               {error && (
-                <p className="text-sm text-destructive" data-testid="text-login-error">
+                <p className="text-sm text-destructive text-left" data-testid="text-login-error">
                   {error}
                 </p>
               )}
 
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                 disabled={loginMutation.isPending}
                 data-testid="button-submit-login"
               >

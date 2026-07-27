@@ -4,7 +4,7 @@ import { PageHeader, PageContent } from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { FileText, ExternalLink, Search } from "lucide-react";
-import SmartSearchDocs from '@/components/SmartSearchDocs'; // Added your AI Search Component import
+import { SmartSearchDocs } from '@/components/SmartSearchDocs'; // Added your AI Search Component import
 
 function categoryBadge(category: string) {
   const map: Record<string, string> = {
