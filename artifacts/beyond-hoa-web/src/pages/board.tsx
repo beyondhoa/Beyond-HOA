@@ -106,12 +106,8 @@ interface OverviewTabProps {
 }
 
 function OverviewTab({ setTab }: OverviewTabProps) {
-<<<<<<< HEAD
   const [unpaidModalOpen, setUnpaidModalOpen] = useState(false);
-
-=======
   const [, setLocation] = useLocation();
->>>>>>> 0658660 (Update dashboard layout and PWA configuration)
   const { data: workOrders } = useListWorkOrders({ query: { queryKey: getListWorkOrdersQueryKey() } });
   const { data: violations } = useListViolations({ query: { queryKey: getListViolationsQueryKey() } });
   const { data: allPayments } = useListDuesPayments({ query: { queryKey: getListDuesPaymentsQueryKey() } });
@@ -133,33 +129,18 @@ function OverviewTab({ setTab }: OverviewTabProps) {
       {/* 1. Stat Tiles Row — Uniform Sizing Matching Home Dashboard */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full">
         
-<<<<<<< HEAD
         {/* Outstanding Dues Card - Triggers Unpaid Residents Modal */}
         <div onClick={() => setUnpaidModalOpen(true)} className="block group cursor-pointer">
           <Card className="border-l-4 border-l-amber-600 group-hover:shadow-md group-hover:scale-[1.01] transition-all h-full">
-            <CardContent className="pt-6">
+            <CardContent className="pt-3 pb-3 px-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="bg-amber-50 rounded-xl p-3">
-                    <CreditCard className="w-5 h-5 text-amber-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground font-medium">Outstanding Dues</p>
-                    <p className="text-xl font-bold text-amber-600">${totalUnpaid.toFixed(2)}</p>
-                  </div>
+                <div className="bg-amber-50 rounded-lg p-1.5 w-fit mb-1.5">
+                  <CreditCard className="w-3.5 h-3.5 text-amber-600" />
                 </div>
                 <ChevronRight className="w-4 h-4 text-amber-600/60 group-hover:translate-x-1 transition-transform" />
-=======
-        {/* Outstanding Dues */}
-        <div onClick={() => setTab("residents")} className="block group h-full cursor-pointer">
-          <Card className="border-l-4 border-l-stone-400 group-hover:shadow-md group-hover:scale-[1.01] transition-all h-full">
-            <CardContent className="pt-3 pb-3 px-3">
-              <div className="bg-stone-100 rounded-lg p-1.5 w-fit mb-1.5">
-                <CreditCard className="w-3.5 h-3.5 text-stone-700" />
->>>>>>> 0658660 (Update dashboard layout and PWA configuration)
               </div>
               <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">Outstanding Dues</p>
-              <p className="text-xl font-bold text-slate-900 leading-none">$1,420.00</p>
+              <p className="text-xl font-bold text-amber-600 leading-none">${totalUnpaid.toFixed(2)}</p>
               <p className="text-[11px] font-semibold text-stone-600 mt-0.5">Review Balances</p>
             </CardContent>
           </Card>
@@ -209,19 +190,6 @@ function OverviewTab({ setTab }: OverviewTabProps) {
 
       </div>
 
-<<<<<<< HEAD
-      {/* Middle Action Tiles with Readability Enhancements */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        
-        <div onClick={() => setTab("announcements")} className="flex items-center justify-between p-4 bg-gradient-to-r from-indigo-950 to-indigo-900 border border-indigo-950 rounded-xl hover:shadow-md hover:scale-[1.01] transition-all text-white group cursor-pointer">
-          <div className="flex items-center space-x-3">
-            <div className="p-2.5 bg-white/10 rounded-lg">
-              <Megaphone className="h-5 w-5 text-amber-400" />
-            </div>
-            <div className="text-left">
-              <p className="text-base font-bold text-white leading-snug">Broadcast Announcement</p>
-              <p className="text-xs text-indigo-200 font-medium mt-0.5">Pin updates to dashboards</p>
-=======
       {/* 2. Quick Management Actions Grid */}
       <div className="mt-5">
         <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-2.5">
@@ -238,23 +206,9 @@ function OverviewTab({ setTab }: OverviewTabProps) {
                 <p className="font-semibold text-white text-xs">Broadcast Announcement</p>
                 <p className="text-[11px] text-indigo-200 font-normal">Pin updates to dashboards</p>
               </div>
->>>>>>> 0658660 (Update dashboard layout and PWA configuration)
             </div>
             <ChevronRight className="h-4 w-4 text-indigo-300 group-hover:translate-x-1 transition-transform" />
           </div>
-<<<<<<< HEAD
-          <ChevronRight className="h-5 w-5 text-indigo-300 group-hover:translate-x-1 transition-transform" />
-        </div>
-
-        <div onClick={() => setTab("vendors")} className="flex items-center justify-between p-4 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-md hover:scale-[1.01] transition-all text-indigo-950 group cursor-pointer">
-          <div className="flex items-center space-x-3">
-            <div className="p-2.5 bg-indigo-50 rounded-lg text-indigo-900">
-              <Truck className="h-5 w-5 text-indigo-700" />
-            </div>
-            <div className="text-left">
-              <p className="text-base font-bold text-slate-900 leading-snug">Manage Vendors</p>
-              <p className="text-xs text-muted-foreground font-medium mt-0.5">Directory & contractors</p>
-=======
 
           <div onClick={() => setTab("vendors")} className="flex items-center justify-between p-3.5 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-sm transition-all font-semibold text-sm group cursor-pointer">
             <div className="flex items-center space-x-3">
@@ -265,23 +219,9 @@ function OverviewTab({ setTab }: OverviewTabProps) {
                 <p className="font-semibold text-slate-900 text-xs">Manage Vendors</p>
                 <p className="text-[11px] text-muted-foreground font-normal">Directory & contractors</p>
               </div>
->>>>>>> 0658660 (Update dashboard layout and PWA configuration)
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
           </div>
-<<<<<<< HEAD
-          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-        </div>
-
-        <div onClick={() => setTab("residents")} className="flex items-center justify-between p-4 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-md hover:scale-[1.01] transition-all text-indigo-950 group cursor-pointer">
-          <div className="flex items-center space-x-3">
-            <div className="p-2.5 bg-amber-50 rounded-lg text-amber-600">
-              <Users className="h-5 w-5 text-amber-600" />
-            </div>
-            <div className="text-left">
-              <p className="text-base font-bold text-slate-900 leading-snug">Resident Directory</p>
-              <p className="text-xs text-muted-foreground font-medium mt-0.5">Units, contact info, & notes</p>
-=======
 
           <div onClick={() => setTab("residents")} className="flex items-center justify-between p-3.5 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-sm transition-all font-semibold text-sm group cursor-pointer">
             <div className="flex items-center space-x-3">
@@ -292,15 +232,9 @@ function OverviewTab({ setTab }: OverviewTabProps) {
                 <p className="font-semibold text-slate-900 text-xs">Resident Directory</p>
                 <p className="text-[11px] text-muted-foreground font-normal">Units, contacts & notes</p>
               </div>
->>>>>>> 0658660 (Update dashboard layout and PWA configuration)
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
           </div>
-<<<<<<< HEAD
-          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-        </div>
-=======
->>>>>>> 0658660 (Update dashboard layout and PWA configuration)
 
         </div>
       </div>
