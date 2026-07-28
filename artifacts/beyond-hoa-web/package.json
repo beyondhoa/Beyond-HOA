@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --config vite.config.ts --host 0.0.0.0",
     "build": "vite build --config vite.config.ts",
-    "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
+    "serve": "sirv dist --host 0.0.0.0 --port ${PORT:-4173} --single",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {
@@ -83,6 +83,7 @@
   "dependencies": {
     "@capacitor/android": "^8.4.2",
     "@capacitor/browser": "^8.0.4",
-    "@capacitor/core": "^8.4.2"
+    "@capacitor/core": "^8.4.2",
+    "sirv-cli": "^3.0.1"
   }
 }
