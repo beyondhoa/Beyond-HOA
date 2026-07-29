@@ -14,7 +14,7 @@ export default defineConfig(async ({ mode }) => {
       srcDir: "src",
       filename: "sw.ts",
       registerType: "autoUpdate",
-      includeAssets: ["favicon.svg", "icons/icon-192.png", "icons/icon-512.png"],
+      includeAssets: ["favicon.svg", "icons/icon-192-v2.png", "icons/icon-512-v2.png"],
       manifest: {
         name: "Beyond HOA",
         short_name: "BeyondHOA",
@@ -25,16 +25,22 @@ export default defineConfig(async ({ mode }) => {
         orientation: "portrait",
         icons: [
           {
-            src: "./icons/icon-192.png",
+            src: "./icons/icon-192-v2.png",
             sizes: "192x192",
             type: "image/png",
             purpose: "any",
           },
           {
-            src: "./icons/icon-512.png",
+            src: "./icons/icon-512-v2.png",
             sizes: "512x512",
             type: "image/png",
-            purpose: "any maskable",
+            purpose: "any",
+          },
+          {
+            src: "./icons/icon-512-v2.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
           },
         ],
       },
