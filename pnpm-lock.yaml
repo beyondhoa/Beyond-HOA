@@ -386,6 +386,15 @@ importers:
       sirv-cli:
         specifier: ^3.0.1
         version: 3.0.1
+      workbox-precaching:
+        specifier: ^7.4.1
+        version: 7.4.1
+      workbox-routing:
+        specifier: ^7.4.1
+        version: 7.4.1
+      workbox-strategies:
+        specifier: ^7.4.1
+        version: 7.4.1
     devDependencies:
       '@capacitor/cli':
         specifier: ^8.4.2

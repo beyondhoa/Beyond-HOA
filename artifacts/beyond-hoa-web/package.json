@@ -84,6 +84,9 @@
     "@capacitor/android": "^8.4.2",
     "@capacitor/browser": "^8.0.4",
     "@capacitor/core": "^8.4.2",
-    "sirv-cli": "^3.0.1"
+    "sirv-cli": "^3.0.1",
+    "workbox-precaching": "^7.4.1",
+    "workbox-routing": "^7.4.1",
+    "workbox-strategies": "^7.4.1"
   }
 }
