@@ -62,7 +62,7 @@ export default function DashboardPage() {
   if (!resident) {
     return (
       <div className="flex-1 flex items-center justify-center min-h-[50vh]">
-        <p className="text-base text-muted-foreground animate-pulse font-medium">Loading dashboard...</p>
+        <p className="text-lg text-muted-foreground animate-pulse font-semibold">Loading dashboard...</p>
       </div>
     );
   }
@@ -140,11 +140,11 @@ export default function DashboardPage() {
         subtitle={`Unit ${resident?.unit} · ${resident?.status === "owner" ? "Owner" : "Tenant"}`}
       />
 
-      <div className="flex-1 flex flex-col w-full space-y-4">
+      <div className="flex-1 flex flex-col w-full space-y-6">
         <PageContent>
 
           {/* 1. Stat Tiles Row */}
-          <div className="grid grid-cols-3 gap-2.5 w-full">
+          <div className="grid grid-cols-3 gap-3 w-full">
 
             {/* Dues Status */}
             <div
@@ -156,17 +156,17 @@ export default function DashboardPage() {
                 data-testid="card-dues-status"
                 className="border-l-4 border-l-red-400 group-hover:shadow-md transition-all rounded-xl bg-white"
               >
-                <CardContent className="p-3 flex flex-col justify-between h-32">
+                <CardContent className="p-3.5 flex flex-col justify-between min-h-[140px]">
                   <div>
-                    <div className="bg-red-50 rounded-lg p-2 w-fit mb-1.5">
-                      <CreditCard className="w-4 h-4 text-red-500" />
+                    <div className="bg-red-50 rounded-lg p-2.5 w-fit mb-2">
+                      <CreditCard className="w-5 h-5 text-red-500" />
                     </div>
-                    <p className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wider mb-0.5">DUES</p>
-                    <p className="text-2xl font-black text-slate-900 leading-none">
+                    <p className="text-xs font-black text-muted-foreground uppercase tracking-wider mb-1">DUES</p>
+                    <p className="text-3xl font-black text-slate-900 leading-none">
                       {stripeConfig?.configured ? "$0" : "$155"}
                     </p>
                   </div>
-                  <p className="text-xs font-bold text-red-500 truncate">
+                  <p className="text-sm font-bold text-red-500 truncate mt-2">
                     {stripeConfig?.configured ? "Paid" : "Due Mar 30"}
                   </p>
                 </CardContent>
@@ -182,15 +182,15 @@ export default function DashboardPage() {
                 data-testid="card-my-work-orders"
                 className="border-l-4 border-l-amber-500 group-hover:shadow-md transition-all rounded-xl bg-white"
               >
-                <CardContent className="p-3 flex flex-col justify-between h-32">
+                <CardContent className="p-3.5 flex flex-col justify-between min-h-[140px]">
                   <div>
-                    <div className="bg-amber-50 rounded-lg p-2 w-fit mb-1.5">
-                      <Wrench className="w-4 h-4 text-amber-600" />
+                    <div className="bg-amber-50 rounded-lg p-2.5 w-fit mb-2">
+                      <Wrench className="w-5 h-5 text-amber-600" />
                     </div>
-                    <p className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wider mb-0.5">WORK ORDERS</p>
-                    <p className="text-2xl font-black text-slate-900 leading-none">{activeWorkOrders.length}</p>
+                    <p className="text-xs font-black text-muted-foreground uppercase tracking-wider mb-1">WORK ORDERS</p>
+                    <p className="text-3xl font-black text-slate-900 leading-none">{activeWorkOrders.length}</p>
                   </div>
-                  <p className="text-xs font-bold text-amber-600 truncate">Active</p>
+                  <p className="text-sm font-bold text-amber-600 truncate mt-2">Active</p>
                 </CardContent>
               </Card>
             </div>
@@ -205,49 +205,49 @@ export default function DashboardPage() {
                 data-testid="card-active-votes"
                 className="border-l-4 border-l-blue-500 group-hover:shadow-md transition-all rounded-xl bg-white"
               >
-                <CardContent className="p-3 flex flex-col justify-between h-32">
+                <CardContent className="p-3.5 flex flex-col justify-between min-h-[140px]">
                   <div>
-                    <div className="bg-blue-50 rounded-lg p-2 w-fit mb-1.5">
-                      <Vote className="w-4 h-4 text-blue-600" />
+                    <div className="bg-blue-50 rounded-lg p-2.5 w-fit mb-2">
+                      <Vote className="w-5 h-5 text-blue-600" />
                     </div>
-                    <p className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wider mb-0.5">VOTES</p>
-                    <p className="text-2xl font-black text-slate-900 leading-none">1</p>
+                    <p className="text-xs font-black text-muted-foreground uppercase tracking-wider mb-1">VOTES</p>
+                    <p className="text-3xl font-black text-slate-900 leading-none">1</p>
                   </div>
-                  <p className="text-xs font-bold text-blue-600 truncate">Open</p>
+                  <p className="text-sm font-bold text-blue-600 truncate mt-2">Open</p>
                 </CardContent>
               </Card>
             </div>
           </div>
 
           {/* 2. Quick Actions — 2x2 Feature Cards */}
-          <div className="mt-5">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2.5">
+          <div className="mt-6">
+            <p className="text-sm font-black text-slate-700 uppercase tracking-widest mb-3">
               QUICK ACTIONS
             </p>
             
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3.5">
 
               {/* Pay Dues Card */}
               <div
                 onClick={() => setLocation("/dues")}
                 data-testid="link-pay-dues"
-                className="bg-white border rounded-xl p-3.5 flex flex-col justify-between hover:shadow-md transition-all cursor-pointer group"
+                className="bg-white border rounded-xl p-4 flex flex-col justify-between hover:shadow-md transition-all cursor-pointer group"
               >
                 <div>
-                  <div className="flex justify-between items-start mb-2.5">
-                    <div className="w-9 h-9 rounded-lg bg-red-100/80 text-red-500 flex items-center justify-center">
-                      <CreditCard className="w-5 h-5" />
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="w-10 h-10 rounded-lg bg-red-100 text-red-500 flex items-center justify-center">
+                      <CreditCard className="w-6 h-6" />
                     </div>
-                    <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-slate-500 transition-colors" />
+                    <ChevronRight className="w-6 h-6 text-slate-400 group-hover:text-slate-600 transition-colors" />
                   </div>
-                  <h3 className="font-bold text-slate-900 text-base">Pay dues</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5 font-medium">
+                  <h3 className="font-extrabold text-slate-900 text-lg">Pay dues</h3>
+                  <p className="text-sm text-slate-600 mt-1 font-medium">
                     {stripeConfig?.configured ? "$0 due" : "$155 due Mar 30"}
                   </p>
                 </div>
                 {!stripeConfig?.configured && (
-                  <div className="mt-2.5">
-                    <span className="inline-block bg-red-100/80 text-red-600 text-xs font-bold px-2.5 py-0.5 rounded-full">
+                  <div className="mt-3">
+                    <span className="inline-block bg-red-100 text-red-700 text-xs font-bold px-3 py-1 rounded-full">
                       Overdue soon
                     </span>
                   </div>
@@ -258,17 +258,17 @@ export default function DashboardPage() {
               <div
                 onClick={() => setWoOpen(true)}
                 data-testid="link-report-issue"
-                className="bg-white border rounded-xl p-3.5 flex flex-col justify-between hover:shadow-md transition-all cursor-pointer group"
+                className="bg-white border rounded-xl p-4 flex flex-col justify-between hover:shadow-md transition-all cursor-pointer group"
               >
                 <div>
-                  <div className="flex justify-between items-start mb-2.5">
-                    <div className="w-9 h-9 rounded-lg bg-amber-100/80 text-amber-600 flex items-center justify-center">
-                      <Wrench className="w-5 h-5" />
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="w-10 h-10 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center">
+                      <Wrench className="w-6 h-6" />
                     </div>
-                    <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-slate-500 transition-colors" />
+                    <ChevronRight className="w-6 h-6 text-slate-400 group-hover:text-slate-600 transition-colors" />
                   </div>
-                  <h3 className="font-bold text-slate-900 text-base">Report issue</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5 font-medium">Submit a work order</p>
+                  <h3 className="font-extrabold text-slate-900 text-lg">Report issue</h3>
+                  <p className="text-sm text-slate-600 mt-1 font-medium">Submit a work order</p>
                 </div>
               </div>
 
@@ -276,17 +276,17 @@ export default function DashboardPage() {
               <div
                 onClick={() => setLocation("/documents")}
                 data-testid="link-documents"
-                className="bg-white border rounded-xl p-3.5 flex flex-col justify-between hover:shadow-md transition-all cursor-pointer group"
+                className="bg-white border rounded-xl p-4 flex flex-col justify-between hover:shadow-md transition-all cursor-pointer group"
               >
                 <div>
-                  <div className="flex justify-between items-start mb-2.5">
-                    <div className="w-9 h-9 rounded-lg bg-blue-100/80 text-blue-600 flex items-center justify-center">
-                      <FileText className="w-5 h-5" />
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
+                      <FileText className="w-6 h-6" />
                     </div>
-                    <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-slate-500 transition-colors" />
+                    <ChevronRight className="w-6 h-6 text-slate-400 group-hover:text-slate-600 transition-colors" />
                   </div>
-                  <h3 className="font-bold text-slate-900 text-base">Documents</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5 font-medium">Bylaws & guidelines</p>
+                  <h3 className="font-extrabold text-slate-900 text-lg">Documents</h3>
+                  <p className="text-sm text-slate-600 mt-1 font-medium">Bylaws & guidelines</p>
                 </div>
               </div>
 
@@ -294,17 +294,17 @@ export default function DashboardPage() {
               <a
                 href="mailto:board@beyondhoa.com"
                 data-testid="link-contact-board"
-                className="bg-white border rounded-xl p-3.5 flex flex-col justify-between hover:shadow-md transition-all cursor-pointer group"
+                className="bg-white border rounded-xl p-4 flex flex-col justify-between hover:shadow-md transition-all cursor-pointer group"
               >
                 <div>
-                  <div className="flex justify-between items-start mb-2.5">
-                    <div className="w-9 h-9 rounded-lg bg-emerald-100/80 text-emerald-600 flex items-center justify-center">
-                      <MessageSquare className="w-5 h-5" />
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                      <MessageSquare className="w-6 h-6" />
                     </div>
-                    <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-slate-500 transition-colors" />
+                    <ChevronRight className="w-6 h-6 text-slate-400 group-hover:text-slate-600 transition-colors" />
                   </div>
-                  <h3 className="font-bold text-slate-900 text-base">Contact board</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5 font-medium">Message administrators</p>
+                  <h3 className="font-extrabold text-slate-900 text-lg">Contact board</h3>
+                  <p className="text-sm text-slate-600 mt-1 font-medium">Message administrators</p>
                 </div>
               </a>
 
@@ -312,22 +312,22 @@ export default function DashboardPage() {
           </div>
 
           {/* 3. Community Announcements */}
-          <div className="mt-5">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2.5">
+          <div className="mt-6">
+            <p className="text-sm font-black text-slate-700 uppercase tracking-widest mb-3">
               COMMUNITY ANNOUNCEMENTS
             </p>
 
             <div className="bg-white border rounded-xl divide-y">
               {annLoading ? (
-                <div className="p-3 space-y-2">
+                <div className="p-4 space-y-3">
                   {[1, 2].map((i) => (
-                    <div key={i} className="h-12 bg-muted rounded animate-pulse" />
+                    <div key={i} className="h-14 bg-muted rounded animate-pulse" />
                   ))}
                 </div>
               ) : sortedAnnouncements.length === 0 ? (
                 <div className="text-center py-6 text-muted-foreground">
-                  <Megaphone className="w-7 h-7 mx-auto mb-1.5 opacity-40" />
-                  <p className="text-xs font-medium">No community announcements posted yet.</p>
+                  <Megaphone className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                  <p className="text-sm font-semibold">No community announcements posted yet.</p>
                 </div>
               ) : (
                 sortedAnnouncements.map((announcement) => {
@@ -335,22 +335,22 @@ export default function DashboardPage() {
                   return (
                     <div
                       key={announcement.id}
-                      className="p-3 flex items-center justify-between gap-3 hover:bg-slate-50 transition-colors"
+                      className="p-4 flex items-center justify-between gap-3 hover:bg-slate-50 transition-colors"
                     >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${colors.bg}`}>
-                          <Megaphone className={`w-4 h-4 ${colors.text}`} />
+                      <div className="flex items-center gap-3.5 min-w-0">
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${colors.bg}`}>
+                          <Megaphone className={`w-5 h-5 ${colors.text}`} />
                         </div>
                         <div className="min-w-0">
-                          <h4 className="font-bold text-sm text-slate-900 leading-snug truncate">
+                          <h4 className="font-bold text-base text-slate-900 leading-snug truncate">
                             {announcement.title}
                           </h4>
-                          <p className="text-xs text-muted-foreground font-medium truncate mt-0.5">
+                          <p className="text-sm text-slate-600 font-medium truncate mt-0.5">
                             {announcement.content}
                           </p>
                         </div>
                       </div>
-                      <span className="text-xs font-semibold text-slate-400 shrink-0">
+                      <span className="text-xs font-bold text-slate-500 shrink-0">
                         {announcement.createdAt
                           ? new Date(announcement.createdAt).toLocaleDateString(undefined, {
                               month: "short",
@@ -372,11 +372,11 @@ export default function DashboardPage() {
       <Dialog open={woOpen} onOpenChange={setWoOpen}>
         <DialogContent className="max-w-[92vw] rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold">Submit Work Order</DialogTitle>
+            <DialogTitle className="text-xl font-bold">Submit Work Order</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-3.5 mt-1">
-            <div className="space-y-1">
-              <Label htmlFor="wo-title" className="text-xs font-semibold">Title</Label>
+          <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="wo-title" className="text-sm font-bold">Title</Label>
               <Input
                 id="wo-title"
                 value={form.title}
@@ -386,9 +386,9 @@ export default function DashboardPage() {
                 data-testid="input-wo-title"
               />
             </div>
-            <div className="grid grid-cols-2 gap-2.5">
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Category</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-sm font-bold">Category</Label>
                 <Select value={form.category} onValueChange={(v) => setForm((f) => ({ ...f, category: v }))}>
                   <SelectTrigger data-testid="select-wo-category">
                     <SelectValue />
@@ -402,8 +402,8 @@ export default function DashboardPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Priority</Label>
+              <div className="space-y-1.5">
+                <Label className="text-sm font-bold">Priority</Label>
                 <Select value={form.priority} onValueChange={(v) => setForm((f) => ({ ...f, priority: v }))}>
                   <SelectTrigger data-testid="select-wo-priority">
                     <SelectValue />
@@ -417,8 +417,8 @@ export default function DashboardPage() {
                 </Select>
               </div>
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="wo-desc" className="text-xs font-semibold">Description</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="wo-desc" className="text-sm font-bold">Description</Label>
               <Textarea
                 id="wo-desc"
                 value={form.description}
@@ -431,7 +431,7 @@ export default function DashboardPage() {
             </div>
             <Button
               type="submit"
-              className="w-full bg-indigo-950 hover:bg-indigo-900 text-white font-bold text-sm"
+              className="w-full bg-indigo-950 hover:bg-indigo-900 text-white font-bold text-base py-3"
               disabled={createWO.isPending}
               data-testid="button-submit-wo"
             >
