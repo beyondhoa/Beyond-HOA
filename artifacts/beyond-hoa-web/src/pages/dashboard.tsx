@@ -94,7 +94,7 @@ export default function DashboardPage() {
       }
     } catch (err) {
       console.error("Failed to fetch announcements:", err);
-    } fontally {
+    } finally {
       setAnnLoading(false);
     }
   };
