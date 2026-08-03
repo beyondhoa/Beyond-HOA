@@ -30,7 +30,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen w-full bg-background select-none overflow-hidden">
+    <div className="flex flex-col lg:flex-row min-h-dvh w-full bg-background select-none">
       
       {/* 1. MOBILE TOP HEADER (Fixed Full Width & Larger Text) */}
       <header className="fixed top-0 left-0 right-0 h-[calc(4rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] bg-indigo-950 px-4 flex items-center justify-between border-b border-indigo-900/60 shadow-md lg:hidden z-50 w-full">
