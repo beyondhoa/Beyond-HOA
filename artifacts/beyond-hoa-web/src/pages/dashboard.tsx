@@ -9,11 +9,10 @@ import {
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { PageHeader, PageContent } from "@/components/Layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -34,7 +33,8 @@ import {
   Vote,
   Megaphone,
   FileText,
-  Mail,
+  MessageSquare,
+  ChevronRight,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -47,12 +47,12 @@ interface Announcement {
   createdAt?: string;
 }
 
-const categoryColors: Record<string, { bg: string; text: string; dot: string }> = {
-  governance: { bg: "bg-indigo-50/70 dark:bg-indigo-950/30", text: "text-indigo-900 dark:text-indigo-300", dot: "bg-indigo-900" },
-  maintenance: { bg: "bg-amber-50/70 dark:bg-amber-950/30", text: "text-amber-700 dark:text-amber-300", dot: "bg-amber-500" },
-  general: { bg: "bg-stone-50 dark:bg-stone-900/50", text: "text-stone-700 dark:text-stone-300", dot: "bg-stone-500" },
-  emergency: { bg: "bg-red-50/70 dark:bg-red-950/30", text: "text-red-700 dark:text-red-300", dot: "bg-red-600" },
-  event: { bg: "bg-amber-50/50 dark:bg-amber-950/20", text: "text-amber-800 dark:text-amber-400", dot: "bg-amber-600" },
+const categoryColors: Record<string, { bg: string; text: string }> = {
+  governance: { bg: "bg-emerald-100 dark:bg-emerald-950/40", text: "text-emerald-700 dark:text-emerald-400" },
+  maintenance: { bg: "bg-amber-100 dark:bg-amber-950/40", text: "text-amber-700 dark:text-amber-400" },
+  general: { bg: "bg-emerald-100 dark:bg-emerald-950/40", text: "text-emerald-700 dark:text-emerald-400" },
+  emergency: { bg: "bg-red-100 dark:bg-red-950/40", text: "text-red-700 dark:text-red-400" },
+  event: { bg: "bg-amber-100 dark:bg-amber-950/40", text: "text-amber-700 dark:text-amber-400" },
 };
 
 export default function DashboardPage() {
@@ -62,7 +62,7 @@ export default function DashboardPage() {
   if (!resident) {
     return (
       <div className="flex-1 flex items-center justify-center min-h-[50vh]">
-        <p className="text-base text-muted-foreground animate-pulse font-medium">Loading dashboard...</p>
+        <p className="text-sm text-muted-foreground animate-pulse font-medium">Loading dashboard...</p>
       </div>
     );
   }
@@ -94,7 +94,7 @@ export default function DashboardPage() {
       }
     } catch (err) {
       console.error("Failed to fetch announcements:", err);
-    } finally {
+    } fontally {
       setAnnLoading(false);
     }
   };
@@ -134,11 +134,12 @@ export default function DashboardPage() {
     .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
 
   return (
-    <div className="flex-1 flex flex-col w-full h-full relative">
+    <div className="flex-1 flex flex-col w-full h-full relative bg-slate-50/50">
       <PageHeader
         title={`Welcome, ${resident?.name?.split(" ")[0]}`}
         subtitle={`Unit ${resident?.unit} · ${resident?.status === "owner" ? "Owner" : "Tenant"}`}
       />
+
       <div className="flex-1 flex flex-col w-full space-y-5">
         <PageContent>
 
@@ -149,21 +150,23 @@ export default function DashboardPage() {
             <div
               onClick={() => setLocation("/dues")}
               data-testid="link-dues"
-              className="block group h-full cursor-pointer"
+              className="block group cursor-pointer"
             >
               <Card
                 data-testid="card-dues-status"
-                className="border-l-4 border-l-red-400 group-hover:shadow-md transition-all h-full"
+                className="border-l-4 border-l-red-400 group-hover:shadow-md transition-all rounded-2xl bg-white"
               >
-                <CardContent className="p-2.5">
-                  <div className="bg-red-50 rounded-md p-1.5 w-fit mb-1.5">
-                    <CreditCard className="w-4 h-4 text-red-500" />
+                <CardContent className="p-3 flex flex-col justify-between h-32">
+                  <div>
+                    <div className="bg-red-50 rounded-xl p-2 w-fit mb-2">
+                      <CreditCard className="w-4 h-4 text-red-500" />
+                    </div>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">DUES</p>
+                    <p className="text-xl font-extrabold text-slate-900 leading-none">
+                      {stripeConfig?.configured ? "$0" : "$155"}
+                    </p>
                   </div>
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5 truncate">Dues</p>
-                  <p className="text-xl font-extrabold text-slate-900 leading-none">
-                    {stripeConfig?.configured ? "$0" : "$155"}
-                  </p>
-                  <p className="text-xs font-bold text-red-500 mt-1 truncate">
+                  <p className="text-xs font-semibold text-red-500 truncate">
                     {stripeConfig?.configured ? "Paid" : "Due Mar 30"}
                   </p>
                 </CardContent>
@@ -173,19 +176,21 @@ export default function DashboardPage() {
             {/* Work Orders */}
             <div
               onClick={() => setWoOpen(true)}
-              className="block group h-full cursor-pointer"
+              className="block group cursor-pointer"
             >
               <Card
                 data-testid="card-my-work-orders"
-                className="border-l-4 border-l-amber-500 group-hover:shadow-md transition-all h-full"
+                className="border-l-4 border-l-amber-500 group-hover:shadow-md transition-all rounded-2xl bg-white"
               >
-                <CardContent className="p-2.5">
-                  <div className="bg-amber-50 rounded-md p-1.5 w-fit mb-1.5">
-                    <Wrench className="w-4 h-4 text-amber-600" />
+                <CardContent className="p-3 flex flex-col justify-between h-32">
+                  <div>
+                    <div className="bg-amber-50 rounded-xl p-2 w-fit mb-2">
+                      <Wrench className="w-4 h-4 text-amber-600" />
+                    </div>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">WORK ORDERS</p>
+                    <p className="text-xl font-extrabold text-slate-900 leading-none">{activeWorkOrders.length}</p>
                   </div>
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5 truncate">Orders</p>
-                  <p className="text-xl font-extrabold text-slate-900 leading-none">{activeWorkOrders.length}</p>
-                  <p className="text-xs font-bold text-amber-600 mt-1 truncate">Active</p>
+                  <p className="text-xs font-semibold text-amber-600 truncate">Active</p>
                 </CardContent>
               </Card>
             </div>
@@ -194,101 +199,135 @@ export default function DashboardPage() {
             <div
               onClick={() => setLocation("/voting")}
               data-testid="link-votes"
-              className="block group h-full cursor-pointer"
+              className="block group cursor-pointer"
             >
               <Card
                 data-testid="card-active-votes"
-                className="border-l-4 border-l-blue-500 group-hover:shadow-md transition-all h-full"
+                className="border-l-4 border-l-blue-500 group-hover:shadow-md transition-all rounded-2xl bg-white"
               >
-                <CardContent className="p-2.5">
-                  <div className="bg-blue-50 rounded-md p-1.5 w-fit mb-1.5">
-                    <Vote className="w-4 h-4 text-blue-600" />
+                <CardContent className="p-3 flex flex-col justify-between h-32">
+                  <div>
+                    <div className="bg-blue-50 rounded-xl p-2 w-fit mb-2">
+                      <Vote className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">VOTES</p>
+                    <p className="text-xl font-extrabold text-slate-900 leading-none">1</p>
                   </div>
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5 truncate">Votes</p>
-                  <p className="text-xl font-extrabold text-slate-900 leading-none">1</p>
-                  <p className="text-xs font-bold text-blue-600 mt-1 truncate">Open</p>
+                  <p className="text-xs font-semibold text-blue-600 truncate">Open</p>
                 </CardContent>
               </Card>
             </div>
           </div>
 
-          {/* 2. Quick Actions — Icon Grid */}
-          <div className="mt-5">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2.5">
-              Quick Actions
+          {/* 2. Quick Actions — 2x2 Feature Card Grid */}
+          <div className="mt-6">
+            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-3">
+              QUICK ACTIONS
             </p>
-            <div className="grid grid-cols-4 gap-2">
+            
+            <div className="grid grid-cols-2 gap-3">
 
-              {/* Pay Dues */}
+              {/* Pay Dues Card */}
               <div
                 onClick={() => setLocation("/dues")}
                 data-testid="link-pay-dues"
-                className="flex flex-col items-center gap-2 pt-3.5 pb-3 px-1 bg-card border rounded-2xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-sm transition-all group cursor-pointer"
+                className="bg-white border rounded-2xl p-4 flex flex-col justify-between hover:shadow-md transition-all cursor-pointer group"
               >
-                <div className="w-10 h-10 rounded-xl bg-red-100 text-red-500 flex items-center justify-center group-hover:bg-red-200 transition-colors">
-                  <CreditCard className="w-5 h-5" />
+                <div>
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="w-10 h-10 rounded-xl bg-red-100/80 text-red-500 flex items-center justify-center">
+                      <CreditCard className="w-5 h-5" />
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                  </div>
+                  <h3 className="font-bold text-slate-900 text-sm">Pay dues</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5 font-medium">
+                    {stripeConfig?.configured ? "$0 due" : "$155 due Mar 30"}
+                  </p>
                 </div>
-                <span className="text-xs font-semibold text-slate-800 leading-tight truncate w-full text-center">Pay Dues</span>
+                {!stripeConfig?.configured && (
+                  <div className="mt-3">
+                    <span className="inline-block bg-red-100/80 text-red-600 text-[10px] font-semibold px-2.5 py-1 rounded-full">
+                      Overdue soon
+                    </span>
+                  </div>
+                )}
               </div>
 
-              {/* Documents */}
+              {/* Report Issue Card */}
+              <div
+                onClick={() => setWoOpen(true)}
+                data-testid="link-report-issue"
+                className="bg-white border rounded-2xl p-4 flex flex-col justify-between hover:shadow-md transition-all cursor-pointer group"
+              >
+                <div>
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-100/80 text-amber-600 flex items-center justify-center">
+                      <Wrench className="w-5 h-5" />
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                  </div>
+                  <h3 className="font-bold text-slate-900 text-sm">Report issue</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5 font-medium">Submit a work order</p>
+                </div>
+              </div>
+
+              {/* Documents Card */}
               <div
                 onClick={() => setLocation("/documents")}
                 data-testid="link-documents"
-                className="flex flex-col items-center gap-2 pt-3.5 pb-3 px-1 bg-card border rounded-2xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-sm transition-all group cursor-pointer"
+                className="bg-white border rounded-2xl p-4 flex flex-col justify-between hover:shadow-md transition-all cursor-pointer group"
               >
-                <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-500 flex items-center justify-center group-hover:bg-indigo-200 transition-colors">
-                  <FileText className="w-5 h-5" />
+                <div>
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-100/80 text-blue-600 flex items-center justify-center">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                  </div>
+                  <h3 className="font-bold text-slate-900 text-sm">Documents</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5 font-medium">Bylaws & guidelines</p>
                 </div>
-                <span className="text-xs font-semibold text-slate-800 leading-tight truncate w-full text-center">Documents</span>
               </div>
 
-              {/* Report Issue */}
-              <button
-                type="button"
-                onClick={() => setWoOpen(true)}
-                data-testid="link-report-issue"
-                className="flex flex-col items-center gap-2 pt-3.5 pb-3 px-1 bg-card border rounded-2xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-sm transition-all group cursor-pointer w-full"
-              >
-                <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-500 flex items-center justify-center group-hover:bg-amber-200 transition-colors">
-                  <Wrench className="w-5 h-5" />
-                </div>
-                <span className="text-xs font-semibold text-slate-800 leading-tight truncate w-full text-center">Report Issue</span>
-              </button>
-
-              {/* Contact Board */}
+              {/* Contact Board Card */}
               <a
                 href="mailto:board@beyondhoa.com"
                 data-testid="link-contact-board"
-                className="flex flex-col items-center gap-2 pt-3.5 pb-3 px-1 bg-card border rounded-2xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-sm transition-all group cursor-pointer"
+                className="bg-white border rounded-2xl p-4 flex flex-col justify-between hover:shadow-md transition-all cursor-pointer group"
               >
-                <div className="w-10 h-10 rounded-xl bg-green-100 text-green-600 flex items-center justify-center group-hover:bg-green-200 transition-colors">
-                  <Mail className="w-5 h-5" />
+                <div>
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-100/80 text-emerald-600 flex items-center justify-center">
+                      <MessageSquare className="w-5 h-5" />
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                  </div>
+                  <h3 className="font-bold text-slate-900 text-sm">Contact board</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5 font-medium">Message administrators</p>
                 </div>
-                <span className="text-xs font-semibold text-slate-800 leading-tight truncate w-full text-center">Contact</span>
               </a>
+
             </div>
           </div>
 
           {/* 3. Community Announcements */}
-          <Card className="border-t-2 border-t-amber-500 mt-5">
-            <CardHeader className="pb-2 pt-3.5 px-3.5">
-              <CardTitle className="text-base font-bold flex items-center gap-2 text-amber-800">
-                <Megaphone className="w-4 h-4 text-amber-600 shrink-0" />
-                <span className="truncate">Community Announcements</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2.5 px-3.5 pb-3.5">
+          <div className="mt-6">
+            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-3">
+              COMMUNITY ANNOUNCEMENTS
+            </p>
+
+            <div className="bg-white border rounded-2xl divide-y">
               {annLoading ? (
-                <div className="space-y-2">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-16 bg-muted rounded animate-pulse" />
+                <div className="p-4 space-y-3">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="h-12 bg-muted rounded animate-pulse" />
                   ))}
                 </div>
               ) : sortedAnnouncements.length === 0 ? (
                 <div className="text-center py-6 text-muted-foreground">
-                  <Megaphone className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                  <p className="text-sm font-medium">No announcements posted yet.</p>
+                  <Megaphone className="w-7 h-7 mx-auto mb-2 opacity-40" />
+                  <p className="text-xs">No community announcements posted yet.</p>
                 </div>
               ) : (
                 sortedAnnouncements.map((announcement) => {
@@ -296,42 +335,35 @@ export default function DashboardPage() {
                   return (
                     <div
                       key={announcement.id}
-                      className="flex items-start gap-2.5 p-3 rounded-xl border bg-card hover:bg-stone-50/50 transition-colors"
+                      className="p-3.5 flex items-center justify-between gap-3 hover:bg-slate-50 transition-colors"
                     >
-                      <div className={`rounded-lg p-2 w-fit shrink-0 mt-0.5 ${colors.bg}`}>
-                        <Megaphone className={`w-4 h-4 ${colors.text}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start gap-1.5">
-                          <h4 className="font-bold text-sm tracking-tight text-slate-900 truncate">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${colors.bg}`}>
+                          <Megaphone className={`w-5 h-5 ${colors.text}`} />
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="font-bold text-sm text-slate-900 leading-snug truncate">
                             {announcement.title}
                           </h4>
-                          <div className="flex items-center gap-1 shrink-0">
-                            {announcement.pinned && (
-                              <Badge className="text-[10px] px-1.5 py-0 uppercase tracking-wider font-extrabold bg-amber-500 hover:bg-amber-600 text-white border-0">
-                                Pin
-                              </Badge>
-                            )}
-                            <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
-                              {announcement.createdAt
-                                ? new Date(announcement.createdAt).toLocaleDateString(undefined, {
-                                    month: "short",
-                                    day: "2-digit",
-                                  })
-                                : "Recent"}
-                            </span>
-                          </div>
+                          <p className="text-xs text-muted-foreground font-medium truncate mt-0.5">
+                            {announcement.content}
+                          </p>
                         </div>
-                        <p className="text-xs font-medium text-muted-foreground leading-relaxed mt-1 line-clamp-2">
-                          {announcement.content}
-                        </p>
                       </div>
+                      <span className="text-xs font-medium text-slate-400 shrink-0">
+                        {announcement.createdAt
+                          ? new Date(announcement.createdAt).toLocaleDateString(undefined, {
+                              month: "short",
+                              day: "2-digit",
+                            })
+                          : "Jul 15"}
+                      </span>
                     </div>
                   );
                 })
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
         </PageContent>
       </div>
