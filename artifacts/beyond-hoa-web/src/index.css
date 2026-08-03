@@ -52,6 +52,19 @@
 
   * {
     @apply border-border;
+    
+  }
+  html {
+    /* Set base font size for scaling rem values */
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Scale up root font size on mobile viewports so text renders noticeably larger */
+  @media (max-width: 640px) {
+    html {
+      font-size: 18.5px;
+    }
   }
   body {
     @apply bg-background text-foreground;
