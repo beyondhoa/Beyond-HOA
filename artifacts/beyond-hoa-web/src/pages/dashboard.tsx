@@ -133,7 +133,7 @@ export default function DashboardPage() {
     .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
 
   return (
-    <div className="flex-1 flex flex-col w-full h-full">
+    <div className="flex-1 flex flex-col w-full">
       <PageHeader
         title={`Welcome, ${resident?.name?.split(" ")[0]}`}
         subtitle={`Unit ${resident?.unit} · ${resident?.status === "owner" ? "Owner" : "Tenant"}`}

@@ -117,7 +117,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* 3. MAIN SCROLLABLE CONTENT */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto pb-24 lg:pb-0 bg-background text-foreground">
+      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto pb-24 lg:pb-0 bg-background text-foreground min-h-0">
         <div className="flex-1 flex flex-col w-full">
           {children}
         </div>
