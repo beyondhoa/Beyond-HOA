@@ -32,7 +32,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col lg:flex-row h-screen w-full bg-background select-none overflow-hidden">
       
-      {/* 1. MOBILE TOP HEADER (With Top Safe Area) */}
+      {/* 1. MOBILE TOP HEADER */}
       <header className="flex-none h-[calc(3.5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] bg-indigo-950 px-4 flex items-center justify-between border-b border-indigo-900/60 shadow-md lg:hidden z-30">
         <div className="flex items-center gap-2.5">
           <img src={iconUrl} alt="Beyond HOA" className="w-7 h-7 rounded-lg" />
@@ -118,12 +118,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       {/* 3. MAIN SCROLLABLE CONTENT */}
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto pb-24 lg:pb-0 bg-background text-foreground min-h-0">
-        <div className="flex-1 flex flex-col w-full">
+        <div className="flex-1 flex flex-col w-full h-auto">
           {children}
         </div>
       </main>
 
-      {/* 4. MOBILE BOTTOM TAB BAR (With Dynamic Bottom Safe Area Height) */}
+      {/* 4. MOBILE BOTTOM TAB BAR */}
       <nav className="fixed bottom-0 left-0 right-0 h-[calc(4rem+env(safe-area-inset-bottom))] bg-indigo-950 border-t border-indigo-900/60 flex items-center justify-around z-50 lg:hidden pb-[env(safe-area-inset-bottom)] shadow-lg">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -143,7 +143,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               )}
             >
               <Icon className={cn("w-5 h-5", isActive ? "text-white" : "text-indigo-200/70")} />
-              <span className="text-[10px] mt-1 tracking-tight truncate max-w-[64px]">
+              <span className="text-xs mt-1 tracking-tight truncate max-w-[64px]">
                 {item.label}
               </span>
             </Link>
@@ -155,20 +155,40 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function PageHeader({ title, subtitle, action }: { title: string; subtitle?: string; action?: React.ReactNode }) {
+/* Restored PageHeader with ReactNode subtitle support */
+export function PageHeader({ 
+  title, 
+  subtitle, 
+  action 
+}: { 
+  title: string; 
+  subtitle?: React.ReactNode; 
+  action?: React.ReactNode 
+}) {
   return (
     <div className="flex items-start justify-between px-3 sm:px-8 pt-4 sm:pt-8 pb-3 sm:pb-6">
-      <div>
+      <div className="min-w-0">
         <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate">{title}</h1>
-        {subtitle && <p className="mt-1 text-xs text-muted-foreground truncate">{subtitle}</p>}
+        {subtitle && (
+          <div className="mt-1 text-xs sm:text-sm text-muted-foreground truncate">
+            {subtitle}
+          </div>
+        )}
       </div>
       {action && <div className="shrink-0 ml-2">{action}</div>}
     </div>
   );
 }
 
-export function PageContent({ children }: { children: React.ReactNode }) {
-  return <div className="px-3 sm:px-8 pb-4 sm:pb-8">{children}</div>;
+/* PageContent with optional className merging */
+export function PageContent({ 
+  children, 
+  className 
+}: { 
+  children: React.ReactNode; 
+  className?: string 
+}) {
+  return <div className={cn("px-3 sm:px-8 pb-4 sm:pb-8", className)}>{children}</div>;
 }
 
 export function BuildingIcon() {

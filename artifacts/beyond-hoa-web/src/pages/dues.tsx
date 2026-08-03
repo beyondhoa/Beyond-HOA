@@ -47,7 +47,8 @@ export default function DuesPage() {
   // Filter payments array strictly for the active resident
   const payments = allPayments?.filter((p) => {
     if (!currentResidentId) return true;
-    const itemResidentId = p.resident_id ?? p.residentId;
+    const rawP = p as Record<string, any>;
+    const itemResidentId = rawP.resident_id ?? rawP.residentId; 
     return String(itemResidentId) === String(currentResidentId);
   }) ?? [];
 

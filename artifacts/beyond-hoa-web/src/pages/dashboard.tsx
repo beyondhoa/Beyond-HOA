@@ -34,8 +34,7 @@ import {
   Vote,
   Megaphone,
   FileText,
-  ChevronRight,
-  MessageSquare,
+  Mail,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -79,7 +78,9 @@ export default function DashboardPage() {
   const { data: stripeConfig } = useGetDuesStripeConfigured();
 
   const myWorkOrders = workOrders?.filter((wo) => wo.resident_name === resident?.name) ?? [];
-  const activeWorkOrders = myWorkOrders.filter((wo) => wo.status === "open" || wo.status === "in_progress");
+  const activeWorkOrders = myWorkOrders.filter(
+  (wo) => (wo.status as string) === "open" || (wo.status as string) === "in_progress"
+  );
 
   const API_BASE_URL = import.meta.env.VITE_API_URL || "https://beyond-hoa-web-production.up.railway.app";
 
@@ -133,267 +134,213 @@ export default function DashboardPage() {
     .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
 
   return (
-    /* Fix: Updated container layout & scroll padding to prevent overflow gaps */
-    <div className="w-full flex flex-col pb-24 md:pb-8">
+    <div className="flex-1 flex flex-col w-full h-full relative">
       <PageHeader
         title={`Welcome, ${resident?.name?.split(" ")[0]}`}
         subtitle={`Unit ${resident?.unit} · ${resident?.status === "owner" ? "Owner" : "Tenant"}`}
       />
-      
-      {/* Fix: Added flex-none & h-auto to PageContent wrapper */}
-      <PageContent className="space-y-6 h-auto flex-none">
-        
-        {/* 1. Stat Tiles Row (Increased text sizes for mobile) */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full">
+      <div className="flex-1 flex flex-col w-full space-y-4">
+        <PageContent>
 
-          {/* Dues Status */}
-          <div
-            onClick={() => setLocation("/dues")}
-            data-testid="link-dues"
-            className="block group h-full cursor-pointer"
-          >
-            <Card
-              data-testid="card-dues-status"
-              className="border-l-4 border-l-red-400 group-hover:shadow-md transition-all h-full"
-            >
-              <CardContent className="p-2.5 sm:p-3 flex flex-col justify-between h-full">
-                <div className="flex items-center justify-between gap-1 mb-1">
-                  <span className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wide truncate">
-                    Dues
-                  </span>
-                  <div className="bg-red-50 dark:bg-red-950/40 rounded p-1 shrink-0">
-                    <CreditCard className="w-3.5 h-3.5 text-red-500" />
-                  </div>
-                </div>
-                <div>
-                  <p className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 leading-none">
-                    {stripeConfig?.configured ? "$0" : "$155"}
-                  </p>
-                  <p className="text-[11px] sm:text-xs font-semibold text-red-500 mt-1 truncate">
-                    {stripeConfig?.configured ? "Paid" : "Due Mar 30"}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          {/* 1. Stat Tiles Row */}
+          <div className="grid grid-cols-3 gap-2 w-full">
 
-          {/* Work Orders */}
-          <div
-            onClick={() => setWoOpen(true)}
-            className="block group h-full cursor-pointer"
-          >
-            <Card
-              data-testid="card-my-work-orders"
-              className="border-l-4 border-l-amber-500 group-hover:shadow-md transition-all h-full"
-            >
-              <CardContent className="p-2.5 sm:p-3 flex flex-col justify-between h-full">
-                <div className="flex items-center justify-between gap-1 mb-1">
-                  <span className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wide truncate">
-                    Orders
-                  </span>
-                  <div className="bg-amber-50 dark:bg-amber-950/40 rounded p-1 shrink-0">
-                    <Wrench className="w-3.5 h-3.5 text-amber-600" />
-                  </div>
-                </div>
-                <div>
-                  <p className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 leading-none">
-                    {activeWorkOrders.length}
-                  </p>
-                  <p className="text-[11px] sm:text-xs font-semibold text-amber-600 mt-1 truncate">
-                    Active
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Active Votes */}
-          <div
-            onClick={() => setLocation("/voting")}
-            data-testid="link-votes"
-            className="block group h-full cursor-pointer"
-          >
-            <Card
-              data-testid="card-active-votes"
-              className="border-l-4 border-l-blue-500 group-hover:shadow-md transition-all h-full"
-            >
-              <CardContent className="p-2.5 sm:p-3 flex flex-col justify-between h-full">
-                <div className="flex items-center justify-between gap-1 mb-1">
-                  <span className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wide truncate">
-                    Votes
-                  </span>
-                  <div className="bg-blue-50 dark:bg-blue-950/40 rounded p-1 shrink-0">
-                    <Vote className="w-3.5 h-3.5 text-blue-600" />
-                  </div>
-                </div>
-                <div>
-                  <p className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 leading-none">
-                    1
-                  </p>
-                  <p className="text-[11px] sm:text-xs font-semibold text-blue-600 mt-1 truncate">
-                    Open
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-        </div>
-
-        {/* 2. Quick Actions — Updated 2x2 Grid with Larger Text */}
-        <div className="mt-4">
-          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">
-            Quick Actions
-          </p>
-          <div className="grid grid-cols-2 gap-3">
-
-            {/* Pay Dues Card */}
+            {/* Dues Status */}
             <div
               onClick={() => setLocation("/dues")}
-              data-testid="link-pay-dues"
-              className="bg-card border rounded-2xl p-3.5 hover:shadow-sm transition-all group cursor-pointer flex flex-col justify-between h-36"
+              data-testid="link-dues"
+              className="block group h-full cursor-pointer"
             >
-              <div className="flex justify-between items-start">
-                <div className="w-10 h-10 rounded-xl bg-red-100 text-red-500 flex items-center justify-center">
-                  <CreditCard className="w-5 h-5" />
-                </div>
-                <ChevronRight className="w-4 h-4 text-stone-300" />
-              </div>
-              <div>
-                <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100">Pay dues</h4>
-                <p className="text-xs text-muted-foreground mt-0.5">$155 due Mar 30</p>
-                <span className="inline-block mt-1.5 text-[10px] font-semibold text-red-500 bg-red-50 dark:bg-red-950/50 px-2 py-0.5 rounded-full">
-                  Overdue soon
-                </span>
-              </div>
-            </div>
-
-            {/* Report Issue Card */}
-            <button
-              type="button"
-              onClick={() => setWoOpen(true)}
-              data-testid="link-report-issue"
-              className="bg-card border rounded-2xl p-3.5 hover:shadow-sm transition-all group cursor-pointer flex flex-col justify-between h-36 text-left w-full"
-            >
-              <div className="flex justify-between items-start">
-                <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
-                  <Wrench className="w-5 h-5" />
-                </div>
-                <ChevronRight className="w-4 h-4 text-stone-300" />
-              </div>
-              <div>
-                <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100">Report issue</h4>
-                <p className="text-xs text-muted-foreground mt-0.5">Submit a work order</p>
-              </div>
-            </button>
-
-            {/* Documents Card */}
-            <div
-              onClick={() => setLocation("/documents")}
-              data-testid="link-documents"
-              className="bg-card border rounded-2xl p-3.5 hover:shadow-sm transition-all group cursor-pointer flex flex-col justify-between h-36"
-            >
-              <div className="flex justify-between items-start">
-                <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-500 flex items-center justify-center">
-                  <FileText className="w-5 h-5" />
-                </div>
-                <ChevronRight className="w-4 h-4 text-stone-300" />
-              </div>
-              <div>
-                <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100">Documents</h4>
-                <p className="text-xs text-muted-foreground mt-0.5">Bylaws & guidelines</p>
-              </div>
-            </div>
-
-            {/* Contact Board Card */}
-            <a
-              href="mailto:board@beyondhoa.com"
-              data-testid="link-contact-board"
-              className="bg-card border rounded-2xl p-3.5 hover:shadow-sm transition-all group cursor-pointer flex flex-col justify-between h-36"
-            >
-              <div className="flex justify-between items-start">
-                <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
-                  <MessageSquare className="w-5 h-5" />
-                </div>
-                <ChevronRight className="w-4 h-4 text-stone-300" />
-              </div>
-              <div>
-                <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100">Contact board</h4>
-                <p className="text-xs text-muted-foreground mt-0.5">Message administrators</p>
-              </div>
-            </a>
-
-          </div>
-        </div>
-
-        {/* 3. Community Announcements (Scaled text sizes) */}
-        <Card className="border-t-2 border-t-amber-500 mt-4">
-          <CardHeader className="pb-2 pt-3 px-3.5">
-            <CardTitle className="text-sm sm:text-base flex items-center gap-2 text-amber-800 dark:text-amber-400">
-              <Megaphone className="w-4 h-4 text-amber-600/70 shrink-0" />
-              <span className="truncate">Community Announcements</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2.5 px-3.5 pb-3.5">
-            {annLoading ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-14 bg-muted rounded animate-pulse" />
-                ))}
-              </div>
-            ) : sortedAnnouncements.length === 0 ? (
-              <div className="text-center py-6 text-muted-foreground">
-                <Megaphone className="w-7 h-7 mx-auto mb-2 opacity-40" />
-                <p className="text-xs sm:text-sm">No announcements posted yet.</p>
-              </div>
-            ) : (
-              sortedAnnouncements.map((announcement) => {
-                const colors = categoryColors[announcement.category] || categoryColors.general;
-                return (
-                  <div
-                    key={announcement.id}
-                    className="flex items-start gap-2.5 p-3 rounded-xl border bg-card hover:bg-stone-50/50 transition-colors"
-                  >
-                    <div className={`rounded-lg p-1.5 w-fit shrink-0 mt-0.5 ${colors.bg}`}>
-                      <Megaphone className={`w-4 h-4 ${colors.text}`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start gap-1.5">
-                        <h4 className="font-semibold text-xs sm:text-sm tracking-tight text-slate-900 dark:text-slate-100 truncate">
-                          {announcement.title}
-                        </h4>
-                        <div className="flex items-center gap-1 shrink-0">
-                          {announcement.pinned && (
-                            <Badge className="text-[9px] px-1 py-0 uppercase tracking-wider font-bold bg-amber-500 hover:bg-amber-600 text-white border-0">
-                              Pin
-                            </Badge>
-                          )}
-                          <span className="text-[11px] sm:text-xs text-muted-foreground whitespace-nowrap">
-                            {announcement.createdAt
-                              ? new Date(announcement.createdAt).toLocaleDateString(undefined, {
-                                  month: "short",
-                                  day: "2-digit",
-                                })
-                              : "Recent"}
-                          </span>
-                        </div>
-                      </div>
-                      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mt-0.5 line-clamp-2">
-                        {announcement.content}
-                      </p>
-                    </div>
+              <Card
+                data-testid="card-dues-status"
+                className="border-l-4 border-l-red-400 group-hover:shadow-md group-hover:scale-[1.01] transition-all h-full"
+              >
+                <CardContent className="p-2">
+                  <div className="bg-red-50 rounded-md p-1 w-fit mb-1">
+                    <CreditCard className="w-3 h-3 text-red-500" />
                   </div>
-                );
-              })
-            )}
-          </CardContent>
-        </Card>
+                  <p className="text-[8px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5 truncate">Dues</p>
+                  <p className="text-base font-bold text-slate-900 leading-none">
+                    {stripeConfig?.configured ? "$0" : "$155"}
+                  </p>
+                  <p className="text-[10px] font-semibold text-red-500 mt-0.5 truncate">
+                    {stripeConfig?.configured ? "Paid" : "Due Mar 30"}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
 
-      </PageContent>
+            {/* Work Orders */}
+            <div
+              onClick={() => setWoOpen(true)}
+              className="block group h-full cursor-pointer"
+            >
+              <Card
+                data-testid="card-my-work-orders"
+                className="border-l-4 border-l-amber-500 group-hover:shadow-md group-hover:scale-[1.01] transition-all h-full"
+              >
+                <CardContent className="p-2">
+                  <div className="bg-amber-50 rounded-md p-1 w-fit mb-1">
+                    <Wrench className="w-3 h-3 text-amber-600" />
+                  </div>
+                  <p className="text-[8px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5 truncate">Orders</p>
+                  <p className="text-base font-bold text-slate-900 leading-none">{activeWorkOrders.length}</p>
+                  <p className="text-[10px] font-semibold text-amber-600 mt-0.5 truncate">Active</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Active Votes */}
+            <div
+              onClick={() => setLocation("/voting")}
+              data-testid="link-votes"
+              className="block group h-full cursor-pointer"
+            >
+              <Card
+                data-testid="card-active-votes"
+                className="border-l-4 border-l-blue-500 group-hover:shadow-md group-hover:scale-[1.01] transition-all h-full"
+              >
+                <CardContent className="p-2">
+                  <div className="bg-blue-50 rounded-md p-1 w-fit mb-1">
+                    <Vote className="w-3 h-3 text-blue-600" />
+                  </div>
+                  <p className="text-[8px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5 truncate">Votes</p>
+                  <p className="text-base font-bold text-slate-900 leading-none">1</p>
+                  <p className="text-[10px] font-semibold text-blue-600 mt-0.5 truncate">Open</p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* 2. Quick Actions — Icon Grid */}
+          <div className="mt-4">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-2">
+              Quick Actions
+            </p>
+            <div className="grid grid-cols-4 gap-1.5">
+
+              {/* Pay Dues */}
+              <div
+                onClick={() => setLocation("/dues")}
+                data-testid="link-pay-dues"
+                className="flex flex-col items-center gap-1.5 pt-3 pb-2.5 px-1 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-sm transition-all group cursor-pointer"
+              >
+                <div className="w-9 h-9 rounded-xl bg-red-100 text-red-500 flex items-center justify-center group-hover:bg-red-200 transition-colors">
+                  <CreditCard className="w-4 h-4" />
+                </div>
+                <span className="text-[10px] font-medium text-slate-700 leading-tight truncate w-full text-center">Pay Dues</span>
+              </div>
+
+              {/* Documents */}
+              <div
+                onClick={() => setLocation("/documents")}
+                data-testid="link-documents"
+                className="flex flex-col items-center gap-1.5 pt-3 pb-2.5 px-1 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-sm transition-all group cursor-pointer"
+              >
+                <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-500 flex items-center justify-center group-hover:bg-indigo-200 transition-colors">
+                  <FileText className="w-4 h-4" />
+                </div>
+                <span className="text-[10px] font-medium text-slate-700 leading-tight truncate w-full text-center">Documents</span>
+              </div>
+
+              {/* Report Issue */}
+              <button
+                type="button"
+                onClick={() => setWoOpen(true)}
+                data-testid="link-report-issue"
+                className="flex flex-col items-center gap-1.5 pt-3 pb-2.5 px-1 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-sm transition-all group cursor-pointer w-full"
+              >
+                <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-500 flex items-center justify-center group-hover:bg-amber-200 transition-colors">
+                  <Wrench className="w-4 h-4" />
+                </div>
+                <span className="text-[10px] font-medium text-slate-700 leading-tight truncate w-full text-center">Report Issue</span>
+              </button>
+
+              {/* Contact Board */}
+              <a
+                href="mailto:board@beyondhoa.com"
+                data-testid="link-contact-board"
+                className="flex flex-col items-center gap-1.5 pt-3 pb-2.5 px-1 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-sm transition-all group cursor-pointer"
+              >
+                <div className="w-9 h-9 rounded-xl bg-green-100 text-green-600 flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                  <Mail className="w-4 h-4" />
+                </div>
+                <span className="text-[10px] font-medium text-slate-700 leading-tight truncate w-full text-center">Contact</span>
+              </a>
+            </div>
+          </div>
+
+          {/* 3. Community Announcements */}
+          <Card className="border-t-2 border-t-amber-500 mt-4">
+            <CardHeader className="pb-2 pt-3 px-3">
+              <CardTitle className="text-sm flex items-center gap-2 text-amber-800">
+                <Megaphone className="w-3.5 h-3.5 text-amber-600/70 shrink-0" />
+                <span className="truncate">Community Announcements</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 px-3 pb-3">
+              {annLoading ? (
+                <div className="space-y-2">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-14 bg-muted rounded animate-pulse" />
+                  ))}
+                </div>
+              ) : sortedAnnouncements.length === 0 ? (
+                <div className="text-center py-6 text-muted-foreground">
+                  <Megaphone className="w-7 h-7 mx-auto mb-2 opacity-40" />
+                  <p className="text-xs">No announcements posted yet.</p>
+                </div>
+              ) : (
+                sortedAnnouncements.map((announcement) => {
+                  const colors = categoryColors[announcement.category] || categoryColors.general;
+                  return (
+                    <div
+                      key={announcement.id}
+                      className="flex items-start gap-2 p-2.5 rounded-xl border bg-card hover:bg-stone-50/50 transition-colors"
+                    >
+                      {/* Category icon */}
+                      <div className={`rounded-lg p-1.5 w-fit shrink-0 mt-0.5 ${colors.bg}`}>
+                        <Megaphone className={`w-3.5 h-3.5 ${colors.text}`} />
+                      </div>
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start gap-1.5">
+                          <h4 className="font-semibold text-xs tracking-tight text-slate-900 truncate">
+                            {announcement.title}
+                          </h4>
+                          <div className="flex items-center gap-1 shrink-0">
+                            {announcement.pinned && (
+                              <Badge className="text-[9px] px-1 py-0 uppercase tracking-wider font-bold bg-amber-500 hover:bg-amber-600 text-white border-0">
+                                Pin
+                              </Badge>
+                            )}
+                            <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                              {announcement.createdAt
+                                ? new Date(announcement.createdAt).toLocaleDateString(undefined, {
+                                    month: "short",
+                                    day: "2-digit",
+                                  })
+                                : "Recent"}
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground leading-relaxed mt-0.5 line-clamp-2">
+                          {announcement.content}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </CardContent>
+          </Card>
+
+        </PageContent>
+      </div>
 
       {/* Work Order Dialog */}
       <Dialog open={woOpen} onOpenChange={setWoOpen}>
-        <DialogContent className="max-w-[92vw] sm:max-w-md rounded-2xl">
+        <DialogContent className="max-w-[92vw] rounded-2xl">
           <DialogHeader>
             <DialogTitle>Submit Work Order</DialogTitle>
           </DialogHeader>

@@ -117,9 +117,10 @@ function OverviewTab({ setTab }: OverviewTabProps) {
   const openViolations = violations?.filter(v => v.status === "open") ?? [];
 
   // Filter out settled payments to isolate unpaid/overdue/failed records
-  const unpaidPayments = allPayments?.filter(
-    (p) => p.status === "unpaid" || p.status === "failed" || p.status === "overdue" || p.status === "pending"
-  ) ?? [];
+  const unpaidPayments = allPayments?.filter((p) => {
+  const status = p.status as string;
+  return status === "unpaid" || status === "failed" || status === "overdue" || status === "pending";
+  }) ?? [];
 
   // Calculate live total unpaid dues from dues_payments
   const totalUnpaid = unpaidPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
@@ -333,10 +334,12 @@ function OverviewTab({ setTab }: OverviewTabProps) {
           ) : (
             <div className="space-y-3 mt-2">
               <div className="divide-y divide-border border rounded-xl overflow-hidden bg-card">
-                {unpaidPayments.map((p) => {
-                  const resident = residents?.find((r) => String(r.id) === String(p.resident_id ?? p.residentId));
-                  const displayName = resident?.name || p.resident_name || `Resident ID #${p.resident_id || p.residentId || "N/A"}`;
-                  const displayUnit = resident?.unit || p.unit || "—";
+            {unpaidPayments.map((p) => {
+              const rawP = p as Record<string, any>;
+              const residentId = rawP.resident_id ?? rawP.residentId;
+              const resident = residents?.find((r) => String(r.id) === String(residentId));
+              const displayName = resident?.name || rawP.resident_name || `Resident ID #${residentId || "N/A"}`;
+              const displayUnit = resident?.unit || rawP.unit || "—";
 
                   return (
                     <div key={p.id} className="p-3.5 flex items-center justify-between hover:bg-stone-50/80 transition-colors">
@@ -351,7 +354,7 @@ function OverviewTab({ setTab }: OverviewTabProps) {
                           ${p.amount ? Number(p.amount).toFixed(2) : "0.00"}
                         </p>
                         <Badge className={`text-[10px] mt-0.5 capitalize ${
-                          p.status === 'overdue' || p.status === 'failed' 
+                          (p.status as string) === 'overdue' || (p.status as string) === 'failed'
                             ? 'bg-red-50 text-red-700 border-red-200' 
                             : 'bg-amber-50 text-amber-800 border-amber-200'
                         }`}>
