@@ -30,10 +30,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <div className="flex flex-col md:flex-row h-screen w-full bg-background select-none overflow-hidden">
+    <div className="flex flex-col lg:flex-row h-screen w-full bg-background select-none overflow-hidden">
       
       {/* 1. MOBILE TOP HEADER (With Top Safe Area) */}
-      <header className="flex-none h-[calc(3.5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] bg-indigo-950 px-4 flex items-center justify-between border-b border-indigo-900/60 shadow-md md:hidden z-30">
+      <header className="flex-none h-[calc(3.5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] bg-indigo-950 px-4 flex items-center justify-between border-b border-indigo-900/60 shadow-md lg:hidden z-30">
         <div className="flex items-center gap-2.5">
           <img src={iconUrl} alt="Beyond HOA" className="w-7 h-7 rounded-lg" />
           <div className="flex flex-col">
@@ -61,7 +61,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* 2. DESKTOP SIDEBAR */}
-      <aside className="hidden md:flex w-64 flex-shrink-0 bg-indigo-950 flex-col shadow-xl border-r border-indigo-900/40 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+      <aside className="hidden lg:flex w-64 flex-shrink-0 bg-indigo-950 flex-col shadow-xl border-r border-indigo-900/40 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
         <div className="p-5 border-b border-indigo-900/60">
           <div className="flex items-center gap-3">
             <img src={iconUrl} alt="Beyond HOA" className="w-9 h-9 rounded-lg" />
@@ -117,14 +117,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* 3. MAIN SCROLLABLE CONTENT */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto pb-24 md:pb-0 bg-background text-foreground">
+      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto pb-24 lg:pb-0 bg-background text-foreground">
         <div className="flex-1 flex flex-col w-full">
           {children}
         </div>
       </main>
 
       {/* 4. MOBILE BOTTOM TAB BAR (With Dynamic Bottom Safe Area Height) */}
-      <nav className="fixed bottom-0 left-0 right-0 h-[calc(4rem+env(safe-area-inset-bottom))] bg-indigo-950 border-t border-indigo-900/60 flex items-center justify-around z-50 md:hidden pb-[env(safe-area-inset-bottom)] shadow-lg">
+      <nav className="fixed bottom-0 left-0 right-0 h-[calc(4rem+env(safe-area-inset-bottom))] bg-indigo-950 border-t border-indigo-900/60 flex items-center justify-around z-50 lg:hidden pb-[env(safe-area-inset-bottom)] shadow-lg">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive =
