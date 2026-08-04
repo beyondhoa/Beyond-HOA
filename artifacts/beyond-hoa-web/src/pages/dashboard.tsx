@@ -142,25 +142,25 @@ export default function DashboardPage() {
               Overview
             </h2>
             
-            {/* MOBILE LAYOUT: grid-cols-2 on phones, grid-cols-3 on desktop */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-6">
+            {/* 3-COLUMN GRID FIXED IN A SINGLE ROW ACROSS ALL SCREEN SIZES */}
+            <div className="grid grid-cols-3 gap-2.5 sm:gap-6">
 
               {/* Dues Card */}
               <div
                 onClick={() => setLocation("/dues")}
-                className="bg-white rounded-2xl border border-slate-200/80 border-l-4 border-l-rose-500 p-4 sm:p-6 shadow-sm hover:shadow-md transition cursor-pointer flex flex-col justify-between min-h-[140px] sm:min-h-[160px]"
+                className="bg-white rounded-2xl border border-slate-200/80 border-l-4 border-l-rose-500 p-2.5 sm:p-6 shadow-sm hover:shadow-md transition cursor-pointer flex flex-col justify-between min-h-[120px] sm:min-h-[160px]"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wider">DUES</span>
-                  <div className="p-2.5 sm:p-3 bg-rose-50 rounded-xl">
-                    <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-rose-500" />
+                  <span className="text-[10px] sm:text-sm font-semibold text-slate-500 uppercase tracking-wider">DUES</span>
+                  <div className="p-1.5 sm:p-3 bg-rose-50 rounded-lg sm:rounded-xl">
+                    <CreditCard className="w-4 h-4 sm:w-6 sm:h-6 text-rose-500" />
                   </div>
                 </div>
-                <div className="mt-2 sm:mt-0">
-                  <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-none">
+                <div className="mt-1 sm:mt-0">
+                  <div className="text-xl sm:text-3xl font-extrabold text-slate-900 leading-none">
                     {stripeConfig?.configured ? "$0" : "$155"}
                   </div>
-                  <p className="text-xs sm:text-sm font-medium text-rose-500 mt-2 sm:mt-2.5">
+                  <p className="text-[10px] sm:text-sm font-medium text-rose-500 mt-1 sm:mt-2.5 truncate">
                     {stripeConfig?.configured ? "Paid" : "Due Mar 30"}
                   </p>
                 </div>
@@ -169,21 +169,39 @@ export default function DashboardPage() {
               {/* Work Orders Card */}
               <div
                 onClick={() => setWoOpen(true)}
-                className="bg-white rounded-2xl border border-slate-200/80 border-l-4 border-l-amber-500 p-4 sm:p-6 shadow-sm hover:shadow-md transition cursor-pointer flex flex-col justify-between min-h-[140px] sm:min-h-[160px]"
+                className="bg-white rounded-2xl border border-slate-200/80 border-l-4 border-l-amber-500 p-2.5 sm:p-6 shadow-sm hover:shadow-md transition cursor-pointer flex flex-col justify-between min-h-[120px] sm:min-h-[160px]"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wider">ORDERS</span>
-                  <div className="p-2.5 sm:p-3 bg-amber-50 rounded-xl">
-                    <Wrench className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500" />
+                  <span className="text-[10px] sm:text-sm font-semibold text-slate-500 uppercase tracking-wider">ORDERS</span>
+                  <div className="p-1.5 sm:p-3 bg-amber-50 rounded-lg sm:rounded-xl">
+                    <Wrench className="w-4 h-4 sm:w-6 sm:h-6 text-amber-500" />
                   </div>
                 </div>
-                <div className="mt-2 sm:mt-0">
-                  <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-none">
+                <div className="mt-1 sm:mt-0">
+                  <div className="text-xl sm:text-3xl font-extrabold text-slate-900 leading-none">
                     {activeWorkOrders.length}
                   </div>
-                  <p className="text-xs sm:text-sm font-medium text-amber-500 mt-2 sm:mt-2.5">Active</p>
+                  <p className="text-[10px] sm:text-sm font-medium text-amber-500 mt-1 sm:mt-2.5">Active</p>
                 </div>
               </div>
+
+              {/* Votes Card (Fixed on the same row) */}
+              <div
+                onClick={() => setLocation("/voting")}
+                className="bg-white rounded-2xl border border-slate-200/80 border-l-4 border-l-blue-500 p-2.5 sm:p-6 shadow-sm hover:shadow-md transition cursor-pointer flex flex-col justify-between min-h-[120px] sm:min-h-[160px]"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] sm:text-sm font-semibold text-slate-500 uppercase tracking-wider">VOTES</span>
+                  <div className="p-1.5 sm:p-3 bg-blue-50 rounded-lg sm:rounded-xl">
+                    <Vote className="w-4 h-4 sm:w-6 sm:h-6 text-blue-500" />
+                  </div>
+                </div>
+                <div className="mt-1 sm:mt-0">
+                  <div className="text-xl sm:text-3xl font-extrabold text-slate-900 leading-none">1</div>
+                  <p className="text-[10px] sm:text-sm font-medium text-blue-500 mt-1 sm:mt-2.5">Open</p>
+                </div>
+              </div>
+
             </div>
           </div>
 
@@ -192,8 +210,6 @@ export default function DashboardPage() {
             <h2 className="text-lg font-bold text-slate-800 tracking-normal mb-3 lg:mb-4">
               Quick Actions
             </h2>
-            
-            {/* MOBILE LAYOUT: 4-column icon grid on phones, 2-column rectangular cards on desktop */}
             <div className="grid grid-cols-4 sm:grid-cols-2 gap-2.5 sm:gap-6">
 
               <div
