@@ -8,12 +8,9 @@ import {
   useGetDuesStripeConfigured,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { PageHeader, PageContent } from "@/components/Layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -34,7 +31,6 @@ import {
   Vote,
   Megaphone,
   FileText,
-  ChevronRight,
   Mail,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -48,22 +44,14 @@ interface Announcement {
   createdAt?: string;
 }
 
-const categoryColors: Record<string, { bg: string; text: string; dot: string }> = {
-  governance: { bg: "bg-indigo-50/70 dark:bg-indigo-950/30", text: "text-indigo-900 dark:text-indigo-300", dot: "bg-indigo-900" },
-  maintenance: { bg: "bg-amber-50/70 dark:bg-amber-950/30", text: "text-amber-700 dark:text-amber-300", dot: "bg-amber-500" },
-  general: { bg: "bg-stone-50 dark:bg-stone-900/50", text: "text-stone-700 dark:text-stone-300", dot: "bg-stone-500" },
-  emergency: { bg: "bg-red-50/70 dark:bg-red-950/30", text: "text-red-700 dark:text-red-300", dot: "bg-red-600" },
-  event: { bg: "bg-amber-50/50 dark:bg-amber-950/20", text: "text-amber-800 dark:text-amber-400", dot: "bg-amber-600" },
-};
-
 export default function DashboardPage() {
   const { resident } = useAuth();
   const [, setLocation] = useLocation();
 
   if (!resident) {
     return (
-      <div className="flex-1 flex items-center justify-center min-h-[50vh]">
-        <p className="text-sm text-muted-foreground animate-pulse">Loading dashboard...</p>
+      <div className="flex items-center justify-center min-h-[60vh] font-sans">
+        <p className="text-xl text-slate-500 animate-pulse font-normal">Loading…</p>
       </div>
     );
   }
@@ -79,7 +67,9 @@ export default function DashboardPage() {
   const { data: stripeConfig } = useGetDuesStripeConfigured();
 
   const myWorkOrders = workOrders?.filter((wo) => wo.resident_name === resident?.name) ?? [];
-  const activeWorkOrders = myWorkOrders.filter((wo) => wo.status === "open" || wo.status === "in_progress");
+  const activeWorkOrders = myWorkOrders.filter(
+    (wo) => (wo.status as string) === "open" || (wo.status as string) === "in_progress"
+  );
 
   const API_BASE_URL = import.meta.env.VITE_API_URL || "https://beyond-hoa-web-production.up.railway.app";
 
@@ -87,10 +77,7 @@ export default function DashboardPage() {
     setAnnLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/announcements`);
-      if (res.ok) {
-        const data = await res.json();
-        setAnnouncements(data);
-      }
+      if (res.ok) setAnnouncements(await res.json());
     } catch (err) {
       console.error("Failed to fetch announcements:", err);
     } finally {
@@ -98,9 +85,7 @@ export default function DashboardPage() {
     }
   };
 
-  useEffect(() => {
-    fetchAnnouncements();
-  }, []);
+  useEffect(() => { fetchAnnouncements(); }, []);
 
   const createWO = useCreateWorkOrder({
     mutation: {
@@ -133,233 +118,201 @@ export default function DashboardPage() {
     .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
 
   return (
-    <div className="flex-1 flex flex-col w-full h-full">
-      <PageHeader
-        title={`Welcome, ${resident?.name?.split(" ")[0]}`}
-        subtitle={`Unit ${resident?.unit} · ${resident?.status === "owner" ? "Owner" : "Tenant"}`}
-      />
-      <PageContent className="space-y-6">
-        
-        {/* 1. Stat Tiles Row */}
-        <div className="grid grid-cols-3 gap-2 w-full">
+    <div className="w-full min-h-screen bg-slate-50/50 p-4 sm:p-6 lg:p-10 pb-24 md:pb-10 font-sans">
+      
+      {/* ── Page Header ── */}
+      <div className="mb-6 md:mb-8 border-b border-slate-200 pb-5">
+        <h1 className="text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight">
+          Welcome, {resident?.name?.split(" ")[0]}
+        </h1>
+        <p className="text-xl font-medium text-slate-500 mt-1">
+          Unit {resident?.unit} · {resident?.status === "owner" ? "Owner" : "Tenant"}
+        </p>
+      </div>
 
-          {/* Dues Status */}
-          <div
-            onClick={() => setLocation("/dues")}
-            data-testid="link-dues"
-            className="block group h-full cursor-pointer"
-          >
-            <Card
-              data-testid="card-dues-status"
-              className="border-l-4 border-l-red-400 group-hover:shadow-md group-hover:scale-[1.01] transition-all h-full"
-            >
-              <CardContent className="p-2">
-                <div className="bg-red-50 rounded-md p-1 w-fit mb-1">
-                  <CreditCard className="w-3 h-3 text-red-500" />
-                </div>
-                <p className="text-[8px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5 truncate">Dues</p>
-                <p className="text-base font-bold text-slate-900 leading-none">
-                  {stripeConfig?.configured ? "$0" : "$155"}
-                </p>
-                <p className="text-[10px] font-semibold text-red-500 mt-0.5 truncate">
-                  {stripeConfig?.configured ? "Paid" : "Due Mar 30"}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+      {/* ── Main Dashboard Layout ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8 items-start">
 
-          {/* Work Orders */}
-          <div
-            onClick={() => setWoOpen(true)}
-            className="block group h-full cursor-pointer"
-          >
-            <Card
-              data-testid="card-my-work-orders"
-              className="border-l-4 border-l-amber-500 group-hover:shadow-md group-hover:scale-[1.01] transition-all h-full"
-            >
-              <CardContent className="p-2">
-                <div className="bg-amber-50 rounded-md p-1 w-fit mb-1">
-                  <Wrench className="w-3 h-3 text-amber-600" />
-                </div>
-                <p className="text-[8px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5 truncate">Orders</p>
-                <p className="text-base font-bold text-slate-900 leading-none">{activeWorkOrders.length}</p>
-                <p className="text-[10px] font-semibold text-amber-600 mt-0.5 truncate">Active</p>
-              </CardContent>
-            </Card>
-          </div>
+        {/* ── Primary Section ── */}
+        <div className="xl:col-span-2 space-y-6 lg:space-y-8">
 
-          {/* Active Votes */}
-          <div
-            onClick={() => setLocation("/voting")}
-            data-testid="link-votes"
-            className="block group h-full cursor-pointer"
-          >
-            <Card
-              data-testid="card-active-votes"
-              className="border-l-4 border-l-blue-500 group-hover:shadow-md group-hover:scale-[1.01] transition-all h-full"
-            >
-              <CardContent className="p-2">
-                <div className="bg-blue-50 rounded-md p-1 w-fit mb-1">
-                  <Vote className="w-3 h-3 text-blue-600" />
-                </div>
-                <p className="text-[8px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5 truncate">Votes</p>
-                <p className="text-base font-bold text-slate-900 leading-none">1</p>
-                <p className="text-[10px] font-semibold text-blue-600 mt-0.5 truncate">Open</p>
-              </CardContent>
-            </Card>
-          </div>
+          {/* Stat Tiles */}
+          <div>
+            <h2 className="text-lg font-bold text-slate-800 tracking-normal mb-3 lg:mb-4">
+              Overview
+            </h2>
+            
+            {/* MOBILE LAYOUT: grid-cols-2 on phones, grid-cols-3 on desktop */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-6">
 
-        </div>
-
-        {/* 2. Quick Actions — Icon Grid */}
-        <div className="mt-4">
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-2">
-            Quick Actions
-          </p>
-          <div className="grid grid-cols-4 gap-1.5">
-
-            {/* Pay Dues */}
-            <div
-              onClick={() => setLocation("/dues")}
-              data-testid="link-pay-dues"
-              className="flex flex-col items-center gap-1.5 pt-3 pb-2.5 px-1 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-sm transition-all group cursor-pointer"
-            >
-              <div className="w-9 h-9 rounded-xl bg-red-100 text-red-500 flex items-center justify-center group-hover:bg-red-200 transition-colors">
-                <CreditCard className="w-4 h-4" />
-              </div>
-              <span className="text-[10px] font-medium text-slate-700 text-center leading-tight truncate w-full">Pay Dues</span>
-            </div>
-
-            {/* Documents */}
-            <div
-              onClick={() => setLocation("/documents")}
-              data-testid="link-documents"
-              className="flex flex-col items-center gap-1.5 pt-3 pb-2.5 px-1 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-sm transition-all group cursor-pointer"
-            >
-              <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-500 flex items-center justify-center group-hover:bg-indigo-200 transition-colors">
-                <FileText className="w-4 h-4" />
-              </div>
-              <span className="text-[10px] font-medium text-slate-700 text-center leading-tight truncate w-full">Documents</span>
-            </div>
-
-            {/* Report Issue */}
-            <button
-              type="button"
-              onClick={() => setWoOpen(true)}
-              data-testid="link-report-issue"
-              className="flex flex-col items-center gap-1.5 pt-3 pb-2.5 px-1 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-sm transition-all group cursor-pointer w-full"
-            >
-              <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-500 flex items-center justify-center group-hover:bg-amber-200 transition-colors">
-                <Wrench className="w-4 h-4" />
-              </div>
-              <span className="text-[10px] font-medium text-slate-700 text-center leading-tight truncate w-full">Report Issue</span>
-            </button>
-
-            {/* Contact Board */}
-            <a
-              href="mailto:board@beyondhoa.com"
-              data-testid="link-contact-board"
-              className="flex flex-col items-center gap-1.5 pt-3 pb-2.5 px-1 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-sm transition-all group cursor-pointer"
-            >
-              <div className="w-9 h-9 rounded-xl bg-green-100 text-green-600 flex items-center justify-center group-hover:bg-green-200 transition-colors">
-                <Mail className="w-4 h-4" />
-              </div>
-              <span className="text-[10px] font-medium text-slate-700 text-center leading-tight truncate w-full">Contact</span>
-            </a>
-          </div>
-        </div>
-
-        {/* 3. Community Announcements */}
-        <Card className="border-t-2 border-t-amber-500 mt-4">
-          <CardHeader className="pb-2 pt-3 px-3">
-            <CardTitle className="text-sm flex items-center gap-2 text-amber-800">
-              <Megaphone className="w-3.5 h-3.5 text-amber-600/70 shrink-0" />
-              <span className="truncate">Community Announcements</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 px-3 pb-3">
-            {annLoading ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-14 bg-muted rounded animate-pulse" />
-                ))}
-              </div>
-            ) : sortedAnnouncements.length === 0 ? (
-              <div className="text-center py-6 text-muted-foreground">
-                <Megaphone className="w-7 h-7 mx-auto mb-2 opacity-40" />
-                <p className="text-xs">No announcements posted yet.</p>
-              </div>
-            ) : (
-              sortedAnnouncements.map((announcement) => {
-                const colors = categoryColors[announcement.category] || categoryColors.general;
-                return (
-                  <div
-                    key={announcement.id}
-                    className="flex items-start gap-2 p-2.5 rounded-xl border bg-card hover:bg-stone-50/50 transition-colors"
-                  >
-                    <div className={`rounded-lg p-1.5 w-fit shrink-0 mt-0.5 ${colors.bg}`}>
-                      <Megaphone className={`w-3.5 h-3.5 ${colors.text}`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start gap-1.5">
-                        <h4 className="font-semibold text-xs tracking-tight text-slate-900 truncate">
-                          {announcement.title}
-                        </h4>
-                        <div className="flex items-center gap-1 shrink-0">
-                          {announcement.pinned && (
-                            <Badge className="text-[9px] px-1 py-0 uppercase tracking-wider font-bold bg-amber-500 hover:bg-amber-600 text-white border-0">
-                              Pin
-                            </Badge>
-                          )}
-                          <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                            {announcement.createdAt
-                              ? new Date(announcement.createdAt).toLocaleDateString(undefined, {
-                                  month: "short",
-                                  day: "2-digit",
-                                })
-                              : "Recent"}
-                          </span>
-                        </div>
-                      </div>
-                      <p className="text-xs text-muted-foreground leading-relaxed mt-0.5 line-clamp-2">
-                        {announcement.content}
-                      </p>
-                    </div>
+              {/* Dues Card */}
+              <div
+                onClick={() => setLocation("/dues")}
+                className="bg-white rounded-2xl border border-slate-200/80 border-l-4 border-l-rose-500 p-4 sm:p-6 shadow-sm hover:shadow-md transition cursor-pointer flex flex-col justify-between min-h-[140px] sm:min-h-[160px]"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wider">DUES</span>
+                  <div className="p-2.5 sm:p-3 bg-rose-50 rounded-xl">
+                    <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-rose-500" />
                   </div>
-                );
-              })
-            )}
-          </CardContent>
-        </Card>
+                </div>
+                <div className="mt-2 sm:mt-0">
+                  <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-none">
+                    {stripeConfig?.configured ? "$0" : "$155"}
+                  </div>
+                  <p className="text-xs sm:text-sm font-medium text-rose-500 mt-2 sm:mt-2.5">
+                    {stripeConfig?.configured ? "Paid" : "Due Mar 30"}
+                  </p>
+                </div>
+              </div>
 
-      </PageContent>
+              {/* Work Orders Card */}
+              <div
+                onClick={() => setWoOpen(true)}
+                className="bg-white rounded-2xl border border-slate-200/80 border-l-4 border-l-amber-500 p-4 sm:p-6 shadow-sm hover:shadow-md transition cursor-pointer flex flex-col justify-between min-h-[140px] sm:min-h-[160px]"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wider">ORDERS</span>
+                  <div className="p-2.5 sm:p-3 bg-amber-50 rounded-xl">
+                    <Wrench className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500" />
+                  </div>
+                </div>
+                <div className="mt-2 sm:mt-0">
+                  <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-none">
+                    {activeWorkOrders.length}
+                  </div>
+                  <p className="text-xs sm:text-sm font-medium text-amber-500 mt-2 sm:mt-2.5">Active</p>
+                </div>
+              </div>
+            </div>
+          </div>
 
-      {/* Work Order Dialog */}
+          {/* Quick Actions Grid */}
+          <div>
+            <h2 className="text-lg font-bold text-slate-800 tracking-normal mb-3 lg:mb-4">
+              Quick Actions
+            </h2>
+            
+            {/* MOBILE LAYOUT: 4-column icon grid on phones, 2-column rectangular cards on desktop */}
+            <div className="grid grid-cols-4 sm:grid-cols-2 gap-2.5 sm:gap-6">
+
+              <div
+                onClick={() => setLocation("/dues")}
+                className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-6 shadow-sm hover:border-slate-300 hover:shadow-md transition cursor-pointer flex flex-col sm:flex-row items-center justify-center sm:justify-start text-center sm:text-left space-y-2 sm:space-y-0 sm:space-x-5 min-h-[90px] sm:min-h-[110px]"
+              >
+                <div className="p-2.5 sm:p-4 bg-rose-50 rounded-xl sm:rounded-2xl text-rose-500 shrink-0">
+                  <CreditCard className="w-5 h-5 sm:w-7 sm:h-7" />
+                </div>
+                <div>
+                  <h3 className="text-xs sm:text-lg font-bold text-slate-900 leading-tight">Pay Dues</h3>
+                  <p className="hidden sm:block text-sm font-normal text-slate-500 mt-1">Manage online HOA dues</p>
+                </div>
+              </div>
+
+              <div
+                onClick={() => setWoOpen(true)}
+                className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-6 shadow-sm hover:border-slate-300 hover:shadow-md transition cursor-pointer flex flex-col sm:flex-row items-center justify-center sm:justify-start text-center sm:text-left space-y-2 sm:space-y-0 sm:space-x-5 min-h-[90px] sm:min-h-[110px]"
+              >
+                <div className="p-2.5 sm:p-4 bg-amber-50 rounded-xl sm:rounded-2xl text-amber-500 shrink-0">
+                  <Wrench className="w-5 h-5 sm:w-7 sm:h-7" />
+                </div>
+                <div>
+                  <h3 className="text-xs sm:text-lg font-bold text-slate-900 leading-tight">Report Issue</h3>
+                  <p className="hidden sm:block text-sm font-normal text-slate-500 mt-1">Submit maintenance ticket</p>
+                </div>
+              </div>
+
+              <div
+                onClick={() => setLocation("/documents")}
+                className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-6 shadow-sm hover:border-slate-300 hover:shadow-md transition cursor-pointer flex flex-col sm:flex-row items-center justify-center sm:justify-start text-center sm:text-left space-y-2 sm:space-y-0 sm:space-x-5 min-h-[90px] sm:min-h-[110px]"
+              >
+                <div className="p-2.5 sm:p-4 bg-blue-50 rounded-xl sm:rounded-2xl text-blue-500 shrink-0">
+                  <FileText className="w-5 h-5 sm:w-7 sm:h-7" />
+                </div>
+                <div>
+                  <h3 className="text-xs sm:text-lg font-bold text-slate-900 leading-tight">Documents</h3>
+                  <p className="hidden sm:block text-sm font-normal text-slate-500 mt-1">Access bylaws & policies</p>
+                </div>
+              </div>
+
+              <a
+                href="mailto:board@beyondhoa.com"
+                className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-6 shadow-sm hover:border-slate-300 hover:shadow-md transition cursor-pointer flex flex-col sm:flex-row items-center justify-center sm:justify-start text-center sm:text-left space-y-2 sm:space-y-0 sm:space-x-5 min-h-[90px] sm:min-h-[110px]"
+              >
+                <div className="p-2.5 sm:p-4 bg-emerald-50 rounded-xl sm:rounded-2xl text-emerald-500 shrink-0">
+                  <Mail className="w-5 h-5 sm:w-7 sm:h-7" />
+                </div>
+                <div>
+                  <h3 className="text-xs sm:text-lg font-bold text-slate-900 leading-tight">Contact Board</h3>
+                  <p className="hidden sm:block text-sm font-normal text-slate-500 mt-1">Direct email communication</p>
+                </div>
+              </a>
+
+            </div>
+          </div>
+
+        </div>
+
+        {/* ── Secondary Panel (Announcements) ── */}
+        <div className="xl:col-span-1">
+          <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-4 sm:space-y-5">
+            <div className="flex items-center space-x-3 text-slate-900 font-bold text-lg sm:text-xl border-b border-slate-100 pb-4">
+              <Megaphone className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500" />
+              <h3>Announcements</h3>
+            </div>
+
+            <div className="space-y-3 sm:space-y-4">
+              {annLoading ? (
+                <div className="space-y-3">
+                  {[1, 2].map((i) => <div key={i} className="h-20 bg-slate-100 rounded-xl animate-pulse" />)}
+                </div>
+              ) : sortedAnnouncements.length === 0 ? (
+                <p className="text-sm sm:text-base font-normal text-slate-400 py-6 text-center">No announcements posted yet.</p>
+              ) : (
+                sortedAnnouncements.map((announcement) => (
+                  <div key={announcement.id} className="p-4 rounded-xl border border-slate-100 bg-slate-50/60 space-y-1.5">
+                    <div className="flex justify-between items-start">
+                      <h4 className="font-semibold text-slate-900 text-sm sm:text-base">{announcement.title}</h4>
+                      <span className="text-xs text-slate-400 font-normal shrink-0 ml-2">
+                        {announcement.createdAt
+                          ? new Date(announcement.createdAt).toLocaleDateString(undefined, { month: "short", day: "2-digit" })
+                          : "Jul 15"}
+                      </span>
+                    </div>
+                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">{announcement.content}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* ── Work Order Dialog ── */}
       <Dialog open={woOpen} onOpenChange={setWoOpen}>
-        <DialogContent className="max-w-[92vw] rounded-2xl">
+        <DialogContent className="max-w-lg rounded-2xl p-6 font-sans">
           <DialogHeader>
-            <DialogTitle>Submit Work Order</DialogTitle>
+            <DialogTitle className="text-xl font-bold">Submit Work Order</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="wo-title">Title</Label>
+            <div className="space-y-2">
+              <Label htmlFor="wo-title" className="text-sm font-medium">Title</Label>
               <Input
                 id="wo-title"
                 value={form.title}
                 onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
                 placeholder="Brief description of the issue"
                 required
-                data-testid="input-wo-title"
+                className="text-base h-12 font-sans font-normal"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Category</Label>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Category</Label>
                 <Select value={form.category} onValueChange={(v) => setForm((f) => ({ ...f, category: v }))}>
-                  <SelectTrigger data-testid="select-wo-category">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
+                  <SelectTrigger className="h-12 text-base font-sans font-normal"><SelectValue /></SelectTrigger>
+                  <SelectContent className="font-sans font-normal">
                     <SelectItem value="plumbing">Plumbing</SelectItem>
                     <SelectItem value="electrical">Electrical</SelectItem>
                     <SelectItem value="hvac">HVAC</SelectItem>
@@ -368,13 +321,11 @@ export default function DashboardPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1.5">
-                <Label>Priority</Label>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Priority</Label>
                 <Select value={form.priority} onValueChange={(v) => setForm((f) => ({ ...f, priority: v }))}>
-                  <SelectTrigger data-testid="select-wo-priority">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
+                  <SelectTrigger className="h-12 text-base font-sans font-normal"><SelectValue /></SelectTrigger>
+                  <SelectContent className="font-sans font-normal">
                     <SelectItem value="low">Low</SelectItem>
                     <SelectItem value="medium">Medium</SelectItem>
                     <SelectItem value="high">High</SelectItem>
@@ -383,25 +334,20 @@ export default function DashboardPage() {
                 </Select>
               </div>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="wo-desc">Description</Label>
+            <div className="space-y-2">
+              <Label htmlFor="wo-desc" className="text-sm font-medium">Description</Label>
               <Textarea
                 id="wo-desc"
                 value={form.description}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                placeholder="Describe the issue in detail..."
+                placeholder="Describe the issue in detail…"
                 rows={3}
                 required
-                data-testid="input-wo-description"
+                className="text-base font-sans font-normal"
               />
             </div>
-            <Button
-              type="submit"
-              className="w-full bg-indigo-950 hover:bg-indigo-900 text-white"
-              disabled={createWO.isPending}
-              data-testid="button-submit-wo"
-            >
-              {createWO.isPending ? "Submitting..." : "Submit Work Order"}
+            <Button type="submit" className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold h-12 rounded-xl text-base font-sans" disabled={createWO.isPending}>
+              {createWO.isPending ? "Submitting…" : "Submit Work Order"}
             </Button>
           </form>
         </DialogContent>
