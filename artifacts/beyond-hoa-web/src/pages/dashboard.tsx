@@ -8,10 +8,12 @@ import {
   useGetDuesStripeConfigured,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
+import { PageHeader, PageContent } from "@/components/Layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -32,7 +34,8 @@ import {
   Vote,
   Megaphone,
   FileText,
-  MessageSquare,
+  ChevronRight,
+  Mail,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -45,12 +48,12 @@ interface Announcement {
   createdAt?: string;
 }
 
-const categoryColors: Record<string, { bg: string; text: string }> = {
-  governance: { bg: "bg-emerald-100", text: "text-emerald-700" },
-  maintenance: { bg: "bg-amber-100",  text: "text-amber-700" },
-  general:    { bg: "bg-emerald-100", text: "text-emerald-700" },
-  emergency:  { bg: "bg-red-100",     text: "text-red-700" },
-  event:      { bg: "bg-amber-100",   text: "text-amber-700" },
+const categoryColors: Record<string, { bg: string; text: string; dot: string }> = {
+  governance: { bg: "bg-indigo-50/70 dark:bg-indigo-950/30", text: "text-indigo-900 dark:text-indigo-300", dot: "bg-indigo-900" },
+  maintenance: { bg: "bg-amber-50/70 dark:bg-amber-950/30", text: "text-amber-700 dark:text-amber-300", dot: "bg-amber-500" },
+  general: { bg: "bg-stone-50 dark:bg-stone-900/50", text: "text-stone-700 dark:text-stone-300", dot: "bg-stone-500" },
+  emergency: { bg: "bg-red-50/70 dark:bg-red-950/30", text: "text-red-700 dark:text-red-300", dot: "bg-red-600" },
+  event: { bg: "bg-amber-50/50 dark:bg-amber-950/20", text: "text-amber-800 dark:text-amber-400", dot: "bg-amber-600" },
 };
 
 export default function DashboardPage() {
@@ -59,8 +62,8 @@ export default function DashboardPage() {
 
   if (!resident) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <p className="text-xl text-muted-foreground animate-pulse font-semibold">Loading…</p>
+      <div className="flex-1 flex items-center justify-center min-h-[50vh]">
+        <p className="text-sm text-muted-foreground animate-pulse">Loading dashboard...</p>
       </div>
     );
   }
@@ -76,9 +79,7 @@ export default function DashboardPage() {
   const { data: stripeConfig } = useGetDuesStripeConfigured();
 
   const myWorkOrders = workOrders?.filter((wo) => wo.resident_name === resident?.name) ?? [];
-  const activeWorkOrders = myWorkOrders.filter(
-    (wo) => (wo.status as string) === "open" || (wo.status as string) === "in_progress"
-  );
+  const activeWorkOrders = myWorkOrders.filter((wo) => wo.status === "open" || wo.status === "in_progress");
 
   const API_BASE_URL = import.meta.env.VITE_API_URL || "https://beyond-hoa-web-production.up.railway.app";
 
@@ -86,7 +87,10 @@ export default function DashboardPage() {
     setAnnLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/announcements`);
-      if (res.ok) setAnnouncements(await res.json());
+      if (res.ok) {
+        const data = await res.json();
+        setAnnouncements(data);
+      }
     } catch (err) {
       console.error("Failed to fetch announcements:", err);
     } finally {
@@ -94,7 +98,9 @@ export default function DashboardPage() {
     }
   };
 
-  useEffect(() => { fetchAnnouncements(); }, []);
+  useEffect(() => {
+    fetchAnnouncements();
+  }, []);
 
   const createWO = useCreateWorkOrder({
     mutation: {
@@ -127,179 +133,230 @@ export default function DashboardPage() {
     .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
 
   return (
-    <div className="w-full bg-gray-50">
+    <div className="flex-1 flex flex-col w-full h-full">
+      <PageHeader
+        title={`Welcome, ${resident?.name?.split(" ")[0]}`}
+        subtitle={`Unit ${resident?.unit} · ${resident?.status === "owner" ? "Owner" : "Tenant"}`}
+      />
+      <PageContent className="space-y-6">
+        
+        {/* 1. Stat Tiles Row */}
+        <div className="grid grid-cols-3 gap-2 w-full">
 
-      {/* ── Page Title ── */}
-      <div className="px-5 pt-6 pb-4 bg-white border-b border-gray-100">
-        <h1 className="text-3xl font-black text-gray-900 tracking-tight">
-          Welcome, {resident?.name?.split(" ")[0]}
-        </h1>
-        <p className="text-base font-semibold text-gray-500 mt-1">
-          Unit {resident?.unit} · {resident?.status === "owner" ? "Owner" : "Tenant"}
-        </p>
-      </div>
-
-      <div className="px-4 py-5 space-y-6">
-
-        {/* ── Stat Tiles ── */}
-        <div className="grid grid-cols-3 gap-3">
-
-          <div onClick={() => setLocation("/dues")} data-testid="link-dues" className="cursor-pointer">
-            <Card className="border-0 rounded-2xl bg-white shadow-sm active:scale-95 transition-transform">
-              <CardContent className="p-4">
-                <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center mb-3">
-                  <CreditCard className="w-5 h-5 text-red-500" />
+          {/* Dues Status */}
+          <div
+            onClick={() => setLocation("/dues")}
+            data-testid="link-dues"
+            className="block group h-full cursor-pointer"
+          >
+            <Card
+              data-testid="card-dues-status"
+              className="border-l-4 border-l-red-400 group-hover:shadow-md group-hover:scale-[1.01] transition-all h-full"
+            >
+              <CardContent className="p-2">
+                <div className="bg-red-50 rounded-md p-1 w-fit mb-1">
+                  <CreditCard className="w-3 h-3 text-red-500" />
                 </div>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Dues</p>
-                <p className="text-3xl font-black text-gray-900 leading-none">
+                <p className="text-[8px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5 truncate">Dues</p>
+                <p className="text-base font-bold text-slate-900 leading-none">
                   {stripeConfig?.configured ? "$0" : "$155"}
                 </p>
-                <p className="text-sm font-bold text-red-500 mt-2">
+                <p className="text-[10px] font-semibold text-red-500 mt-0.5 truncate">
                   {stripeConfig?.configured ? "Paid" : "Due Mar 30"}
                 </p>
               </CardContent>
             </Card>
           </div>
 
-          <div onClick={() => setWoOpen(true)} className="cursor-pointer">
-            <Card className="border-0 rounded-2xl bg-white shadow-sm active:scale-95 transition-transform">
-              <CardContent className="p-4">
-                <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center mb-3">
-                  <Wrench className="w-5 h-5 text-amber-600" />
+          {/* Work Orders */}
+          <div
+            onClick={() => setWoOpen(true)}
+            className="block group h-full cursor-pointer"
+          >
+            <Card
+              data-testid="card-my-work-orders"
+              className="border-l-4 border-l-amber-500 group-hover:shadow-md group-hover:scale-[1.01] transition-all h-full"
+            >
+              <CardContent className="p-2">
+                <div className="bg-amber-50 rounded-md p-1 w-fit mb-1">
+                  <Wrench className="w-3 h-3 text-amber-600" />
                 </div>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Orders</p>
-                <p className="text-3xl font-black text-gray-900 leading-none">{activeWorkOrders.length}</p>
-                <p className="text-sm font-bold text-amber-600 mt-2">Active</p>
+                <p className="text-[8px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5 truncate">Orders</p>
+                <p className="text-base font-bold text-slate-900 leading-none">{activeWorkOrders.length}</p>
+                <p className="text-[10px] font-semibold text-amber-600 mt-0.5 truncate">Active</p>
               </CardContent>
             </Card>
           </div>
 
-          <div onClick={() => setLocation("/voting")} data-testid="link-votes" className="cursor-pointer">
-            <Card className="border-0 rounded-2xl bg-white shadow-sm active:scale-95 transition-transform">
-              <CardContent className="p-4">
-                <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center mb-3">
-                  <Vote className="w-5 h-5 text-blue-600" />
+          {/* Active Votes */}
+          <div
+            onClick={() => setLocation("/voting")}
+            data-testid="link-votes"
+            className="block group h-full cursor-pointer"
+          >
+            <Card
+              data-testid="card-active-votes"
+              className="border-l-4 border-l-blue-500 group-hover:shadow-md group-hover:scale-[1.01] transition-all h-full"
+            >
+              <CardContent className="p-2">
+                <div className="bg-blue-50 rounded-md p-1 w-fit mb-1">
+                  <Vote className="w-3 h-3 text-blue-600" />
                 </div>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Votes</p>
-                <p className="text-3xl font-black text-gray-900 leading-none">1</p>
-                <p className="text-sm font-bold text-blue-600 mt-2">Open</p>
+                <p className="text-[8px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5 truncate">Votes</p>
+                <p className="text-base font-bold text-slate-900 leading-none">1</p>
+                <p className="text-[10px] font-semibold text-blue-600 mt-0.5 truncate">Open</p>
               </CardContent>
             </Card>
           </div>
 
         </div>
 
-        {/* ── Quick Actions ── */}
-        <div>
-          <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3 px-1">Quick Actions</p>
-          <div className="grid grid-cols-2 gap-3">
+        {/* 2. Quick Actions — Icon Grid */}
+        <div className="mt-4">
+          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-2">
+            Quick Actions
+          </p>
+          <div className="grid grid-cols-4 gap-1.5">
 
-            <div onClick={() => setLocation("/dues")} data-testid="link-pay-dues"
-              className="bg-white rounded-2xl p-5 shadow-sm cursor-pointer active:scale-95 transition-transform">
-              <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center mb-4">
-                <CreditCard className="w-6 h-6 text-red-500" />
+            {/* Pay Dues */}
+            <div
+              onClick={() => setLocation("/dues")}
+              data-testid="link-pay-dues"
+              className="flex flex-col items-center gap-1.5 pt-3 pb-2.5 px-1 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-sm transition-all group cursor-pointer"
+            >
+              <div className="w-9 h-9 rounded-xl bg-red-100 text-red-500 flex items-center justify-center group-hover:bg-red-200 transition-colors">
+                <CreditCard className="w-4 h-4" />
               </div>
-              <h3 className="text-lg font-black text-gray-900">Pay Dues</h3>
-              <p className="text-sm font-medium text-gray-500 mt-1">
-                {stripeConfig?.configured ? "$0 due" : "$155 due Mar 30"}
-              </p>
+              <span className="text-[10px] font-medium text-slate-700 text-center leading-tight truncate w-full">Pay Dues</span>
             </div>
 
-            <div onClick={() => setWoOpen(true)} data-testid="link-report-issue"
-              className="bg-white rounded-2xl p-5 shadow-sm cursor-pointer active:scale-95 transition-transform">
-              <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center mb-4">
-                <Wrench className="w-6 h-6 text-amber-600" />
+            {/* Documents */}
+            <div
+              onClick={() => setLocation("/documents")}
+              data-testid="link-documents"
+              className="flex flex-col items-center gap-1.5 pt-3 pb-2.5 px-1 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-sm transition-all group cursor-pointer"
+            >
+              <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-500 flex items-center justify-center group-hover:bg-indigo-200 transition-colors">
+                <FileText className="w-4 h-4" />
               </div>
-              <h3 className="text-lg font-black text-gray-900">Report Issue</h3>
-              <p className="text-sm font-medium text-gray-500 mt-1">Submit a work order</p>
+              <span className="text-[10px] font-medium text-slate-700 text-center leading-tight truncate w-full">Documents</span>
             </div>
 
-            <div onClick={() => setLocation("/documents")} data-testid="link-documents"
-              className="bg-white rounded-2xl p-5 shadow-sm cursor-pointer active:scale-95 transition-transform">
-              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center mb-4">
-                <FileText className="w-6 h-6 text-blue-600" />
+            {/* Report Issue */}
+            <button
+              type="button"
+              onClick={() => setWoOpen(true)}
+              data-testid="link-report-issue"
+              className="flex flex-col items-center gap-1.5 pt-3 pb-2.5 px-1 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-sm transition-all group cursor-pointer w-full"
+            >
+              <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-500 flex items-center justify-center group-hover:bg-amber-200 transition-colors">
+                <Wrench className="w-4 h-4" />
               </div>
-              <h3 className="text-lg font-black text-gray-900">Documents</h3>
-              <p className="text-sm font-medium text-gray-500 mt-1">Bylaws & guidelines</p>
-            </div>
+              <span className="text-[10px] font-medium text-slate-700 text-center leading-tight truncate w-full">Report Issue</span>
+            </button>
 
-            <a href="mailto:board@beyondhoa.com" data-testid="link-contact-board"
-              className="bg-white rounded-2xl p-5 shadow-sm cursor-pointer active:scale-95 transition-transform block">
-              <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center mb-4">
-                <MessageSquare className="w-6 h-6 text-emerald-600" />
+            {/* Contact Board */}
+            <a
+              href="mailto:board@beyondhoa.com"
+              data-testid="link-contact-board"
+              className="flex flex-col items-center gap-1.5 pt-3 pb-2.5 px-1 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-sm transition-all group cursor-pointer"
+            >
+              <div className="w-9 h-9 rounded-xl bg-green-100 text-green-600 flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                <Mail className="w-4 h-4" />
               </div>
-              <h3 className="text-lg font-black text-gray-900">Contact Board</h3>
-              <p className="text-sm font-medium text-gray-500 mt-1">Message administrators</p>
+              <span className="text-[10px] font-medium text-slate-700 text-center leading-tight truncate w-full">Contact</span>
             </a>
-
           </div>
         </div>
 
-        {/* ── Announcements ── */}
-        <div>
-          <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3 px-1">Announcements</p>
-          <div className="bg-white rounded-2xl shadow-sm overflow-hidden divide-y divide-gray-100">
+        {/* 3. Community Announcements */}
+        <Card className="border-t-2 border-t-amber-500 mt-4">
+          <CardHeader className="pb-2 pt-3 px-3">
+            <CardTitle className="text-sm flex items-center gap-2 text-amber-800">
+              <Megaphone className="w-3.5 h-3.5 text-amber-600/70 shrink-0" />
+              <span className="truncate">Community Announcements</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 px-3 pb-3">
             {annLoading ? (
-              <div className="p-5 space-y-4">
-                {[1, 2].map((i) => <div key={i} className="h-16 bg-gray-100 rounded-xl animate-pulse" />)}
+              <div className="space-y-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-14 bg-muted rounded animate-pulse" />
+                ))}
               </div>
             ) : sortedAnnouncements.length === 0 ? (
-              <div className="text-center py-10">
-                <Megaphone className="w-10 h-10 mx-auto mb-3 text-gray-300" />
-                <p className="text-base font-semibold text-gray-400">No announcements yet.</p>
+              <div className="text-center py-6 text-muted-foreground">
+                <Megaphone className="w-7 h-7 mx-auto mb-2 opacity-40" />
+                <p className="text-xs">No announcements posted yet.</p>
               </div>
             ) : (
               sortedAnnouncements.map((announcement) => {
                 const colors = categoryColors[announcement.category] || categoryColors.general;
                 return (
-                  <div key={announcement.id} className="p-4 flex items-start gap-4">
-                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${colors.bg}`}>
-                      <Megaphone className={`w-5 h-5 ${colors.text}`} />
+                  <div
+                    key={announcement.id}
+                    className="flex items-start gap-2 p-2.5 rounded-xl border bg-card hover:bg-stone-50/50 transition-colors"
+                  >
+                    <div className={`rounded-lg p-1.5 w-fit shrink-0 mt-0.5 ${colors.bg}`}>
+                      <Megaphone className={`w-3.5 h-3.5 ${colors.text}`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start gap-2">
-                        <h4 className="text-base font-bold text-gray-900 leading-snug">{announcement.title}</h4>
-                        <span className="text-xs font-semibold text-gray-400 shrink-0 mt-0.5">
-                          {announcement.createdAt
-                            ? new Date(announcement.createdAt).toLocaleDateString(undefined, { month: "short", day: "2-digit" })
-                            : "Jul 15"}
-                        </span>
+                      <div className="flex justify-between items-start gap-1.5">
+                        <h4 className="font-semibold text-xs tracking-tight text-slate-900 truncate">
+                          {announcement.title}
+                        </h4>
+                        <div className="flex items-center gap-1 shrink-0">
+                          {announcement.pinned && (
+                            <Badge className="text-[9px] px-1 py-0 uppercase tracking-wider font-bold bg-amber-500 hover:bg-amber-600 text-white border-0">
+                              Pin
+                            </Badge>
+                          )}
+                          <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                            {announcement.createdAt
+                              ? new Date(announcement.createdAt).toLocaleDateString(undefined, {
+                                  month: "short",
+                                  day: "2-digit",
+                                })
+                              : "Recent"}
+                          </span>
+                        </div>
                       </div>
-                      <p className="text-sm text-gray-500 font-medium mt-1 line-clamp-2">{announcement.content}</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed mt-0.5 line-clamp-2">
+                        {announcement.content}
+                      </p>
                     </div>
                   </div>
                 );
               })
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-      </div>
+      </PageContent>
 
-      {/* ── Work Order Dialog ── */}
+      {/* Work Order Dialog */}
       <Dialog open={woOpen} onOpenChange={setWoOpen}>
-        <DialogContent className="max-w-[92vw] rounded-3xl">
+        <DialogContent className="max-w-[92vw] rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-black">Submit Work Order</DialogTitle>
+            <DialogTitle>Submit Work Order</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-            <div className="space-y-2">
-              <Label htmlFor="wo-title" className="text-base font-bold">Title</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="wo-title">Title</Label>
               <Input
                 id="wo-title"
                 value={form.title}
                 onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
                 placeholder="Brief description of the issue"
                 required
-                className="text-base h-12"
                 data-testid="input-wo-title"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label className="text-base font-bold">Category</Label>
+              <div className="space-y-1.5">
+                <Label>Category</Label>
                 <Select value={form.category} onValueChange={(v) => setForm((f) => ({ ...f, category: v }))}>
-                  <SelectTrigger className="h-12 text-base" data-testid="select-wo-category">
+                  <SelectTrigger data-testid="select-wo-category">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -311,10 +368,10 @@ export default function DashboardPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label className="text-base font-bold">Priority</Label>
+              <div className="space-y-1.5">
+                <Label>Priority</Label>
                 <Select value={form.priority} onValueChange={(v) => setForm((f) => ({ ...f, priority: v }))}>
-                  <SelectTrigger className="h-12 text-base" data-testid="select-wo-priority">
+                  <SelectTrigger data-testid="select-wo-priority">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -326,31 +383,29 @@ export default function DashboardPage() {
                 </Select>
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="wo-desc" className="text-base font-bold">Description</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="wo-desc">Description</Label>
               <Textarea
                 id="wo-desc"
                 value={form.description}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                placeholder="Describe the issue in detail…"
+                placeholder="Describe the issue in detail..."
                 rows={3}
                 required
-                className="text-base"
                 data-testid="input-wo-description"
               />
             </div>
             <Button
               type="submit"
-              className="w-full bg-indigo-950 hover:bg-indigo-900 text-white font-black text-lg h-14 rounded-2xl"
+              className="w-full bg-indigo-950 hover:bg-indigo-900 text-white"
               disabled={createWO.isPending}
               data-testid="button-submit-wo"
             >
-              {createWO.isPending ? "Submitting…" : "Submit Work Order"}
+              {createWO.isPending ? "Submitting..." : "Submit Work Order"}
             </Button>
           </form>
         </DialogContent>
       </Dialog>
-
     </div>
   );
 }
