@@ -118,7 +118,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       {/* 3. SCROLLABLE MAIN CONTENT (Padded top & bottom on mobile so content clears fixed header/footer) */}
       <main className="flex-1 flex flex-col min-w-0 w-full overflow-y-auto pt-[calc(4rem+env(safe-area-inset-top))] pb-[calc(4.25rem+env(safe-area-inset-bottom))] lg:pt-0 lg:pb-0 bg-background text-foreground min-h-0">
-        <div className="flex-1 flex flex-col w-full h-auto">
+        <div className="w-full">
           {children}
         </div>
       </main>
