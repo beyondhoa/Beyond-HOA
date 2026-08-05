@@ -16,6 +16,10 @@ export default {
   ],
   theme: {
     extend: {
+      screens: {
+        coarse: { raw: '(pointer: coarse)' },
+        fine: { raw: '(pointer: fine)' },
+      },
       colors: {
         border: withOpacity("--border"),
         input: withOpacity("--input"),
