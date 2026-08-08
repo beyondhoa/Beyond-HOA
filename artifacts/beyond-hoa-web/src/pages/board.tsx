@@ -15,7 +15,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -32,15 +31,16 @@ import {
   MessageSquarePlus, 
   MessageSquare, 
   Megaphone, 
-  Calendar, 
+  Calendar as CalendarIcon, 
   Users,
   CreditCard,
   Vote,
-  ChevronRight,
   Truck,
-  LayoutDashboard,
   AlertTriangle,
-  CheckCircle2
+  CheckCircle2,
+  FileText,
+  ChevronRight,
+  Home
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ResidentsPage from "@/pages/residents";
@@ -53,6 +53,20 @@ interface Announcement {
   createdAt?: string;
 }
 
+interface ArchitecturalRequest {
+  id: string;
+  unit: string;
+  applicant: string;
+  project: string;
+  status: "pending" | "approved" | "rejected";
+  submittedDate: string;
+}
+
+const MOCK_ARC_REQUESTS: ArchitecturalRequest[] = [
+  { id: "arc-1", unit: "104", applicant: "Michael Scott", project: "Solar Panel Installation", status: "pending", submittedDate: "Aug 2, 2026" },
+  { id: "arc-2", unit: "112", applicant: "Pam Beesly", project: "Rear Deck Expansion", status: "pending", submittedDate: "Aug 4, 2026" },
+];
+
 function statusColor(s: string) {
   const m: Record<string, string> = { 
     open: "bg-amber-50 text-amber-800 border-amber-200", 
@@ -64,42 +78,65 @@ function statusColor(s: string) {
   return m[s] ?? "bg-stone-50 text-stone-600 border border-stone-200";
 }
 
-export default function BoardPage() {
-  const [activeTab, setActiveTab] = useState("overview");
+const UNPAID_STATUSES = new Set(["unpaid", "failed", "overdue", "pending"]);
 
-  return (
-    <>
-      <PageHeader 
-        title="Board Dashboard" 
-        subtitle={<span className="text-sm sm:text-base text-muted-foreground font-normal">Manage violations, vendors, work orders, and announcements</span>} 
-      />
-      <PageContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="mb-2">
-            <TabsTrigger value="overview" data-testid="tab-overview"><LayoutDashboard className="w-4 h-4 mr-2" />Overview</TabsTrigger>
-            <TabsTrigger value="workorders" data-testid="tab-workorders"><Wrench className="w-4 h-4 mr-2" />Work Orders</TabsTrigger>
-            <TabsTrigger value="announcements" data-testid="tab-announcements"><Megaphone className="w-4 h-4 mr-2" />Announcements</TabsTrigger>
-            <TabsTrigger value="violations" data-testid="tab-violations"><ShieldAlert className="w-4 h-4 mr-2" />Violations</TabsTrigger>
-            <TabsTrigger value="vendors" data-testid="tab-vendors"><Store className="w-4 h-4 mr-2" />Vendors</TabsTrigger>
-            <TabsTrigger value="residents" data-testid="tab-residents"><Users className="w-4 h-4 mr-2" />Residents</TabsTrigger>
-            <TabsTrigger value="voting" data-testid="tab-voting"><Vote className="w-4 h-4 mr-2" />Voting</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="overview">
-            <OverviewTab setTab={setActiveTab} />
-          </TabsContent>
+interface StatTileProps {
+  title: string;
+  value: React.ReactNode;
+  subtitle: string;
+  icon: React.ReactNode;
+  accentColorClass: string;
+  iconBgClass: string;
+  tileBgClass?: string;
+  onClick?: () => void;
+}
 
-          <TabsContent value="violations"><ViolationsTab /></TabsContent>
-          <TabsContent value="vendors"><VendorsTab /></TabsContent>
-          <TabsContent value="workorders"><WorkOrdersTab /></TabsContent>
-          <TabsContent value="announcements"><AnnouncementsTab /></TabsContent>
-          <TabsContent value="residents"><ResidentsTab /></TabsContent>
-          <TabsContent value="voting"><VotingTab /></TabsContent>
-        </Tabs>
-      </PageContent>
-    </>
+function StatTile({
+  title,
+  value,
+  subtitle,
+  icon,
+  accentColorClass,
+  iconBgClass,
+  tileBgClass = "bg-card",
+  onClick,
+}: StatTileProps) {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (onClick && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault();
+      onClick();
+    }
+  };
+ return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={handleKeyDown}
+      className="block group cursor-pointer h-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-xl transition-all"
+    >
+      <Card className={`quick-action-tile border border-stone-200 border-t-[3px] ${accentColorClass} ${tileBgClass} rounded-xl group-hover:shadow-md transition-all h-full flex flex-col justify-between`}>
+        <CardContent className="p-4 flex flex-col justify-between h-full">
+          <div className="flex items-start justify-between gap-2">
+            <span className="text-xs font-bold text-stone-500 uppercase tracking-wider">
+              {title}
+            </span>
+            <div className={`p-2 rounded-lg shrink-0 ${iconBgClass}`}>
+              {icon}
+            </div>
+          </div>
+          <div className="mt-4">
+            <div className="text-2xl font-bold text-slate-900 leading-none">
+              {value}
+            </div>
+            <p className="text-xs text-stone-500 font-medium mt-2">{subtitle}</p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
+
 
 interface OverviewTabProps {
   setTab: (tab: string) => void;
@@ -112,207 +149,252 @@ function OverviewTab({ setTab }: OverviewTabProps) {
   const { data: violations } = useListViolations({ query: { queryKey: getListViolationsQueryKey() } });
   const { data: allPayments } = useListDuesPayments({ query: { queryKey: getListDuesPaymentsQueryKey() } });
   const { data: residents } = useListResidents({ query: { queryKey: getListResidentsQueryKey() } });
+  const { data: vendors = [] } = useListVendors({ query: { queryKey: getListVendorsQueryKey() } });
 
   const activeWOs = workOrders?.filter(wo => wo.status !== "completed" && wo.status !== "cancelled") ?? [];
   const openViolations = violations?.filter(v => v.status === "open") ?? [];
 
-  // Filter out settled payments to isolate unpaid/overdue/failed records
   const unpaidPayments = allPayments?.filter((p) => {
-  const status = p.status as string;
-  return status === "unpaid" || status === "failed" || status === "overdue" || status === "pending";
+    const status = p.status as string;
+    return status === "unpaid" || status === "failed" || status === "overdue" || status === "pending";
   }) ?? [];
 
-  // Calculate live total unpaid dues from dues_payments
   const totalUnpaid = unpaidPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
 
-  return (
+   return (
     <div className="space-y-6">
-      {/* 1. Stat Tiles Row — Uniform Sizing Matching Home Dashboard */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full">
-        
-        {/* Outstanding Dues Card - Triggers Unpaid Residents Modal */}
-        <div onClick={() => setUnpaidModalOpen(true)} className="block group cursor-pointer">
-          <Card className="border-l-4 border-l-amber-600 group-hover:shadow-md group-hover:scale-[1.01] transition-all h-full">
-            <CardContent className="pt-3 pb-3 px-3">
-              <div className="flex items-center justify-between">
-                <div className="bg-amber-50 rounded-lg p-1.5 w-fit mb-1.5">
-                  <CreditCard className="w-3.5 h-3.5 text-amber-600" />
-                </div>
-                <ChevronRight className="w-4 h-4 text-amber-600/60 group-hover:translate-x-1 transition-transform" />
-              </div>
-              <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">Outstanding Dues</p>
-              <p className="text-xl font-bold text-amber-600 leading-none">${totalUnpaid.toFixed(2)}</p>
-              <p className="text-[11px] font-semibold text-stone-600 mt-0.5">Review Balances</p>
-            </CardContent>
-          </Card>
-        </div>
+      {/* Top Grid: Metric Stat Tiles */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatTile
+          title="Outstanding Dues"
+          value={<span className="text-amber-600">${totalUnpaid.toFixed(2)}</span>}
+          subtitle="Review balances"
+          icon={<CreditCard className="w-6 h-6" />}
+          accentColorClass="border-t-amber-500"
+          iconBgClass="bg-amber-50 text-amber-600"
+          tileBgClass="bg-amber-50/80"
+          onClick={() => setUnpaidModalOpen(true)}
+        />
 
-        {/* Active Work Orders */}
-        <div onClick={() => setTab("workorders")} className="block group h-full cursor-pointer">
-          <Card className="border-l-4 border-l-amber-500 group-hover:shadow-md group-hover:scale-[1.01] transition-all h-full">
-            <CardContent className="pt-3 pb-3 px-3">
-              <div className="bg-amber-50 rounded-lg p-1.5 w-fit mb-1.5">
-                <Wrench className="w-3.5 h-3.5 text-amber-600" />
-              </div>
-              <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">Work Orders</p>
-              <p className="text-xl font-bold text-slate-900 leading-none">{activeWOs.length}</p>
-              <p className="text-[11px] font-semibold text-amber-600 mt-0.5">Active Requests</p>
-            </CardContent>
-          </Card>
-        </div>
+        <StatTile
+          title="Work Orders"
+          value={activeWOs.length}
+          subtitle="Active requests"
+          icon={<Wrench className="w-6 h-6" />}
+          accentColorClass="border-t-blue-500"
+          iconBgClass="bg-blue-50 text-blue-600"
+          tileBgClass="bg-blue-50/80"
+          onClick={() => setTab("workorders")}
+        />
 
-        {/* Active Votes */}
-        <div onClick={() => setLocation("/voting")} className="block group h-full cursor-pointer">
-          <Card className="border-l-4 border-l-blue-500 group-hover:shadow-md group-hover:scale-[1.01] transition-all h-full">
-            <CardContent className="pt-3 pb-3 px-3">
-              <div className="bg-blue-50 rounded-lg p-1.5 w-fit mb-1.5">
-                <Vote className="w-3.5 h-3.5 text-blue-600" />
-              </div>
-              <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">Votes</p>
-              <p className="text-xl font-bold text-slate-900 leading-none">2</p>
-              <p className="text-[11px] font-semibold text-blue-600 mt-0.5">Open Ballots</p>
-            </CardContent>
-          </Card>
-        </div>
+        <StatTile
+          title="Violations"
+          value={openViolations.length}
+          subtitle="Pending review"
+          icon={<AlertTriangle className="w-6 h-6" />}
+          accentColorClass="border-t-rose-500"
+          iconBgClass="bg-rose-50 text-rose-600"
+          tileBgClass="bg-rose-50/80"
+          onClick={() => setTab("violations")}
+        />
 
-        {/* Open Violations */}
-        <div onClick={() => setTab("violations")} className="block group h-full cursor-pointer">
-          <Card className="border-l-4 border-l-red-500 group-hover:shadow-md group-hover:scale-[1.01] transition-all h-full">
-            <CardContent className="pt-3 pb-3 px-3">
-              <div className="bg-red-50 rounded-lg p-1.5 w-fit mb-1.5">
-                <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
-              </div>
-              <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">Violations</p>
-              <p className="text-xl font-bold text-slate-900 leading-none">{openViolations.length}</p>
-              <p className="text-[11px] font-semibold text-red-500 mt-0.5">Pending Review</p>
-            </CardContent>
-          </Card>
-        </div>
-
+        <StatTile
+          title="ARC Requests"
+          value={MOCK_ARC_REQUESTS.length}
+          subtitle="Pending approval"
+          icon={<Home className="w-6 h-6" />}
+          accentColorClass="border-t-teal-600"
+          iconBgClass="bg-teal-50 text-teal-600"
+          tileBgClass="bg-teal-50/50"
+        />
       </div>
 
-      {/* 2. Quick Management Actions Grid */}
-      <div className="mt-5">
-        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-2.5">
-          Management Actions
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          
-          <div onClick={() => setTab("announcements")} className="flex items-center justify-between p-3.5 bg-gradient-to-r from-indigo-950 to-indigo-900 border border-indigo-950 rounded-xl hover:shadow-md hover:scale-[1.01] transition-all font-semibold text-sm text-white group cursor-pointer">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-white/10 rounded-lg">
-                <Megaphone className="h-4 w-4 text-amber-400" />
-              </div>
-              <div className="text-left">
-                <p className="font-semibold text-white text-xs">Broadcast Announcement</p>
-                <p className="text-[11px] text-indigo-200 font-normal">Pin updates to dashboards</p>
-              </div>
-            </div>
-            <ChevronRight className="h-4 w-4 text-indigo-300 group-hover:translate-x-1 transition-transform" />
-          </div>
+      {/* Second Row: Secondary Actions & Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatTile
+          title="Announcements"
+          value={<span className="text-sm font-bold text-slate-900 leading-tight block">Broadcast Announcement</span>}
+          subtitle="Pin updates to dashboards"
+          icon={<Megaphone className="w-6 h-6" />}
+          accentColorClass="border-t-indigo-600"
+          iconBgClass="bg-indigo-50 text-indigo-600"
+          tileBgClass="bg-indigo-50/80"
+          onClick={() => setTab("announcements")}
+        />
 
-          <div onClick={() => setTab("vendors")} className="flex items-center justify-between p-3.5 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-sm transition-all font-semibold text-sm group cursor-pointer">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-indigo-50 rounded-lg text-indigo-900">
-                <Truck className="h-4 w-4 text-indigo-700" />
-              </div>
-              <div className="text-left">
-                <p className="font-semibold text-slate-900 text-xs">Manage Vendors</p>
-                <p className="text-[11px] text-muted-foreground font-normal">Directory & contractors</p>
-              </div>
-            </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-          </div>
+        <StatTile
+          title="Community"
+          value={<span className="text-sm font-bold text-slate-900 leading-tight block">Resident Directory</span>}
+          subtitle="Units, contacts & notes"
+          icon={<Users className="w-6 h-6" />}
+          accentColorClass="border-t-teal-600"
+          iconBgClass="bg-teal-50 text-teal-600"
+          tileBgClass="bg-teal-50/80"
+          onClick={() => setTab("residents")}
+        />
 
-          <div onClick={() => setTab("residents")} className="flex items-center justify-between p-3.5 bg-card border rounded-xl hover:bg-stone-50/50 hover:border-stone-300 hover:shadow-sm transition-all font-semibold text-sm group cursor-pointer">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-amber-50 rounded-lg text-amber-600">
-                <Users className="h-4 w-4 text-amber-600" />
-              </div>
-              <div className="text-left">
-                <p className="font-semibold text-slate-900 text-xs">Resident Directory</p>
-                <p className="text-[11px] text-muted-foreground font-normal">Units, contacts & notes</p>
-              </div>
-            </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-          </div>
+        <StatTile
+          title="Vendors"
+          value={vendors.length}
+          subtitle="Preferred contractors"
+          icon={<Truck className="w-6 h-6" />}
+          accentColorClass="border-t-amber-500"
+          iconBgClass="bg-amber-50 text-amber-600"
+          tileBgClass="bg-amber-50/80"
+          onClick={() => setTab("vendors")}
+        />
 
-        </div>
+        <StatTile
+          title="Votes"
+          value={2}
+          subtitle="Votes pending"
+          icon={<FileText className="w-6 h-6" />}
+          accentColorClass="border-t-blue-500"
+          iconBgClass="bg-blue-50 text-blue-600"
+          tileBgClass="bg-blue-50/80"
+          onClick={() => setLocation("/voting")}
+        />
       </div>
 
-      {/* 3. Section Feeds */}
+      {/* Bottom Grid: 2 Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        <Card className="h-full border-t-2 border-t-amber-500">
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2 text-amber-800">
-              <Wrench className="w-4 h-4 text-amber-600/70" />
-              Pending Work Orders
-            </CardTitle>
-            <span onClick={() => setTab("workorders")} className="text-xs text-amber-700 hover:underline cursor-pointer font-semibold">View All</span>
-          </CardHeader>
-          <CardContent>
-            {activeWOs.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Wrench className="w-8 h-8 mx-auto mb-2 opacity-40 text-stone-400" />
-                <p className="text-sm">No pending maintenance requests right now.</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-border">
-                {activeWOs.slice(0, 5).map((wo) => (
-                  <div key={wo.id} className="py-3 flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">{wo.title}</p>
-                      <p className="text-xs text-muted-foreground capitalize">
-                        Unit {wo.unit} · {wo.category} · {wo.priority}
-                      </p>
+        {/* Left Column */}
+        <div className="space-y-6">
+          <Card className="border-t-[3px] border-t-amber-500">
+            <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2 text-slate-900">
+                <Wrench className="w-6 h-6 text-amber-600" />
+                Pending Work Orders
+              </CardTitle>
+              <span onClick={() => setTab("workorders")} className="text-xs text-amber-700 hover:underline cursor-pointer font-semibold">
+                View All
+              </span>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              {activeWOs.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Wrench className="w-6 h-6 mx-auto mb-2 opacity-40 text-stone-400" />
+                  <p className="text-sm">No pending maintenance requests right now.</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {activeWOs.slice(0, 4).map((wo) => (
+                    <div key={wo.id} className="py-3 flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">{wo.title}</p>
+                        <p className="text-xs text-muted-foreground capitalize">
+                          Unit {wo.unit} · {wo.category}
+                        </p>
+                      </div>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium capitalize ${statusColor(wo.status)}`}>
+                        {wo.status.replace("_", " ")}
+                      </span>
                     </div>
-                    <span className={`text-xs px-2 py-0.5 rounded-full border font-medium capitalize ${statusColor(wo.status)}`}>
-                      {wo.status.replace("_", " ")}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-        <Card className="h-full border-t-2 border-t-indigo-900">
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2 text-indigo-950">
-              <ShieldAlert className="w-4 h-4 text-indigo-900/70" />
-              Violations
-            </CardTitle>
-            <span onClick={() => setTab("violations")} className="text-xs text-indigo-900 hover:underline cursor-pointer font-semibold">View All</span>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <p className="text-xs font-bold uppercase tracking-wider text-red-600">Open Violations</p>
+          <Card className="border-t-[3px] border-t-amber-500">
+            <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2 text-slate-900">
+                <Truck className="w-4 h-4 text-amber-600" />
+                Vendors Directory
+              </CardTitle>
+              <span onClick={() => setTab("vendors")} className="text-xs text-amber-700 hover:underline cursor-pointer font-semibold flex items-center gap-0.5">
+                Manage <ChevronRight className="w-3 h-3" />
+              </span>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              {vendors.length === 0 ? (
+                <div className="text-center py-6 text-muted-foreground">
+                  <Store className="w-6 h-6 mx-auto mb-1 opacity-40 text-stone-400" />
+                  <p className="text-xs">No active vendors registered.</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {vendors.slice(0, 3).map((vendor) => (
+                    <div key={vendor.id} className="py-2.5 flex items-center justify-between text-sm">
+                      <div>
+                        <p className="font-semibold text-slate-900">{vendor.name}</p>
+                        <p className="text-xs text-muted-foreground">{vendor.specialty}</p>
+                      </div>
+                      <Badge variant="outline" className="text-[10px] bg-slate-50">
+                        {vendor.active ? "Active" : "Inactive"}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Column */}
+        <div className="space-y-6">
+          <Card className="border-t-[3px] border-t-rose-500">
+            <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2 text-slate-900">
+                <ShieldAlert className="w-6 h-6 text-rose-600" />
+                Violations
+              </CardTitle>
+              <span onClick={() => setTab("violations")} className="text-xs text-rose-700 hover:underline cursor-pointer font-semibold">
+                View All
+              </span>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
               {openViolations.length === 0 ? (
-                <div className="text-center py-4 border border-dashed rounded-xl bg-card">
+                <div className="text-center py-8 border border-dashed rounded-xl bg-card">
                   <p className="text-xs text-muted-foreground">No open violations on record.</p>
                 </div>
               ) : (
                 <div className="divide-y divide-border border rounded-xl overflow-hidden bg-card">
-                  {openViolations.slice(0, 3).map((vio) => (
+                  {openViolations.slice(0, 4).map((vio) => (
                     <div key={vio.id} className="p-3 flex items-center justify-between text-sm">
                       <div>
                         <p className="font-semibold text-slate-900">{vio.violation_type || "Property Infraction"}</p>
                         <p className="text-xs text-muted-foreground capitalize">
-                          Unit {vio.unit} · Issued: {new Date(vio.incident_date || "").toLocaleDateString()}
+                          Unit {vio.unit}
                         </p>
                       </div>
-                      <Badge className="bg-red-50 text-red-700 border-red-200">
+                      <Badge className="bg-rose-50 text-rose-700 border-rose-200 text-[10px]">
                         {vio.status}
                       </Badge>
                     </div>
                   ))}
                 </div>
               )}
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
+          <Card className="border-t-[3px] border-t-teal-600">
+            <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2 text-slate-900">
+                <Home className="w-6 h-6 text-teal-600" />
+                Architectural Requests
+              </CardTitle>
+              <span className="text-xs text-teal-700 hover:underline cursor-pointer font-semibold">Review All</span>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              <div className="divide-y divide-border border rounded-xl overflow-hidden bg-card">
+                {MOCK_ARC_REQUESTS.map((arc) => (
+                  <div key={arc.id} className="p-3 flex items-center justify-between text-sm">
+                    <div>
+                      <p className="font-semibold text-slate-900">{arc.project}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Unit {arc.unit} · {arc.applicant}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200 text-[10px] capitalize">
+                      {arc.status}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Unpaid Balances Modal */}
@@ -334,12 +416,11 @@ function OverviewTab({ setTab }: OverviewTabProps) {
           ) : (
             <div className="space-y-3 mt-2">
               <div className="divide-y divide-border border rounded-xl overflow-hidden bg-card">
-            {unpaidPayments.map((p) => {
-              const rawP = p as Record<string, any>;
-              const residentId = rawP.resident_id ?? rawP.residentId;
-              const resident = residents?.find((r) => String(r.id) === String(residentId));
-              const displayName = resident?.name || rawP.resident_name || `Resident ID #${residentId || "N/A"}`;
-              const displayUnit = resident?.unit || rawP.unit || "—";
+                {unpaidPayments.map((p) => {
+                  const residentId = p.resident_id ?? p.residentId;
+                  const resident = residents?.find((r) => String(r.id) === String(residentId));
+                  const displayName = resident?.name || p.resident_name || `Resident ID #${residentId || "N/A"}`;
+                  const displayUnit = resident?.unit || p.unit || "—";
 
                   return (
                     <div key={p.id} className="p-3.5 flex items-center justify-between hover:bg-stone-50/80 transition-colors">
@@ -354,8 +435,8 @@ function OverviewTab({ setTab }: OverviewTabProps) {
                           ${p.amount ? Number(p.amount).toFixed(2) : "0.00"}
                         </p>
                         <Badge className={`text-[10px] mt-0.5 capitalize ${
-                          (p.status as string) === 'overdue' || (p.status as string) === 'failed'
-                            ? 'bg-red-50 text-red-700 border-red-200' 
+                          p.status === 'overdue' || p.status === 'failed'
+                            ? 'bg-rose-50 text-rose-700 border-rose-200' 
                             : 'bg-amber-50 text-amber-800 border-amber-200'
                         }`}>
                           {p.status}
@@ -370,7 +451,7 @@ function OverviewTab({ setTab }: OverviewTabProps) {
                 <Button 
                   variant="outline" 
                   onClick={() => { setUnpaidModalOpen(false); setTab("residents"); }}
-                  className="w-full text-indigo-950 border-indigo-950 hover:bg-indigo-50"
+                  className="w-full text-slate-900 border-slate-300 hover:bg-slate-50"
                 >
                   <Users className="w-4 h-4 mr-2" /> Go to Resident Directory
                 </Button>
@@ -380,6 +461,32 @@ function OverviewTab({ setTab }: OverviewTabProps) {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function BoardPage() {
+  const [activeTab, setActiveTab] = useState("overview");
+
+  return (
+    <>
+      <PageHeader 
+        title="Board Dashboard" 
+        subtitle={
+          <span className="text-base text-muted-foreground font-normal">
+            Manage violations, vendors, work orders, and announcements
+          </span>
+        }
+      />
+      <PageContent>
+        {activeTab === "overview" && <OverviewTab setTab={setActiveTab} />}
+        {activeTab === "violations" && <ViolationsTab />}
+        {activeTab === "vendors" && <VendorsTab />}
+        {activeTab === "workorders" && <WorkOrdersTab />}
+        {activeTab === "announcements" && <AnnouncementsTab />}
+        {activeTab === "residents" && <ResidentsTab />}
+        {activeTab === "voting" && <VotingTab />}
+      </PageContent>
+    </>
   );
 }
 
@@ -585,7 +692,7 @@ function AnnouncementsTab() {
                       </div>
                     </div>
                     <p className="text-sm text-muted-foreground mt-0.5 flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5" /> Published on {ann.createdAt ? new Date(ann.createdAt).toLocaleDateString() : "Recent"}
+                      <CalendarIcon className="w-3.5 h-3.5" /> Published on {ann.createdAt ? new Date(ann.createdAt).toLocaleDateString() : "Recent"}
                     </p>
                     <p className="text-sm text-foreground mt-2 bg-muted/20 p-2.5 rounded border border-stone-200 leading-relaxed">
                       {ann.content}
